@@ -47,7 +47,7 @@ const HeroSection: React.FC = () => {
             textColor: useColorModeValue("black", "white")
           }}
         >
-          Get Started for Free
+          Try for Free
         </Button>
         <Button
           size={"lg"}
