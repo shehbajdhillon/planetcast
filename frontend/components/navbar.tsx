@@ -8,6 +8,7 @@ import {
   useColorMode,
   useColorModeValue,
 } from '@chakra-ui/react';
+import { useUser } from '@clerk/nextjs';
 import { Moon, Sun } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,6 +20,7 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
 
   const { toggleColorMode } = useColorMode();
+  const { isSignedIn, isLoaded } = useUser();
 
   return (
     <Box w="full" display={"flex"} alignItems={"center"} justifyContent={"center"}>
@@ -56,6 +58,22 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
             icon={useColorModeValue(<Moon />, <Sun />)}
             variant={"ghost"}
           />
+          <Link
+            href={'/dashboard'}
+            hidden={!(marketing && isLoaded)}
+          >
+            <Button
+              backgroundColor={useColorModeValue("black", "white")}
+              textColor={useColorModeValue("white", "black")}
+              borderWidth={"1px"}
+              _hover={{
+                backgroundColor: useColorModeValue("white", "black"),
+                textColor: useColorModeValue("black", "white")
+              }}
+            >
+              { isSignedIn ? 'Dashboard' : 'Log In' }
+            </Button>
+          </Link>
         </HStack>
       </Box>
     </Box>

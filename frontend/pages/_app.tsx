@@ -5,6 +5,7 @@ import { mode } from '@chakra-ui/theme-tools'
 import { extendTheme } from '@chakra-ui/react';
 
 import { Inter } from 'next/font/google';
+import { ClerkProvider } from '@clerk/nextjs';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -26,9 +27,11 @@ const theme = extendTheme({
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <ChakraProvider theme={theme}>
-      <main className={inter.className}>
-        <Component {...pageProps} />
-      </main>
+      <ClerkProvider>
+        <main className={inter.className}>
+          <Component {...pageProps} />
+        </main>
+      </ClerkProvider>
     </ChakraProvider>
   );
 }
