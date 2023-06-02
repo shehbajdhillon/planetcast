@@ -21,7 +21,7 @@ const NewCastModal: React.FC<NewCastModalProps> = (props) => {
   const { isOpen, onClose } = props;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
+    <Modal isOpen={isOpen} onClose={onClose} isCentered size={"lg"}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>New Cast</ModalHeader>
