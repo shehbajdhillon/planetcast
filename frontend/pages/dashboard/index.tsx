@@ -155,21 +155,6 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
           Dashboard
         </Text>
       </Button>
-      <Button
-        my={{ base: "0px", md: "2px" }}
-        textAlign={"left"}
-        size={{ base: "md", lg: "lg"}}
-        display="flex"
-        justifyContent="flex-start"
-        borderWidth={tabIdx === 1 ? "1px" : "0px"}
-        variant={tabIdx === 1 ? "solid" : "ghost"}
-        onClick={() => setTabIdx(1)}
-      >
-        <Orbit />
-        <Text pl={"10px"} display={{ base:"none", lg: "flex" }}>
-          PlanetCast
-        </Text>
-      </Button>
       <Box marginTop={{ base: "0px", md: "auto"}}>
         <MenuBar
           emailAddress={user?.primaryEmailAddress?.emailAddress || ""}
@@ -187,8 +172,8 @@ const Dashboard: NextPage = () => {
   const [tabIdx, setTabIdx] = useState(0);
 
   const mobileView = useBreakpointValue({ base: true, md: false });
-
   const { height } = useWindowDimensions();
+
 
   return (
     <Box>
