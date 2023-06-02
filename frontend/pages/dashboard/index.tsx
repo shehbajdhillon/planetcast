@@ -15,8 +15,6 @@ import {
   Text,
   HStack,
   useColorMode,
-  RadioGroup,
-  Radio,
 } from "@chakra-ui/react";
 import { NextPage } from "next";
 
@@ -24,12 +22,11 @@ import { useClerk, useUser } from "@clerk/nextjs";
 import { UserResource } from '@clerk/types';
 
 import Image from "next/image";
-import { Banknote, BrainCircuit, LayoutDashboard, } from "lucide-react";
+import { LayoutDashboard, Orbit, } from "lucide-react";
 import { Dispatch, SetStateAction, useState } from "react";
 import useWindowDimensions from "@/hooks/useWindowDimensions";
-import PlanetCastTab from "@/components/dashboard/planetcast_tab";
 import DashboardTab from "@/components/dashboard/dashboard_tab";
-import AccountsTab from "@/components/dashboard/accounts_tab";
+import AccountsTab from "@/components/dashboard/planetcast_tab";
 import Head from "next/head";
 
 interface MenuBarProps {
@@ -168,24 +165,9 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
         variant={tabIdx === 1 ? "solid" : "ghost"}
         onClick={() => setTabIdx(1)}
       >
-        <BrainCircuit />
+        <Orbit />
         <Text pl={"10px"} display={{ base:"none", lg: "flex" }}>
           PlanetCast
-        </Text>
-      </Button>
-      <Button
-        my={{ base: "0px", md: "2px" }}
-        textAlign={"left"}
-        size={{ base: "md", lg: "lg"}}
-        display="flex"
-        justifyContent="flex-start"
-        borderWidth={tabIdx === 2 ? "1px" : "0px"}
-        variant={tabIdx === 2 ? "solid" : "ghost"}
-        onClick={() => setTabIdx(2)}
-      >
-        <Banknote />
-        <Text pl={"10px"} display={{ base:"none", lg: "flex" }}>
-          Accounts
         </Text>
       </Button>
       <Box marginTop={{ base: "0px", md: "auto"}}>
@@ -259,8 +241,7 @@ const Dashboard: NextPage = () => {
           >
             <Box w="full" h="full">
               { tabIdx == 0 && <DashboardTab /> }
-              { tabIdx == 1 && <PlanetCastTab /> }
-              { tabIdx == 2 && <AccountsTab /> }
+              { tabIdx == 1 && <AccountsTab /> }
             </Box>
             <Box
               marginTop={"auto"}
