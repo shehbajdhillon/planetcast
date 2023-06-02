@@ -1,7 +1,8 @@
-import { Box, Center, Divider, Grid, GridItem, Heading, useBreakpointValue, useColorModeValue } from "@chakra-ui/react";
+import { Box, Center, Divider, Grid, GridItem, Heading, useBreakpointValue, useColorModeValue, useDisclosure } from "@chakra-ui/react";
 import CastCard from "./cast_card";
 import Image from "next/image";
 import useWindowDimensions from "@/hooks/useWindowDimensions";
+import NewCastModal from "../new_cast_modal";
 
 const DashboardTab: React.FC = () => {
 
@@ -9,9 +10,11 @@ const DashboardTab: React.FC = () => {
   const imageSize = useBreakpointValue({ base: 70 });
 
   const { height } = useWindowDimensions();
+  const { onOpen, isOpen, onClose } = useDisclosure();
 
   return (
     <Box w="full" h="full" display={"flex"} flexDir={"column"}>
+      <NewCastModal onOpen={onOpen} isOpen={isOpen} onClose={onClose} />
       <Box display={{ "lg": "none" }}>
         <Heading p="5px" fontSize={"3xl"}>Dashboard</Heading>
         <Divider borderColor={dividerColor} />
@@ -34,6 +37,7 @@ const DashboardTab: React.FC = () => {
         >
           <GridItem colSpan={2} w="full" h="full">
             <Box
+              onClick={onOpen}
               borderWidth={"1px"}
               w="full"
               h={"full"}
@@ -42,7 +46,7 @@ const DashboardTab: React.FC = () => {
               _hover={{
                 borderColor: useColorModeValue('gray.300', 'whiteAlpha.500'),
                 boxShadow: 'lg',
-                bg: useColorModeValue('white', 'whiteAlpha.100'),
+                bg: useColorModeValue('white', 'black'),
               }}
               cursor={"pointer"}
             >

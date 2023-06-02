@@ -9,7 +9,36 @@ import { ClerkProvider } from '@clerk/nextjs';
 
 const inter = Inter({ subsets: ['latin'] });
 
+const components = {
+  Modal: {
+    // setup light/dark mode component defaults
+    baseStyle: (props: any) => ({
+      dialog: {
+        bg: mode('white', 'black')(props),
+        padding: 2,
+        borderColor: mode("blackAlpha.300", "whiteAlpha.300")(props),
+        borderWidth: '1px'
+      },
+    }),
+  },
+
+  Drawer: {
+    // setup light/dark mode component defaults
+    baseStyle: (props: any) => ({
+      dialog: {
+        bg: mode('white', 'black')(props),
+      },
+    }),
+  },
+};
+
+const config = {
+  initialColorMode: 'dark',
+};
+
 const theme = extendTheme({
+  config,
+  components,
   fonts: {
     heading: inter.style.fontFamily,
     body: inter.style.fontFamily,
