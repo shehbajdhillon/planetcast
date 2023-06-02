@@ -155,12 +155,14 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
           Dashboard
         </Text>
       </Button>
-      <Box marginTop={{ base: "0px", md: "auto"}}>
-        <MenuBar
-          emailAddress={user?.primaryEmailAddress?.emailAddress || ""}
-          fullName={user?.fullName || ""}
-          logout={signOut}
-        />
+      <Box marginTop={{ base: "0px", md: "auto"}} marginBottom={"10px"}>
+        <Center>
+          <MenuBar
+            emailAddress={user?.primaryEmailAddress?.emailAddress || ""}
+            fullName={user?.fullName || ""}
+            logout={signOut}
+          />
+        </Center>
       </Box>
     </Box>
   );
