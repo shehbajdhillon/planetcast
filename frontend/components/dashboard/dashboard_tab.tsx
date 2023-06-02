@@ -57,8 +57,8 @@ const DashboardTab: React.FC = () => {
               </Center>
             </Box>
           </GridItem>
-          {new Array(20).fill(0).map(_ => (
-            <GridItem colSpan={2}>
+          {new Array(20).fill(0).map((_, idx) => (
+            <GridItem colSpan={2} key={idx}>
               <CastCard
                 title="This Week In Startups"
                 status="DRAFT"
