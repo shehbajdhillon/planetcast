@@ -36,7 +36,7 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
             src={useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg')}
             width={60}
             height={100}
-            alt='spend sense logo'
+            alt='planet cast logo'
           />
           <Heading
             fontSize={"30px"}
