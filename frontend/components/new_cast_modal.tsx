@@ -16,6 +16,8 @@ import {
   Stack,
   Box,
   Center,
+  Spacer,
+  Select,
 } from '@chakra-ui/react';
 import { Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -60,7 +62,6 @@ const NewCastModal: React.FC<NewCastModalProps> = (props) => {
           <FormControl isRequired={true}>
             <Stack spacing={-1} py="10px">
               <FormLabel
-                textColor={useColorModeValue('gray.700', 'white')}
                 fontWeight={'600'}
                 fontSize={'lg'}
               >
@@ -74,7 +75,6 @@ const NewCastModal: React.FC<NewCastModalProps> = (props) => {
             </Stack>
             <Stack spacing={-1} py="10px">
               <FormLabel
-                textColor={useColorModeValue('gray.700', 'white')}
                 fontWeight={'600'}
                 fontSize={'lg'}
               >
@@ -101,6 +101,31 @@ const NewCastModal: React.FC<NewCastModalProps> = (props) => {
                 )}
               </Dropzone>
             </Stack>
+            <HStack>
+              <Stack spacing={-1} py="10px" w="full">
+                <FormLabel
+                  fontWeight={'600'}
+                  fontSize={'lg'}
+                >
+                  Source Language
+                </FormLabel>
+                <Select>
+                  <option value='ENGLISH'>ENGLISH</option>
+                </Select>
+              </Stack>
+              <Spacer />
+              <Stack spacing={-1} py="10px" w="full">
+                <FormLabel
+                  fontWeight={'600'}
+                  fontSize={'lg'}
+                >
+                  Target Language
+                </FormLabel>
+                <Select>
+                  <option value='HINDI'>HINDI</option>
+                </Select>
+              </Stack>
+            </HStack>
           </FormControl>
         </ModalBody>
         <ModalFooter alignSelf={"center"}>
