@@ -92,8 +92,8 @@ const NewCastModal: React.FC<NewCastModalProps> = (props) => {
                     {...getRootProps({className: 'dropzone'})}
                   >
                     <Center>
-                      <input {...getInputProps()} />
-                      <Text>
+                      <input {...getInputProps()} type='file' />
+                      <Text py="20px">
                         { !mediaFile ? "Upload Media File" : (mediaFile as File).name }
                       </Text>
                     </Center>
