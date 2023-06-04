@@ -9,7 +9,7 @@ import {
 
 interface CastCardProps {
   title: string;
-  status: "DRAFT" | "PROCESSING" | "DRAFT";
+  status: "DRAFT" | "PROCESSING" | "DONE";
   totalSteps: number;
   completedSteps: number;
 };
@@ -24,6 +24,8 @@ const CastCard: React.FC<CastCardProps> = (props) => {
     <Box
       borderWidth={"1px"}
       p={6}
+      maxW="400px"
+      minW="270px"
       rounded={"lg"}
       _hover={{
         borderColor: useColorModeValue('gray.300', 'whiteAlpha.500'),
@@ -35,6 +37,7 @@ const CastCard: React.FC<CastCardProps> = (props) => {
       <HStack>
         <Text
           textTransform="capitalize"
+          maxW="65%"
           fontWeight={700}
           fontSize={'lg'}
           letterSpacing={1.1}

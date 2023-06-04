@@ -24,6 +24,7 @@ const DashboardTab: React.FC = () => {
       <Center>
         <Grid
           py={{ base: "50px", md: "50px", lg: "100px" }}
+          px={{ lg: "70px" }}
           placeItems={'center'}
           columnGap={'25px'}
           rowGap={'25px'}
@@ -38,6 +39,8 @@ const DashboardTab: React.FC = () => {
             <Box
               onClick={onOpen}
               borderWidth={"1px"}
+              maxW="400px"
+              minW="270px"
               w="full"
               h={"full"}
               p={6}
@@ -63,8 +66,8 @@ const DashboardTab: React.FC = () => {
           {new Array(20).fill(0).map((_, idx) => (
             <GridItem colSpan={2} key={idx}>
               <CastCard
-                title="This Week In Startups"
-                status="DRAFT"
+                title="This Week In Startups Ep 1024"
+                status="PROCESSING"
                 totalSteps={6}
                 completedSteps={4}
               />
