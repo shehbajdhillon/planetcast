@@ -16,8 +16,6 @@ const CastCard: React.FC<CastCardProps> = (props) => {
 
   const { title, status } = props;
 
-  const statusColorScheme = status === "DRAFT" ? "gray" : status === "PROCESSING" ? "blue" : "green"
-
   return (
     <Box
       borderWidth={"1px"}
@@ -52,7 +50,6 @@ const CastCard: React.FC<CastCardProps> = (props) => {
           textTransform="capitalize"
           fontWeight="medium"
           alignContent="right"
-          colorScheme={statusColorScheme}
           pointerEvents={"none"}
         >
           {status}

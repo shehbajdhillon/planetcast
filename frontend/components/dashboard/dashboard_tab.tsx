@@ -67,7 +67,7 @@ const DashboardTab: React.FC = () => {
             <GridItem colSpan={2} key={idx}>
               <CastCard
                 title="This Week In Startups Ep 1024"
-                status="PROCESSING"
+                status="DONE"
               />
             </GridItem>
           ))}
