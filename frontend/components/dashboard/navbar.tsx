@@ -47,6 +47,8 @@ export const MenuBar: React.FC = () => {
       <MenuList alignItems={'center'} backgroundColor={useColorModeValue("white", "black")}>
         <Center>
           <Avatar
+            borderWidth={"1px"}
+            borderColor={"blackAlpha.200"}
             size={'2xl'}
             src={`https://api.dicebear.com/6.x/notionists/svg?seed=${user?.primaryEmailAddress?.emailAddress}`}
             backgroundColor={"white"}
