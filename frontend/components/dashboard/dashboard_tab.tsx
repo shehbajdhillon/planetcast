@@ -1,15 +1,14 @@
 import { Box, Center, Divider, Grid, GridItem, Heading, useBreakpointValue, useColorModeValue, useDisclosure } from "@chakra-ui/react";
 import CastCard from "./cast_card";
 import Image from "next/image";
-import useWindowDimensions from "@/hooks/useWindowDimensions";
 import NewCastModal from "../new_cast_modal";
+import Navbar from "./navbar";
 
 const DashboardTab: React.FC = () => {
 
   const dividerColor = useColorModeValue("gray.300", "whiteAlpha.300");
   const imageSize = useBreakpointValue({ base: 70 });
 
-  const { height } = useWindowDimensions();
   const { onOpen, isOpen, onClose } = useDisclosure();
 
   return (
@@ -19,10 +18,12 @@ const DashboardTab: React.FC = () => {
         <Heading p="5px" fontSize={"3xl"}>Dashboard</Heading>
         <Divider borderColor={dividerColor} />
       </Box>
+      <Box position={"fixed"} top={0} left={0} w="full" p="10px" backgroundColor={useColorModeValue("white", "black")} zIndex={1000}>
+        <Navbar />
+      </Box>
       <Center>
         <Grid
-          px="100px"
-          py={"30px"}
+          py={{ base: "50px", md: "50px", lg: "100px" }}
           placeItems={'center'}
           columnGap={'25px'}
           rowGap={'25px'}
@@ -32,8 +33,6 @@ const DashboardTab: React.FC = () => {
             'repeat(4, 1fr)',
             'repeat(6, 1fr)',
           ]}
-          overflow={"auto"}
-          maxH={{ base: (height as number) - 40, lg: height}}
         >
           <GridItem colSpan={2} w="full" h="full">
             <Box

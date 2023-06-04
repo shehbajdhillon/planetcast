@@ -1,4 +1,4 @@
-import Navbar from '@/components/navbar'
+import Navbar from '@/components/marketing_page_navbar'
 import {
   Box,
   HStack,
