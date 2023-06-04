@@ -10,13 +10,11 @@ import {
 interface CastCardProps {
   title: string;
   status: "DRAFT" | "PROCESSING" | "DONE";
-  totalSteps: number;
-  completedSteps: number;
 };
 
 const CastCard: React.FC<CastCardProps> = (props) => {
 
-  const { title, status, totalSteps, completedSteps } = props;
+  const { title, status } = props;
 
   const statusColorScheme = status === "DRAFT" ? "gray" : status === "PROCESSING" ? "blue" : "green"
 
@@ -48,8 +46,6 @@ const CastCard: React.FC<CastCardProps> = (props) => {
       </HStack>
       <Spacer />
       <HStack pt="20px">
-        <Text>{completedSteps}/{totalSteps} Steps Completed</Text>
-        <Spacer />
         <Button
           borderWidth="1px"
           size={'xs'}

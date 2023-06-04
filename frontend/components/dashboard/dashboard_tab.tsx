@@ -68,8 +68,6 @@ const DashboardTab: React.FC = () => {
               <CastCard
                 title="This Week In Startups Ep 1024"
                 status="PROCESSING"
-                totalSteps={6}
-                completedSteps={4}
               />
             </GridItem>
           ))}
