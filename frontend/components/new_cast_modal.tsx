@@ -3,6 +3,7 @@ import {
   ModalOverlay,
   ModalContent,
   ModalHeader,
+  Text,
   ModalFooter,
   ModalBody,
   ModalCloseButton,
@@ -10,15 +11,16 @@ import {
   HStack,
   FormControl,
   FormLabel,
-  Icon,
   useColorModeValue,
   Input,
   Stack,
-  Spacer,
+  Box,
   Center,
 } from '@chakra-ui/react';
-import { BadgeCheck, Check, Info } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
+import Dropzone from "react-dropzone";
 
 interface NewCastModalProps {
   isOpen: boolean;
@@ -33,10 +35,6 @@ const NewCastModal: React.FC<NewCastModalProps> = (props) => {
   const [castTitle, setCastTitle] = useState("");
   const [mediaFile, setMediaFile] = useState<any>();
 
-  useEffect(() => {
-    console.log({ mediaFile });
-  }, [mediaFile]);
-
   const fileToDataUri = (file: File) => {
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -45,6 +43,12 @@ const NewCastModal: React.FC<NewCastModalProps> = (props) => {
     };
     reader.readAsDataURL(file);
   };
+
+
+  useEffect(() => {
+    setCastTitle("");
+    setMediaFile(undefined);
+  }, [isOpen, onClose]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered size={{ base: "lg", md: "2xl" }}>
@@ -76,15 +80,26 @@ const NewCastModal: React.FC<NewCastModalProps> = (props) => {
               >
                 Media File
               </FormLabel>
-              <Input
-                type='file'
-                colorScheme='teal'
-                borderWidth={"0px"}
-                onChange={(e) => {
-                  if (e.target.files)
-                    fileToDataUri(e.target.files[0])
-                }}
-              />
+              <Dropzone onDrop={(acceptedFiles) => setMediaFile(acceptedFiles[0])}>
+                {({ getRootProps, getInputProps }) => (
+                  <Box
+                    w="full"
+                    h="full"
+                    minH={"80px"}
+                    borderWidth={"2px"}
+                    borderRadius={"10px"}
+                    borderStyle={"dotted"}
+                    {...getRootProps({className: 'dropzone'})}
+                  >
+                    <Center>
+                      <input {...getInputProps()} />
+                      <Text>
+                        { !mediaFile ? "Upload Media File" : (mediaFile as File).name }
+                      </Text>
+                    </Center>
+                  </Box>
+                )}
+              </Dropzone>
             </Stack>
           </FormControl>
         </ModalBody>
