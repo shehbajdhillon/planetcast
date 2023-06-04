@@ -37,7 +37,7 @@ const CastCard: React.FC<CastCardProps> = (props) => {
       <HStack>
         <Text
           textTransform="capitalize"
-          maxW="65%"
+          maxW="400px"
           fontWeight={700}
           fontSize={'lg'}
           letterSpacing={1.1}
@@ -45,6 +45,10 @@ const CastCard: React.FC<CastCardProps> = (props) => {
         >
           {title}
         </Text>
+      </HStack>
+      <Spacer />
+      <HStack pt="20px">
+        <Text>{completedSteps}/{totalSteps} Steps Completed</Text>
         <Spacer />
         <Button
           borderWidth="1px"
@@ -57,10 +61,6 @@ const CastCard: React.FC<CastCardProps> = (props) => {
         >
           {status}
         </Button>
-      </HStack>
-      <Spacer />
-      <HStack pt="20px">
-        <Text>{completedSteps}/{totalSteps} Steps Completed</Text>
       </HStack>
     </Box>
   );
