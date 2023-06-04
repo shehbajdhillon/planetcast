@@ -24,7 +24,7 @@ const DashboardTab: React.FC = () => {
       <Center>
         <Grid
           py={{ base: "50px", md: "50px", lg: "100px" }}
-          px={{ lg: "70px" }}
+          px={{ base: "35px", lg: "70px" }}
           placeItems={'center'}
           columnGap={'25px'}
           rowGap={'25px'}
