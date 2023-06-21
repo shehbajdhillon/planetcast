@@ -7,17 +7,28 @@ package graph
 import (
 	"context"
 	"fmt"
+	"planetcastdev/database"
 	"planetcastdev/graph/model"
 )
 
 // CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
+func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (model.Todo, error) {
 	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
 }
 
 // Todos is the resolver for the todos field.
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
+func (r *queryResolver) Todos(ctx context.Context) ([]model.Todo, error) {
 	panic(fmt.Errorf("not implemented: Todos - todos"))
+}
+
+// TeamType is the resolver for the team_type field.
+func (r *teamResolver) TeamType(ctx context.Context, obj *database.Team) (string, error) {
+	return string(obj.TeamType), nil
+}
+
+// Created is the resolver for the created field.
+func (r *teamResolver) Created(ctx context.Context, obj *database.Team) (string, error) {
+	return obj.Created.String(), nil
 }
 
 // Mutation returns MutationResolver implementation.
@@ -26,5 +37,9 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// Team returns TeamResolver implementation.
+func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type teamResolver struct{ *Resolver }

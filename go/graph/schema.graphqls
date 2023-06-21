@@ -2,6 +2,18 @@
 #
 # https://gqlgen.com/getting-started/
 
+scalar DateTime
+scalar Int64
+scalar Upload
+
+type Team {
+  id: Int64!
+  slug: String!
+  name: String!
+  team_type: String!
+  created: DateTime!
+}
+
 type Todo {
   id: ID!
   text: String!
