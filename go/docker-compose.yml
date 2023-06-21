@@ -1,0 +1,12 @@
+volumes:
+  data:
+
+services:
+  planetcast-gql-server:
+    image: planetcast-gql-server
+    build: .
+    ports:
+      - 8080:8080
+    restart: always
+    env_file:
+      - .env
