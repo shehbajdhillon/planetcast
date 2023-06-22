@@ -38,7 +38,7 @@ func (r *queryResolver) GetTeams(ctx context.Context) ([]database.Team, error) {
 	memberships, _ := r.DB.GetTeamMemebershipsByUserId(ctx, user.ID)
 	for _, mem := range memberships {
 		team, err := r.DB.GetTeamById(ctx, mem.TeamID)
-		if err != nil {
+		if err == nil {
 			teams = append(teams, team)
 		}
 	}
