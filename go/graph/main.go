@@ -3,6 +3,7 @@ package graph
 import (
 	"context"
 	"log"
+	"planetcastdev/auth"
 	"planetcastdev/database"
 	"time"
 
@@ -37,7 +38,11 @@ func GenerateServer(queries *database.Queries) *handler.Server {
 
 	gqlServer.AroundOperations(func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
 		oc := graphql.GetOperationContext(ctx)
-		log.Println("Incoming Request: ", oc.OperationName)
+		log.Println("Incoming Request:", oc.OperationName)
+		email, err := auth.EmailFromContext(ctx)
+		if err != nil {
+			log.Println("User making request:", email)
+		}
 		return next(ctx)
 	})
 
