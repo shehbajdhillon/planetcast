@@ -6,8 +6,19 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"planetcastdev/database"
 )
+
+// CreateTeam is the resolver for the createTeam field.
+func (r *mutationResolver) CreateTeam(ctx context.Context) (database.Team, error) {
+	panic(fmt.Errorf("not implemented: CreateTeam - createTeam"))
+}
+
+// GetTeams is the resolver for the getTeams field.
+func (r *queryResolver) GetTeams(ctx context.Context) ([]database.Team, error) {
+	panic(fmt.Errorf("not implemented: GetTeams - getTeams"))
+}
 
 // TeamType is the resolver for the team_type field.
 func (r *teamResolver) TeamType(ctx context.Context, obj *database.Team) (string, error) {
@@ -19,7 +30,15 @@ func (r *teamResolver) Created(ctx context.Context, obj *database.Team) (string,
 	return obj.Created.String(), nil
 }
 
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
 type teamResolver struct{ *Resolver }

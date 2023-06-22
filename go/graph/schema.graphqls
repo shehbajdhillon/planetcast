@@ -20,3 +20,11 @@ type Userinfo {
   fullName: String!
 }
 
+type Query {
+  getTeams: [Team!]!
+}
+
+type Mutation {
+  createTeam: Team!
+}
+
