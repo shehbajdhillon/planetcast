@@ -12,21 +12,37 @@ import { NextPage, GetServerSideProps } from "next";
 
 import { UserResource } from '@clerk/types';
 
+import { v4 } from 'uuid';
+
 import Image from "next/image";
 import { LayoutDashboard } from "lucide-react";
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction } from "react";
 import useWindowDimensions from "@/hooks/useWindowDimensions";
 import DashboardTab from "@/components/dashboard/dashboard_tab";
 import Head from "next/head";
 import { MenuBar } from "@/components/dashboard/navbar";
-import { gql, useQuery } from "@apollo/client";
-import { getAuth } from "@clerk/nextjs/server";
+import { gql } from "@apollo/client";
+import { clerkClient, getAuth } from "@clerk/nextjs/server";
 import { GetApolloClient } from "@/apollo-client";
 
 const GET_TEAMS = gql`
   query GetTeams {
     getTeams {
       id
+      slug
+      name
+      teamType
+    }
+  }
+`;
+
+const CREATE_TEAM = gql`
+  mutation CreateTeam($name: String!, $slug: String!, $teamType: TeamType!) {
+    createTeam(slug: $slug, name: $name, teamType: $teamType) {
+      id
+      slug
+      name
+      teamType
     }
   }
 `;
@@ -91,12 +107,6 @@ const Dashboard: NextPage = () => {
 
   const { height } = useWindowDimensions();
 
-  const { loading, error, data } = useQuery(GET_TEAMS);
-
-  useEffect(() => {
-    console.log({ loading, error, data });
-  }, [loading, error, data]);
-
   return (
     <Box>
       <Head>
@@ -142,17 +152,30 @@ export default Dashboard;
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
-  const { getToken } = getAuth(ctx.req)
-
+  const { getToken, userId } = getAuth(ctx.req)
   const apolloClient = GetApolloClient(true, getToken);
 
-  const { loading, error, data } = await apolloClient.query({ query: GET_TEAMS });
+  let teams: any[] = [];
 
-  console.log({ loading, error, data });
+  const { data } = await apolloClient.query({ query: GET_TEAMS });
+  teams = data.getTeams;
+
+  if (userId && data?.getTeams?.length === 0) {
+    const user = await clerkClient.users.getUser(userId);
+    const { data } = await apolloClient.mutate({
+      mutation: CREATE_TEAM,
+      variables: {
+        slug: v4(),
+        name: `${user.firstName}'s Personal Workspace`,
+        teamType: 'PERSONAL',
+      }
+    });
+    teams = [data.createTeam];
+  }
 
   return {
     props: {
-      data
+      teams
     }
   }
 };
