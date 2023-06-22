@@ -21,6 +21,8 @@ func main() {
 		port = defaultPort
 	}
 
+	production := os.Getenv("PRODUCTION")
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Println(".env: Could not find .env file", err.Error())
@@ -33,9 +35,11 @@ func main() {
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	if production == "" {
+		http.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
+		log.Printf("connect to http://localhost:%s/playground for GraphQL playground", port)
+	}
+	http.Handle("/", srv)
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
