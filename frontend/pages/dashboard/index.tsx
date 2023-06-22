@@ -8,7 +8,7 @@ import {
   useBreakpointValue,
   Text,
 } from "@chakra-ui/react";
-import { NextPage } from "next";
+import { NextPage, GetServerSideProps } from "next";
 
 import { UserResource } from '@clerk/types';
 
@@ -20,6 +20,8 @@ import DashboardTab from "@/components/dashboard/dashboard_tab";
 import Head from "next/head";
 import { MenuBar } from "@/components/dashboard/navbar";
 import { gql, useQuery } from "@apollo/client";
+import { getAuth } from "@clerk/nextjs/server";
+import { GetApolloClient } from "@/apollo-client";
 
 const GET_TEAMS = gql`
   query GetTeams {
@@ -137,3 +139,21 @@ const Dashboard: NextPage = () => {
 };
 
 export default Dashboard;
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+
+  const { getToken } = getAuth(ctx.req)
+
+  const apolloClient = GetApolloClient(true, getToken);
+
+  const { loading, error, data } = await apolloClient.query({ query: GET_TEAMS });
+
+  console.log({ loading, error, data });
+
+  return {
+    props: {
+      data
+    }
+  }
+};
+
