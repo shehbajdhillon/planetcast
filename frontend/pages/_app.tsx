@@ -69,7 +69,7 @@ const ApolloProviderWrapper = ({ children }: PropsWithChildren) => {
 
   const client = useMemo(() => {
     const authMiddleware = setContext(async (_, { headers }) => {
-      const token = await getToken({ template: 'Sync_GQL_Backend' });
+      const token = await getToken({ template: 'PlanetCast_GQL_Backend' });
       return {
         headers: {
           ...headers,

@@ -14,11 +14,20 @@ import { UserResource } from '@clerk/types';
 
 import Image from "next/image";
 import { LayoutDashboard } from "lucide-react";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import useWindowDimensions from "@/hooks/useWindowDimensions";
 import DashboardTab from "@/components/dashboard/dashboard_tab";
 import Head from "next/head";
 import { MenuBar } from "@/components/dashboard/navbar";
+import { gql, useQuery } from "@apollo/client";
+
+const GET_TEAMS = gql`
+  query GetTeams {
+    getTeams {
+      id
+    }
+  }
+`;
 
 
 interface SidebarProps {
@@ -75,9 +84,16 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
   );
 };
 
+
 const Dashboard: NextPage = () => {
 
   const { height } = useWindowDimensions();
+
+  const { loading, error, data } = useQuery(GET_TEAMS);
+
+  useEffect(() => {
+    console.log({ loading, error, data });
+  }, [loading, error, data]);
 
   return (
     <Box>
