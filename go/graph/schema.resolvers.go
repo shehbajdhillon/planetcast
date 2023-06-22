@@ -6,14 +6,28 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"planetcastdev/auth"
 	"planetcastdev/database"
 )
 
 // CreateTeam is the resolver for the createTeam field.
-func (r *mutationResolver) CreateTeam(ctx context.Context) (database.Team, error) {
-	panic(fmt.Errorf("not implemented: CreateTeam - createTeam"))
+func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name string, teamType database.TeamType) (database.Team, error) {
+	email, _ := auth.EmailFromContext(ctx)
+	user, _ := r.DB.GetUserByEmail(ctx, email)
+
+	team, _ := r.DB.CreateTeam(ctx, database.CreateTeamParams{
+		Slug:     slug,
+		Name:     name,
+		TeamType: teamType,
+	})
+
+	r.DB.AddTeamMembership(ctx, database.AddTeamMembershipParams{
+		TeamID:         team.ID,
+		UserID:         user.ID,
+		MembershipType: database.MembershipTypeOWNER,
+	})
+
+	return team, nil
 }
 
 // GetTeams is the resolver for the getTeams field.
@@ -29,11 +43,6 @@ func (r *queryResolver) GetTeams(ctx context.Context) ([]database.Team, error) {
 		}
 	}
 	return teams, nil
-}
-
-// TeamType is the resolver for the team_type field.
-func (r *teamResolver) TeamType(ctx context.Context, obj *database.Team) (string, error) {
-	return string(obj.TeamType), nil
 }
 
 // Created is the resolver for the created field.

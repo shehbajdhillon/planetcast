@@ -48,7 +48,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CreateTeam func(childComplexity int) int
+		CreateTeam func(childComplexity int, slug string, name string, teamType database.TeamType) int
 	}
 
 	Query struct {
@@ -71,13 +71,12 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateTeam(ctx context.Context) (database.Team, error)
+	CreateTeam(ctx context.Context, slug string, name string, teamType database.TeamType) (database.Team, error)
 }
 type QueryResolver interface {
 	GetTeams(ctx context.Context) ([]database.Team, error)
 }
 type TeamResolver interface {
-	TeamType(ctx context.Context, obj *database.Team) (string, error)
 	Created(ctx context.Context, obj *database.Team) (string, error)
 }
 
@@ -101,7 +100,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Mutation.CreateTeam(childComplexity), true
+		args, err := ec.field_Mutation_createTeam_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateTeam(childComplexity, args["slug"].(string), args["name"].(string), args["teamType"].(database.TeamType)), true
 
 	case "Query.getTeams":
 		if e.complexity.Query.GetTeams == nil {
@@ -138,7 +142,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Team.Slug(childComplexity), true
 
-	case "Team.team_type":
+	case "Team.teamType":
 		if e.complexity.Team.TeamType == nil {
 			break
 		}
@@ -289,6 +293,39 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Mutation_createTeam_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["slug"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["slug"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
+	var arg2 database.TeamType
+	if tmp, ok := rawArgs["teamType"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("teamType"))
+		arg2, err = ec.unmarshalNTeamType2planetcastdevᚋdatabaseᚐTeamType(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["teamType"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -357,7 +394,7 @@ func (ec *executionContext) _Mutation_createTeam(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateTeam(rctx)
+			return ec.resolvers.Mutation().CreateTeam(rctx, fc.Args["slug"].(string), fc.Args["name"].(string), fc.Args["teamType"].(database.TeamType))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.LoggedIn == nil {
@@ -407,13 +444,24 @@ func (ec *executionContext) fieldContext_Mutation_createTeam(ctx context.Context
 				return ec.fieldContext_Team_slug(ctx, field)
 			case "name":
 				return ec.fieldContext_Team_name(ctx, field)
-			case "team_type":
-				return ec.fieldContext_Team_team_type(ctx, field)
+			case "teamType":
+				return ec.fieldContext_Team_teamType(ctx, field)
 			case "created":
 				return ec.fieldContext_Team_created(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Team", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createTeam_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -483,8 +531,8 @@ func (ec *executionContext) fieldContext_Query_getTeams(ctx context.Context, fie
 				return ec.fieldContext_Team_slug(ctx, field)
 			case "name":
 				return ec.fieldContext_Team_name(ctx, field)
-			case "team_type":
-				return ec.fieldContext_Team_team_type(ctx, field)
+			case "teamType":
+				return ec.fieldContext_Team_teamType(ctx, field)
 			case "created":
 				return ec.fieldContext_Team_created(ctx, field)
 			}
@@ -755,8 +803,8 @@ func (ec *executionContext) fieldContext_Team_name(ctx context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _Team_team_type(ctx context.Context, field graphql.CollectedField, obj *database.Team) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Team_team_type(ctx, field)
+func (ec *executionContext) _Team_teamType(ctx context.Context, field graphql.CollectedField, obj *database.Team) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Team_teamType(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -769,7 +817,7 @@ func (ec *executionContext) _Team_team_type(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Team().TeamType(rctx, obj)
+		return obj.TeamType, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -781,19 +829,19 @@ func (ec *executionContext) _Team_team_type(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(database.TeamType)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNTeamType2planetcastdevᚋdatabaseᚐTeamType(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Team_team_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Team_teamType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Team",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type TeamType does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2903,42 +2951,11 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "team_type":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Team_team_type(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+		case "teamType":
+			out.Values[i] = ec._Team_teamType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "created":
 			field := field
 
@@ -3479,6 +3496,22 @@ func (ec *executionContext) marshalNTeam2ᚕplanetcastdevᚋdatabaseᚐTeamᚄ(c
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNTeamType2planetcastdevᚋdatabaseᚐTeamType(ctx context.Context, v interface{}) (database.TeamType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := database.TeamType(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTeamType2planetcastdevᚋdatabaseᚐTeamType(ctx context.Context, sel ast.SelectionSet, v database.TeamType) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

@@ -12,7 +12,7 @@ type Team {
   id: Int64!
   slug: String!
   name: String!
-  team_type: String!
+  teamType: TeamType!
   created: DateTime!
 }
 
@@ -27,6 +27,11 @@ type Query {
 }
 
 type Mutation {
-  createTeam: Team! @loggedIn
+  createTeam(slug: String!, name: String!, teamType: TeamType!): Team! @loggedIn
+}
+
+enum TeamType {
+  PERSONAL
+  TEAM
 }
 
