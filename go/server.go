@@ -1,16 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"planetcastdev/database"
 	"planetcastdev/graph"
 
-	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/go-chi/chi"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 )
 
 const defaultPort = "8080"
@@ -21,8 +21,6 @@ func main() {
 		port = defaultPort
 	}
 
-	production := os.Getenv("PRODUCTION")
-
 	err := godotenv.Load()
 	if err != nil {
 		log.Println(".env: Could not find .env file", err.Error())
@@ -30,16 +28,28 @@ func main() {
 		log.Println(".env: Loaded environment variables")
 	}
 
-	Database := database.Connect()
-	fmt.Print(Database)
+	production := os.Getenv("PRODUCTION")
 
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	router := chi.NewRouter()
+	router.Use(cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:8080", "https://www.planetcast.ai", "https://planetcast.ai", "https://api.planetcast.ai"},
+		AllowCredentials: true,
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		Debug:            production == "",
+	}).Handler)
+
+	Database := database.Connect()
+
+	srv := graph.GenerateServer(Database)
+	router.Handle("/", srv)
 
 	if production == "" {
-		http.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
-		log.Printf("connect to http://localhost:%s/playground for GraphQL playground", port)
+		log.Println("Connect to http://localhost:" + port + " for GraphQL server")
+		router.Handle("/playground", playground.Handler("GraphQL playground", "/"))
+		log.Println("connect to http://localhost:" + port + "/playground for GraphQL playground")
+	} else {
+		log.Println("Connect to https://api.planetcast.ai for GraphQL server")
 	}
-	http.Handle("/", srv)
 
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
