@@ -17,14 +17,14 @@ import (
 
 func GenerateServer(queries *database.Queries) *handler.Server {
 
-	gqlConfig := Config{Resolvers: &Resolver{}}
+	gqlConfig := Config{Resolvers: &Resolver{DB: queries}}
 
-  gqlConfig.Directives.LoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
-    if isLoggedIn(ctx) == false {
-      return nil, fmt.Errorf("Access Denied")
-    }
-    return next(ctx);
-  }
+	gqlConfig.Directives.LoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+		if isLoggedIn(ctx) == false {
+			return nil, fmt.Errorf("Access Denied")
+		}
+		return next(ctx)
+	}
 
 	var MB int64 = 1 << 20
 
@@ -45,11 +45,19 @@ func GenerateServer(queries *database.Queries) *handler.Server {
 	})
 
 	gqlServer.AroundOperations(func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
+		user := auth.FromContext(ctx)
 		oc := graphql.GetOperationContext(ctx)
-		log.Println("Incoming Request:", oc.OperationName)
-		email, err := auth.EmailFromContext(ctx)
-		if err != nil {
-			log.Println("User making request:", email)
+		if user == nil {
+			log.Println("Incoming Request:", oc.OperationName, "User: nil")
+		} else {
+			emailAddr, _ := auth.EmailFromContext(ctx)
+			fullName, _ := auth.FullnameFromContext(ctx)
+
+			user, err := queries.GetUserByEmail(ctx, emailAddr)
+			if err != nil {
+				user, _ = queries.AddUser(ctx, database.AddUserParams{Email: emailAddr, FullName: fullName})
+			}
+			log.Println("Incoming Request:", oc.OperationName, "User:", user.Email)
 		}
 		return next(ctx)
 	})

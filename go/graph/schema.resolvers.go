@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"planetcastdev/auth"
 	"planetcastdev/database"
 )
 
@@ -17,7 +18,17 @@ func (r *mutationResolver) CreateTeam(ctx context.Context) (database.Team, error
 
 // GetTeams is the resolver for the getTeams field.
 func (r *queryResolver) GetTeams(ctx context.Context) ([]database.Team, error) {
-	panic(fmt.Errorf("not implemented: GetTeams - getTeams"))
+	teams := []database.Team{}
+	email, _ := auth.EmailFromContext(ctx)
+	user, _ := r.DB.GetUserByEmail(ctx, email)
+	memberships, _ := r.DB.GetTeamMemebershipsByUserId(ctx, user.ID)
+	for _, mem := range memberships {
+		team, err := r.DB.GetTeamById(ctx, mem.TeamID)
+		if err != nil {
+			teams = append(teams, team)
+		}
+	}
+	return teams, nil
 }
 
 // TeamType is the resolver for the team_type field.
