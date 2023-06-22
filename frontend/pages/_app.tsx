@@ -13,7 +13,7 @@ import { createUploadLink } from 'apollo-upload-client'
 
 const apiServer =
   process.env.NODE_ENV === 'production'
-    ? 'https://api.withsync.ai'
+    ? 'https://api.planetcast.ai'
     : 'http://localhost:8080';
 
 const httpLink: any = createUploadLink({ uri: apiServer });
