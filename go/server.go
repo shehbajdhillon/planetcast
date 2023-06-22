@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"planetcastdev/auth"
 	"planetcastdev/database"
 	"planetcastdev/graph"
 
@@ -31,6 +32,7 @@ func main() {
 	production := os.Getenv("PRODUCTION")
 
 	router := chi.NewRouter()
+	router.Use(auth.Middleware())
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:8080", "https://www.planetcast.ai", "https://planetcast.ai", "https://api.planetcast.ai"},
 		AllowCredentials: true,
