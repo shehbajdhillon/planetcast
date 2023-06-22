@@ -37,7 +37,7 @@ func main() {
 		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:8080", "https://www.planetcast.ai", "https://planetcast.ai", "https://api.planetcast.ai"},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
-		Debug:            production == "",
+		Debug:            false,
 	}).Handler)
 
 	Database := database.Connect()
