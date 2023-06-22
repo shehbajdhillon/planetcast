@@ -23,7 +23,7 @@ func main() {
 
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalln(".env: Could not find .env file", err.Error())
+		log.Println(".env: Could not find .env file", err.Error())
 	} else {
 		log.Println(".env: Loaded environment variables")
 	}
