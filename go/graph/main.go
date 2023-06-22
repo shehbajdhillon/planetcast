@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"planetcastdev/auth"
 	"planetcastdev/database"
@@ -17,6 +18,13 @@ import (
 func GenerateServer(queries *database.Queries) *handler.Server {
 
 	gqlConfig := Config{Resolvers: &Resolver{}}
+
+  gqlConfig.Directives.LoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+    if isLoggedIn(ctx) == false {
+      return nil, fmt.Errorf("Access Denied")
+    }
+    return next(ctx);
+  }
 
 	var MB int64 = 1 << 20
 
@@ -47,4 +55,9 @@ func GenerateServer(queries *database.Queries) *handler.Server {
 	})
 
 	return gqlServer
+}
+
+func isLoggedIn(ctx context.Context) bool {
+	user := auth.FromContext(ctx)
+	return user != nil
 }

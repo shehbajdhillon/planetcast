@@ -6,6 +6,8 @@ scalar DateTime
 scalar Int64
 scalar Upload
 
+directive @loggedIn on FIELD_DEFINITION
+
 type Team {
   id: Int64!
   slug: String!
@@ -21,10 +23,10 @@ type Userinfo {
 }
 
 type Query {
-  getTeams: [Team!]!
+  getTeams: [Team!]! @loggedIn
 }
 
 type Mutation {
-  createTeam: Team!
+  createTeam: Team! @loggedIn
 }
 
