@@ -41,7 +41,7 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
       router.events.off('routeChangeComplete', handleRouteDone);
       router.events.off('routeChangeError', handleRouteDone);
     };
-  }, []);
+  }, [router.events]);
 
   return (
     <Box w="full" display={"flex"} alignItems={"center"} justifyContent={"center"}>

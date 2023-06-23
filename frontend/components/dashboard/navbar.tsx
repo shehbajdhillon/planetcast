@@ -143,7 +143,7 @@ const Navbar: React.FC = () => {
       router.events.off('routeChangeComplete', handleRouteDone);
       router.events.off('routeChangeError', handleRouteDone);
     };
-  }, []);
+  }, [router.events]);
 
   useEffect(() => {
     console.log({ teamId, projectId });
