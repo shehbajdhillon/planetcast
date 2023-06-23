@@ -126,7 +126,7 @@ const Navbar: React.FC = () => {
 
   const router = useRouter();
 
-  const teamId = router.query.teamId;
+  const teamSlug = router.query.teamSlug;
   const projectId = router.query.projectId?.[0];
 
   useEffect(() => {
@@ -146,8 +146,8 @@ const Navbar: React.FC = () => {
   }, [router.events]);
 
   useEffect(() => {
-    console.log({ teamId, projectId });
-  }, [teamId, projectId]);
+    console.log({ teamSlug, projectId });
+  }, [teamSlug, projectId]);
 
   return (
     <Box w="full" display={"flex"} alignItems={"center"} justifyContent={"center"}>
@@ -166,10 +166,10 @@ const Navbar: React.FC = () => {
             alt='planet cast logo'
           />
 
-          { teamId &&
+          { teamSlug &&
             <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4} h="full">
               <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
-              {data?.getTeams?.filter((team: Team) => team.slug === teamId).map((team: Team, idx: number) => (
+              {data?.getTeams?.filter((team: Team) => team.slug === teamSlug).map((team: Team, idx: number) => (
                 <Link href={`/dashboard/${team.slug}`} key={idx}>
                   <Text>
                     {team.name}
@@ -210,8 +210,8 @@ const Navbar: React.FC = () => {
           { projectId &&
             <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4} h="full">
               <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
-              {data?.getTeams?.filter((team: Team) => team.slug === teamId).map((team: Team, idx: number) => (
-                <Link href={`/dashboard/${teamId}/${team.slug}`} key={idx}>
+              {data?.getTeams?.filter((team: Team) => team.slug === teamSlug).map((team: Team, idx: number) => (
+                <Link href={`/dashboard/${teamSlug}/${team.slug}`} key={idx}>
                   <Text>
                     {team.name}
                   </Text>
@@ -228,7 +228,7 @@ const Navbar: React.FC = () => {
                           backgroundColor: hoverColor
                         }}
                         key={idx}
-                        onClick={() => router.push(`/dashboard/${teamId}/${team.slug}`)}
+                        onClick={() => router.push(`/dashboard/${teamSlug}/${team.slug}`)}
                       >
                         {team.name}
                       </MenuItem>

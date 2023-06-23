@@ -10,14 +10,14 @@ import { useRouter } from "next/router";
 
 interface ProjectCardProps {
   projectId: number;
-  teamId: string;
+  teamSlug: string;
   title: string;
   status: "DRAFT" | "PROCESSING" | "DONE";
 };
 
 const ProjectCard: React.FC<ProjectCardProps> = (props) => {
 
-  const { title, status, projectId, teamId } = props;
+  const { title, status, projectId, teamSlug } = props;
 
   const router = useRouter();
 
@@ -34,7 +34,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
         bg: useColorModeValue('white', 'whiteAlpha.100'),
       }}
       cursor={"pointer"}
-      onClick={() => router.push(`/dashboard/${teamId}/${projectId}`)}
+      onClick={() => router.push(`/dashboard/${teamSlug}/${projectId}`)}
     >
       <HStack>
         <Text

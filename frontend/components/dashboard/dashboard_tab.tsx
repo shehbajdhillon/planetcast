@@ -12,10 +12,10 @@ import Image from "next/image";
 import NewCastModal from "../new_cast_modal";
 
 interface DashboardTabProps {
-  teamId: string;
+  teamSlug: string;
 };
 
-const DashboardTab: React.FC<DashboardTabProps> = ({ teamId }) => {
+const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug }) => {
   const imageSize = useBreakpointValue({ base: 70 });
   const { onOpen, isOpen, onClose } = useDisclosure();
 
@@ -69,7 +69,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ teamId }) => {
               <CastCard
                 title="This Week In Startups Ep 1024"
                 status="DONE"
-                teamId={teamId}
+                teamSlug={teamSlug}
                 projectId={idx}
               />
             </GridItem>

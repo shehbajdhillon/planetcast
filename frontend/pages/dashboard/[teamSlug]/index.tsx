@@ -77,8 +77,8 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
 };
 
 const GET_PROJECTS = gql`
-  query GetProjects($teamId: Int64!) {
-    getTeamById(teamId: $teamId) {
+  query GetProjects($teamSlug: String!) {
+    getTeamById(teamSlug: $teamSlug) {
       slug
       projects {
         id
@@ -89,16 +89,16 @@ const GET_PROJECTS = gql`
 
 export interface DashboardPageProps {
   teams: Team[];
-  teamId: string;
+  teamSlug: string;
 };
 
-const Dashboard: NextPage<DashboardPageProps> = ({ teamId }) => {
+const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug }) => {
 
-  const { data, loading, error } = useQuery(GET_PROJECTS, { variables: { teamId } });
+  const { data, loading, error } = useQuery(GET_PROJECTS, { variables: { teamSlug } });
 
   useEffect(() => {
-    console.log({ teamId });
-  }, [teamId]);
+    console.log({ teamSlug });
+  }, [teamSlug]);
 
   const { height } = useWindowDimensions();
 
@@ -138,7 +138,7 @@ const Dashboard: NextPage<DashboardPageProps> = ({ teamId }) => {
             display={"flex"}
             flexDir={"column"}
           >
-            <DashboardTab teamId={teamId} />
+            <DashboardTab teamSlug={teamSlug} />
           </GridItem>
         </Grid>
       </Box>
@@ -150,11 +150,11 @@ export default Dashboard;
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
 
-  const teamId = params?.teamId;
+  const teamSlug = params?.teamSlug;
 
   return {
     props: {
-      teamId
+      teamSlug
     }
   }
 };
