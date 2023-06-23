@@ -36,12 +36,12 @@ type Userinfo {
 
 type Query {
   getTeams: [Team!]! @loggedIn
-  getTeamById(teamSlug: String! @memberTeam): Team!
+  getTeamById(teamSlug: String! @memberTeam): Team! @loggedIn
 }
 
 type Mutation {
   createTeam(slug: String!, name: String!, teamType: TeamType!): Team! @loggedIn
-  createProject(teamSlug: String! @memberTeam, title: String!, sourceLanguage: SupportedLanguage!, targetLanguage: SupportedLanguage!, sourceMedia: Upload!): Project!
+  createProject(teamSlug: String! @memberTeam, title: String!, sourceLanguage: SupportedLanguage!, targetLanguage: SupportedLanguage!, sourceMedia: Upload!): Project! @loggedIn
 }
 
 enum TeamType {
