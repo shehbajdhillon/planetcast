@@ -7,6 +7,7 @@ scalar Int64
 scalar Upload
 
 directive @loggedIn on FIELD_DEFINITION
+directive @memberTeam on FIELD_DEFINITION
 
 type Team {
   id: Int64!
@@ -14,6 +15,16 @@ type Team {
   name: String!
   teamType: TeamType!
   created: DateTime!
+}
+
+type Project {
+  id: Int64!
+  teamId: Int64!
+  title: String!
+  sourceLanguage: SupportedLanguage!
+  targetLanguage: SupportedLanguage!
+  sourceMedia: String!
+  targetMedia: String!
 }
 
 type Userinfo {
@@ -28,10 +39,16 @@ type Query {
 
 type Mutation {
   createTeam(slug: String!, name: String!, teamType: TeamType!): Team! @loggedIn
+  createProject(teamId: Int64!, title: String!, sourceLanguage: SupportedLanguage!, targetLanguage: SupportedLanguage!, sourceMedia: Upload!): Project! @memberTeam
 }
 
 enum TeamType {
   PERSONAL
   TEAM
+}
+
+enum SupportedLanguage {
+  ENGLISH
+  HINDI
 }
 

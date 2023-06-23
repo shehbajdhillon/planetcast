@@ -6,8 +6,11 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"planetcastdev/auth"
 	"planetcastdev/database"
+
+	"github.com/99designs/gqlgen/graphql"
 )
 
 // CreateTeam is the resolver for the createTeam field.
@@ -28,6 +31,11 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 	})
 
 	return team, nil
+}
+
+// CreateProject is the resolver for the createProject field.
+func (r *mutationResolver) CreateProject(ctx context.Context, teamID int64, title string, sourceLanguage database.SupportedLanguage, targetLanguage database.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error) {
+	panic(fmt.Errorf("not implemented: CreateProject - createProject"))
 }
 
 // GetTeams is the resolver for the getTeams field.

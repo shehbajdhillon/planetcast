@@ -4,6 +4,9 @@ CREATE TYPE team_type AS ENUM ('PERSONAL', 'TEAM');
 DROP TYPE IF EXISTS membership_type CASCADE;
 CREATE TYPE membership_type AS ENUM ('OWNER', 'ADMIN', 'MEMBER');
 
+DROP TYPE IF EXISTS supported_language CASCADE;
+CREATE TYPE supported_language AS ENUM ('ENGLISH', 'HINDI');
+
 DROP TABLE IF EXISTS userinfo CASCADE;
 CREATE TABLE userinfo (
   id BIGSERIAL PRIMARY KEY NOT NULL,
@@ -28,4 +31,15 @@ CREATE TABLE team_membership (
   user_id BIGINT REFERENCES userinfo (id) ON DELETE CASCADE NOT NULL,
   membership_type MEMBERSHIP_TYPE NOT NULL,
   created TIMESTAMP NOT NULL
+);
+
+DROP TABLE IF EXISTS project CASCADE;
+CREATE TABLE project (
+  id BIGSERIAL PRIMARY KEY NOT NULL,
+  team_id BIGINT REFERENCES team (id) ON DELETE CASCADE NOT NULL,
+  title TEXT NOT NULL,
+  source_language SUPPORTED_LANGUAGE NOT NULL,
+  target_language SUPPORTED_LANGUAGE NOT NULL,
+  source_media TEXT NOT NULL,
+  target_media TEXT NOT NULL
 );
