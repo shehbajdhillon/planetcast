@@ -13,7 +13,6 @@ import {
   useColorMode,
   useColorModeValue,
   Divider,
-  Button,
   IconButton,
 } from '@chakra-ui/react';
 import { useClerk, useUser } from '@clerk/nextjs';
@@ -22,6 +21,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
+
+import NProgress from 'nprogress';
 
 const GET_TEAMS = gql`
   query GetTeams {
@@ -127,6 +128,22 @@ const Navbar: React.FC = () => {
 
   const teamId = router.query.teamId;
   const projectId = router.query.projectId?.[0];
+
+  useEffect(() => {
+    const handleRouteStart = () => NProgress.start();
+    const handleRouteDone = () => NProgress.done();
+
+    router.events.on('routeChangeStart', handleRouteStart);
+    router.events.on('routeChangeComplete', handleRouteDone);
+    router.events.on('routeChangeError', handleRouteDone);
+
+    return () => {
+      handleRouteDone();
+      router.events.off('routeChangeStart', handleRouteStart);
+      router.events.off('routeChangeComplete', handleRouteDone);
+      router.events.off('routeChangeError', handleRouteDone);
+    };
+  }, []);
 
   useEffect(() => {
     console.log({ teamId, projectId });

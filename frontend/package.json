@@ -25,6 +25,7 @@
     "graphql": "^16.7.0",
     "lucide-react": "^0.220.0",
     "next": "13.4.3",
+    "nprogress": "^0.2.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-dropzone": "^14.2.3",
@@ -33,6 +34,7 @@
   },
   "devDependencies": {
     "@types/apollo-upload-client": "^17.0.2",
+    "@types/nprogress": "^0.2.0",
     "@types/uuid": "^9.0.2"
   }
 }

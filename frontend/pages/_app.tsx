@@ -10,6 +10,7 @@ import { PropsWithChildren, useMemo } from 'react';
 import { ApolloProvider } from '@apollo/client';
 import { GetApolloClient } from '@/apollo-client';
 
+import '../styles/nprogress.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
