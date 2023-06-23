@@ -35,7 +35,17 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 
 // CreateProject is the resolver for the createProject field.
 func (r *mutationResolver) CreateProject(ctx context.Context, teamID int64, title string, sourceLanguage database.SupportedLanguage, targetLanguage database.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error) {
-	panic(fmt.Errorf("not implemented: CreateProject - createProject"))
+
+	project, _ := r.DB.CreateProject(ctx, database.CreateProjectParams{
+		TeamID:         teamID,
+		Title:          title,
+		SourceLanguage: sourceLanguage,
+		TargetLanguage: targetLanguage,
+		SourceMedia:    sourceMedia.Filename,
+		TargetMedia:    sourceMedia.Filename,
+	})
+
+	return project, nil
 }
 
 // GetTeams is the resolver for the getTeams field.

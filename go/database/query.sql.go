@@ -53,6 +53,41 @@ func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) (Userinfo, err
 	return i, err
 }
 
+const createProject = `-- name: CreateProject :one
+INSERT INTO project (team_id, title, source_language, target_language, source_media, target_media) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, team_id, title, source_language, target_language, source_media, target_media
+`
+
+type CreateProjectParams struct {
+	TeamID         int64
+	Title          string
+	SourceLanguage SupportedLanguage
+	TargetLanguage SupportedLanguage
+	SourceMedia    string
+	TargetMedia    string
+}
+
+func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error) {
+	row := q.db.QueryRowContext(ctx, createProject,
+		arg.TeamID,
+		arg.Title,
+		arg.SourceLanguage,
+		arg.TargetLanguage,
+		arg.SourceMedia,
+		arg.TargetMedia,
+	)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.Title,
+		&i.SourceLanguage,
+		&i.TargetLanguage,
+		&i.SourceMedia,
+		&i.TargetMedia,
+	)
+	return i, err
+}
+
 const createTeam = `-- name: CreateTeam :one
 INSERT INTO team (slug, name, team_type, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, slug, name, team_type, created
 `
@@ -74,6 +109,84 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 		&i.Created,
 	)
 	return i, err
+}
+
+const getProjectById = `-- name: GetProjectById :one
+SELECT id, team_id, title, source_language, target_language, source_media, target_media FROM project WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetProjectById(ctx context.Context, id int64) (Project, error) {
+	row := q.db.QueryRowContext(ctx, getProjectById, id)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.Title,
+		&i.SourceLanguage,
+		&i.TargetLanguage,
+		&i.SourceMedia,
+		&i.TargetMedia,
+	)
+	return i, err
+}
+
+const getProjectByProjectIdTeamId = `-- name: GetProjectByProjectIdTeamId :one
+SELECT id, team_id, title, source_language, target_language, source_media, target_media FROM project WHERE id = $1 AND team_id = $2 LIMIT 1
+`
+
+type GetProjectByProjectIdTeamIdParams struct {
+	ID     int64
+	TeamID int64
+}
+
+func (q *Queries) GetProjectByProjectIdTeamId(ctx context.Context, arg GetProjectByProjectIdTeamIdParams) (Project, error) {
+	row := q.db.QueryRowContext(ctx, getProjectByProjectIdTeamId, arg.ID, arg.TeamID)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.Title,
+		&i.SourceLanguage,
+		&i.TargetLanguage,
+		&i.SourceMedia,
+		&i.TargetMedia,
+	)
+	return i, err
+}
+
+const getProjectsByTeamId = `-- name: GetProjectsByTeamId :many
+SELECT id, team_id, title, source_language, target_language, source_media, target_media FROM project WHERE team_id = $1
+`
+
+func (q *Queries) GetProjectsByTeamId(ctx context.Context, teamID int64) ([]Project, error) {
+	rows, err := q.db.QueryContext(ctx, getProjectsByTeamId, teamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Project
+	for rows.Next() {
+		var i Project
+		if err := rows.Scan(
+			&i.ID,
+			&i.TeamID,
+			&i.Title,
+			&i.SourceLanguage,
+			&i.TargetLanguage,
+			&i.SourceMedia,
+			&i.TargetMedia,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getTeamById = `-- name: GetTeamById :one
