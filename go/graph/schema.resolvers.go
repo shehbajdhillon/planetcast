@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"planetcastdev/auth"
 	"planetcastdev/database"
 
@@ -35,7 +34,6 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 
 // CreateProject is the resolver for the createProject field.
 func (r *mutationResolver) CreateProject(ctx context.Context, teamID int64, title string, sourceLanguage database.SupportedLanguage, targetLanguage database.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error) {
-
 	project, _ := r.DB.CreateProject(ctx, database.CreateProjectParams{
 		TeamID:         teamID,
 		Title:          title,
@@ -66,6 +64,20 @@ func (r *queryResolver) GetTeams(ctx context.Context) ([]database.Team, error) {
 // Created is the resolver for the created field.
 func (r *teamResolver) Created(ctx context.Context, obj *database.Team) (string, error) {
 	return obj.Created.String(), nil
+}
+
+// Projects is the resolver for the projects field.
+func (r *teamResolver) Projects(ctx context.Context, obj *database.Team, projectID *int64) ([]database.Project, error) {
+	if projectID != nil {
+		project, _ := r.DB.GetProjectByProjectIdTeamId(ctx, database.GetProjectByProjectIdTeamIdParams{
+			ID:     *projectID,
+			TeamID: obj.ID,
+		})
+		return []database.Project{project}, nil
+	}
+
+	projects, _ := r.DB.GetProjectsByTeamId(ctx, obj.ID)
+	return projects, nil
 }
 
 // Mutation returns MutationResolver implementation.

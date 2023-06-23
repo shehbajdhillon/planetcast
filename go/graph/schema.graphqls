@@ -15,6 +15,7 @@ type Team {
   name: String!
   teamType: TeamType!
   created: DateTime!
+  projects(projectId: Int64): [Project!]!
 }
 
 type Project {
