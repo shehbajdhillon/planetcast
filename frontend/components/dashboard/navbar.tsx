@@ -187,6 +187,7 @@ const Navbar: React.FC = () => {
                           backgroundColor: hoverColor
                         }}
                         key={idx}
+                        onClick={() => router.push(`/dashboard/${team.slug}`)}
                       >
                         {team.name}
                       </MenuItem>
@@ -227,6 +228,7 @@ const Navbar: React.FC = () => {
                           backgroundColor: hoverColor
                         }}
                         key={idx}
+                        onClick={() => router.push(`/dashboard/${teamId}/${team.slug}`)}
                       >
                         {team.name}
                       </MenuItem>
