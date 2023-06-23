@@ -49,7 +49,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CreateProject func(childComplexity int, teamID int64, title string, sourceLanguage database.SupportedLanguage, targetLanguage database.SupportedLanguage, sourceMedia graphql.Upload) int
+		CreateProject func(childComplexity int, teamSlug string, title string, sourceLanguage database.SupportedLanguage, targetLanguage database.SupportedLanguage, sourceMedia graphql.Upload) int
 		CreateTeam    func(childComplexity int, slug string, name string, teamType database.TeamType) int
 	}
 
@@ -64,7 +64,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetTeamByID func(childComplexity int, teamID int64) int
+		GetTeamByID func(childComplexity int, teamSlug string) int
 		GetTeams    func(childComplexity int) int
 	}
 
@@ -86,11 +86,11 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateTeam(ctx context.Context, slug string, name string, teamType database.TeamType) (database.Team, error)
-	CreateProject(ctx context.Context, teamID int64, title string, sourceLanguage database.SupportedLanguage, targetLanguage database.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error)
+	CreateProject(ctx context.Context, teamSlug string, title string, sourceLanguage database.SupportedLanguage, targetLanguage database.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error)
 }
 type QueryResolver interface {
 	GetTeams(ctx context.Context) ([]database.Team, error)
-	GetTeamByID(ctx context.Context, teamID int64) (database.Team, error)
+	GetTeamByID(ctx context.Context, teamSlug string) (database.Team, error)
 }
 type TeamResolver interface {
 	Created(ctx context.Context, obj *database.Team) (string, error)
@@ -122,7 +122,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateProject(childComplexity, args["teamId"].(int64), args["title"].(string), args["sourceLanguage"].(database.SupportedLanguage), args["targetLanguage"].(database.SupportedLanguage), args["sourceMedia"].(graphql.Upload)), true
+		return e.complexity.Mutation.CreateProject(childComplexity, args["teamSlug"].(string), args["title"].(string), args["sourceLanguage"].(database.SupportedLanguage), args["targetLanguage"].(database.SupportedLanguage), args["sourceMedia"].(graphql.Upload)), true
 
 	case "Mutation.createTeam":
 		if e.complexity.Mutation.CreateTeam == nil {
@@ -195,7 +195,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetTeamByID(childComplexity, args["teamId"].(int64)), true
+		return e.complexity.Query.GetTeamByID(childComplexity, args["teamSlug"].(string)), true
 
 	case "Query.getTeams":
 		if e.complexity.Query.GetTeams == nil {
@@ -398,15 +398,28 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_createProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 int64
-	if tmp, ok := rawArgs["teamId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("teamId"))
-		arg0, err = ec.unmarshalNInt642int64(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["teamSlug"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("teamSlug"))
+		directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalNString2string(ctx, tmp) }
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.MemberTeam == nil {
+				return nil, errors.New("directive memberTeam is not implemented")
+			}
+			return ec.directives.MemberTeam(ctx, rawArgs, directive0)
+		}
+
+		tmp, err = directive1(ctx)
 		if err != nil {
-			return nil, err
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if data, ok := tmp.(string); ok {
+			arg0 = data
+		} else {
+			return nil, graphql.ErrorOnPath(ctx, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp))
 		}
 	}
-	args["teamId"] = arg0
+	args["teamSlug"] = arg0
 	var arg1 string
 	if tmp, ok := rawArgs["title"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
@@ -497,15 +510,28 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_getTeamById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 int64
-	if tmp, ok := rawArgs["teamId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("teamId"))
-		arg0, err = ec.unmarshalNInt642int64(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["teamSlug"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("teamSlug"))
+		directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalNString2string(ctx, tmp) }
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.MemberTeam == nil {
+				return nil, errors.New("directive memberTeam is not implemented")
+			}
+			return ec.directives.MemberTeam(ctx, rawArgs, directive0)
+		}
+
+		tmp, err = directive1(ctx)
 		if err != nil {
-			return nil, err
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if data, ok := tmp.(string); ok {
+			arg0 = data
+		} else {
+			return nil, graphql.ErrorOnPath(ctx, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp))
 		}
 	}
-	args["teamId"] = arg0
+	args["teamSlug"] = arg0
 	return args, nil
 }
 
@@ -664,28 +690,8 @@ func (ec *executionContext) _Mutation_createProject(ctx context.Context, field g
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateProject(rctx, fc.Args["teamId"].(int64), fc.Args["title"].(string), fc.Args["sourceLanguage"].(database.SupportedLanguage), fc.Args["targetLanguage"].(database.SupportedLanguage), fc.Args["sourceMedia"].(graphql.Upload))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.MemberTeam == nil {
-				return nil, errors.New("directive memberTeam is not implemented")
-			}
-			return ec.directives.MemberTeam(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(database.Project); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be planetcastdev/database.Project`, tmp)
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateProject(rctx, fc.Args["teamSlug"].(string), fc.Args["title"].(string), fc.Args["sourceLanguage"].(database.SupportedLanguage), fc.Args["targetLanguage"].(database.SupportedLanguage), fc.Args["sourceMedia"].(graphql.Upload))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1141,28 +1147,8 @@ func (ec *executionContext) _Query_getTeamById(ctx context.Context, field graphq
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().GetTeamByID(rctx, fc.Args["teamId"].(int64))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.MemberTeam == nil {
-				return nil, errors.New("directive memberTeam is not implemented")
-			}
-			return ec.directives.MemberTeam(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(database.Team); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be planetcastdev/database.Team`, tmp)
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetTeamByID(rctx, fc.Args["teamSlug"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

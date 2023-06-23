@@ -14,6 +14,9 @@ INSERT INTO team (slug, name, team_type, created) VALUES ($1, $2, $3, clock_time
 -- name: GetTeamById :one
 SELECT * FROM team WHERE id = $1 LIMIT 1;
 
+-- name: GetTeamBySlug :one
+SELECT * FROM team WHERE slug = $1 LIMIT 1;
+
 -- name: AddTeamMembership :one
 INSERT INTO team_membership (team_id, user_id, membership_type, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING *;
 
@@ -26,9 +29,6 @@ SELECT * FROM team_membership WHERE id = $1 AND user_id = $2 LIMIT 1;
 
 -- name: CreateProject :one
 INSERT INTO project (team_id, title, source_language, target_language, source_media, target_media) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
-
--- name: GetProjectById :one
-SELECT * FROM project WHERE id = $1 LIMIT 1;
 
 -- name: GetProjectByProjectIdTeamId :one
 SELECT * FROM project WHERE id = $1 AND team_id = $2 LIMIT 1;

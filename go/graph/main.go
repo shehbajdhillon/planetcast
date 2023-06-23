@@ -26,6 +26,11 @@ func GenerateServer(queries *database.Queries) *handler.Server {
 		return next(ctx)
 	}
 
+	gqlConfig.Directives.MemberTeam = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+		log.Println(obj)
+		return next(ctx)
+	}
+
 	var MB int64 = 1 << 20
 
 	gqlServer := handler.New(NewExecutableSchema(gqlConfig))

@@ -33,9 +33,10 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 }
 
 // CreateProject is the resolver for the createProject field.
-func (r *mutationResolver) CreateProject(ctx context.Context, teamID int64, title string, sourceLanguage database.SupportedLanguage, targetLanguage database.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error) {
+func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceLanguage database.SupportedLanguage, targetLanguage database.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error) {
+	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 	project, _ := r.DB.CreateProject(ctx, database.CreateProjectParams{
-		TeamID:         teamID,
+		TeamID:         team.ID,
 		Title:          title,
 		SourceLanguage: sourceLanguage,
 		TargetLanguage: targetLanguage,
@@ -62,8 +63,8 @@ func (r *queryResolver) GetTeams(ctx context.Context) ([]database.Team, error) {
 }
 
 // GetTeamByID is the resolver for the getTeamById field.
-func (r *queryResolver) GetTeamByID(ctx context.Context, teamID int64) (database.Team, error) {
-	team, _ := r.DB.GetTeamById(ctx, teamID)
+func (r *queryResolver) GetTeamByID(ctx context.Context, teamSlug string) (database.Team, error) {
+	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 	return team, nil
 }
 

@@ -111,25 +111,6 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 	return i, err
 }
 
-const getProjectById = `-- name: GetProjectById :one
-SELECT id, team_id, title, source_language, target_language, source_media, target_media FROM project WHERE id = $1 LIMIT 1
-`
-
-func (q *Queries) GetProjectById(ctx context.Context, id int64) (Project, error) {
-	row := q.db.QueryRowContext(ctx, getProjectById, id)
-	var i Project
-	err := row.Scan(
-		&i.ID,
-		&i.TeamID,
-		&i.Title,
-		&i.SourceLanguage,
-		&i.TargetLanguage,
-		&i.SourceMedia,
-		&i.TargetMedia,
-	)
-	return i, err
-}
-
 const getProjectByProjectIdTeamId = `-- name: GetProjectByProjectIdTeamId :one
 SELECT id, team_id, title, source_language, target_language, source_media, target_media FROM project WHERE id = $1 AND team_id = $2 LIMIT 1
 `
@@ -195,6 +176,23 @@ SELECT id, slug, name, team_type, created FROM team WHERE id = $1 LIMIT 1
 
 func (q *Queries) GetTeamById(ctx context.Context, id int64) (Team, error) {
 	row := q.db.QueryRowContext(ctx, getTeamById, id)
+	var i Team
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.Name,
+		&i.TeamType,
+		&i.Created,
+	)
+	return i, err
+}
+
+const getTeamBySlug = `-- name: GetTeamBySlug :one
+SELECT id, slug, name, team_type, created FROM team WHERE slug = $1 LIMIT 1
+`
+
+func (q *Queries) GetTeamBySlug(ctx context.Context, slug string) (Team, error) {
+	row := q.db.QueryRowContext(ctx, getTeamBySlug, slug)
 	var i Team
 	err := row.Scan(
 		&i.ID,

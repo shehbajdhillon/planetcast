@@ -7,7 +7,7 @@ scalar Int64
 scalar Upload
 
 directive @loggedIn on FIELD_DEFINITION
-directive @memberTeam on FIELD_DEFINITION
+directive @memberTeam on ARGUMENT_DEFINITION
 
 type Team {
   id: Int64!
@@ -36,12 +36,12 @@ type Userinfo {
 
 type Query {
   getTeams: [Team!]! @loggedIn
-  getTeamById(teamId: Int64!): Team! @memberTeam
+  getTeamById(teamSlug: String! @memberTeam): Team!
 }
 
 type Mutation {
   createTeam(slug: String!, name: String!, teamType: TeamType!): Team! @loggedIn
-  createProject(teamId: Int64!, title: String!, sourceLanguage: SupportedLanguage!, targetLanguage: SupportedLanguage!, sourceMedia: Upload!): Project! @memberTeam
+  createProject(teamSlug: String! @memberTeam, title: String!, sourceLanguage: SupportedLanguage!, targetLanguage: SupportedLanguage!, sourceMedia: Upload!): Project!
 }
 
 enum TeamType {
