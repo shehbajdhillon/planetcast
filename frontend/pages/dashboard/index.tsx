@@ -12,11 +12,7 @@ const Index: NextPage = () => {
 const GET_TEAMS = gql`
   query GetTeams {
     getTeams {
-      id
       slug
-      name
-      teamType
-      created
     }
   }
 `;
@@ -24,11 +20,7 @@ const GET_TEAMS = gql`
 const CREATE_TEAM = gql`
   mutation CreateTeam($name: String!, $slug: String!, $teamType: TeamType!) {
     createTeam(slug: $slug, name: $name, teamType: $teamType) {
-      id
       slug
-      name
-      teamType
-      created
     }
   }
 `;
