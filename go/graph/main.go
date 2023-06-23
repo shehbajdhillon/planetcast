@@ -27,7 +27,14 @@ func GenerateServer(queries *database.Queries) *handler.Server {
 	}
 
 	gqlConfig.Directives.MemberTeam = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
-		log.Println(obj)
+		teamSlugField := obj.(map[string]interface{})["teamSlug"]
+		if teamSlugField == nil {
+			return nil, fmt.Errorf("Access Denied")
+		}
+		teamSlug := teamSlugField.(string)
+		if memberTeam(ctx, teamSlug, queries) == false {
+			return nil, fmt.Errorf("Access Denied")
+		}
 		return next(ctx)
 	}
 
@@ -73,4 +80,21 @@ func GenerateServer(queries *database.Queries) *handler.Server {
 func isLoggedIn(ctx context.Context) bool {
 	user := auth.FromContext(ctx)
 	return user != nil
+}
+
+func memberTeam(ctx context.Context, teamSlug string, queries *database.Queries) bool {
+  if !isLoggedIn(ctx) {
+    return false
+  }
+
+  userEmail, _ := auth.EmailFromContext(ctx)
+  user, _ := queries.GetUserByEmail(ctx, userEmail)
+  team, _ := queries.GetTeamBySlug(ctx, teamSlug)
+
+  _, err := queries.GetTeamMembershipByTeamIdUserId(ctx, database.GetTeamMembershipByTeamIdUserIdParams{
+    UserID: user.ID,
+    TeamID: team.ID,
+  })
+
+  return err == nil
 }
