@@ -36,6 +36,7 @@ type Userinfo {
 
 type Query {
   getTeams: [Team!]! @loggedIn
+  getTeamById(teamId: Int64!): Team! @memberTeam
 }
 
 type Mutation {

@@ -61,6 +61,12 @@ func (r *queryResolver) GetTeams(ctx context.Context) ([]database.Team, error) {
 	return teams, nil
 }
 
+// GetTeamByID is the resolver for the getTeamById field.
+func (r *queryResolver) GetTeamByID(ctx context.Context, teamID int64) (database.Team, error) {
+	team, _ := r.DB.GetTeamById(ctx, teamID)
+	return team, nil
+}
+
 // Created is the resolver for the created field.
 func (r *teamResolver) Created(ctx context.Context, obj *database.Team) (string, error) {
 	return obj.Created.String(), nil
