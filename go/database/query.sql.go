@@ -205,16 +205,16 @@ func (q *Queries) GetTeamBySlug(ctx context.Context, slug string) (Team, error) 
 }
 
 const getTeamMembershipByTeamIdUserId = `-- name: GetTeamMembershipByTeamIdUserId :one
-SELECT id, team_id, user_id, membership_type, created FROM team_membership WHERE id = $1 AND user_id = $2 LIMIT 1
+SELECT id, team_id, user_id, membership_type, created FROM team_membership WHERE team_id = $1 AND user_id = $2 LIMIT 1
 `
 
 type GetTeamMembershipByTeamIdUserIdParams struct {
-	ID     int64
+	TeamID int64
 	UserID int64
 }
 
 func (q *Queries) GetTeamMembershipByTeamIdUserId(ctx context.Context, arg GetTeamMembershipByTeamIdUserIdParams) (TeamMembership, error) {
-	row := q.db.QueryRowContext(ctx, getTeamMembershipByTeamIdUserId, arg.ID, arg.UserID)
+	row := q.db.QueryRowContext(ctx, getTeamMembershipByTeamIdUserId, arg.TeamID, arg.UserID)
 	var i TeamMembership
 	err := row.Scan(
 		&i.ID,
