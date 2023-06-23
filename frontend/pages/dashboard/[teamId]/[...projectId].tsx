@@ -11,7 +11,7 @@ const Dashboard: NextPage = () => {
   return (
     <Box>
       <Head>
-        <title>Project | lanetCast</title>
+        <title>Project | PlanetCast</title>
         <meta
           name="description"
           content="Cast Content in any Language, Across the Planet"
