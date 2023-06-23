@@ -12,43 +12,13 @@ import { NextPage, GetServerSideProps } from "next";
 
 import { UserResource } from '@clerk/types';
 
-import { v4 } from 'uuid';
-
 import Image from "next/image";
 import { LayoutDashboard } from "lucide-react";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import useWindowDimensions from "@/hooks/useWindowDimensions";
 import DashboardTab from "@/components/dashboard/dashboard_tab";
 import Head from "next/head";
 import Navbar, { MenuBar } from "@/components/dashboard/navbar";
-import { gql } from "@apollo/client";
-import { clerkClient, getAuth } from "@clerk/nextjs/server";
-import { GetApolloClient } from "@/apollo-client";
-
-const GET_TEAMS = gql`
-  query GetTeams {
-    getTeams {
-      id
-      slug
-      name
-      teamType
-      created
-    }
-  }
-`;
-
-const CREATE_TEAM = gql`
-  mutation CreateTeam($name: String!, $slug: String!, $teamType: TeamType!) {
-    createTeam(slug: $slug, name: $name, teamType: $teamType) {
-      id
-      slug
-      name
-      teamType
-      created
-    }
-  }
-`;
-
 
 interface SidebarProps {
   user: UserResource | null | undefined;
@@ -106,12 +76,16 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
 
 export interface DashboardPageProps {
   teams: Team[];
+  teamId: string;
 };
 
-const Dashboard: NextPage<DashboardPageProps> = ({ teams }) => {
+const Dashboard: NextPage<DashboardPageProps> = ({ teamId }) => {
+
+  useEffect(() => {
+    console.log({ teamId });
+  }, [teamId]);
 
   const { height } = useWindowDimensions();
-  const [selectedTeam, setSelectedTeam] = useState(0);
 
   return (
     <Box>
@@ -125,7 +99,7 @@ const Dashboard: NextPage<DashboardPageProps> = ({ teams }) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Box position={"fixed"} top={0} left={0} w="full" p="10px" backgroundColor={useColorModeValue("white", "black")} zIndex={1000}>
-        <Navbar teams={teams} setSelectedTeam={setSelectedTeam} selectedTeam={selectedTeam} />
+        <Navbar />
       </Box>
       <Box
         display={"flex"}
@@ -149,7 +123,7 @@ const Dashboard: NextPage<DashboardPageProps> = ({ teams }) => {
             display={"flex"}
             flexDir={"column"}
           >
-            <DashboardTab />
+            <DashboardTab teamId={teamId} />
           </GridItem>
         </Grid>
       </Box>
@@ -159,32 +133,13 @@ const Dashboard: NextPage<DashboardPageProps> = ({ teams }) => {
 
 export default Dashboard;
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
 
-  const { getToken, userId } = getAuth(ctx.req)
-  const apolloClient = GetApolloClient(true, getToken);
-
-  let teams: any[] = [];
-
-  const { data } = await apolloClient.query({ query: GET_TEAMS });
-  teams = data.getTeams;
-
-  if (userId && data?.getTeams?.length === 0) {
-    const user = await clerkClient.users.getUser(userId);
-    const { data } = await apolloClient.mutate({
-      mutation: CREATE_TEAM,
-      variables: {
-        slug: v4(),
-        name: `${user.firstName}'s Personal Workspace`,
-        teamType: 'PERSONAL',
-      }
-    });
-    teams = [data.createTeam];
-  }
+  const teamId = params?.teamId;
 
   return {
     props: {
-      teams
+      teamId
     }
   }
 };

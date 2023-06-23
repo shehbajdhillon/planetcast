@@ -1,3 +1,4 @@
+import { gql, useQuery } from '@apollo/client';
 import {
   Box,
   HStack,
@@ -13,11 +14,26 @@ import {
   useColorModeValue,
   Divider,
   Button,
+  IconButton,
 } from '@chakra-ui/react';
 import { useClerk, useUser } from '@clerk/nextjs';
 import { ChevronsUpDown } from 'lucide-react';
 import Image from 'next/image';
-import { Dispatch, SetStateAction, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useEffect } from 'react';
+
+const GET_TEAMS = gql`
+  query GetTeams {
+    getTeams {
+      id
+      slug
+      name
+      teamType
+      created
+    }
+  }
+`;
 
 export const MenuBar: React.FC = () => {
 
@@ -99,18 +115,22 @@ export const MenuBar: React.FC = () => {
   )
 };
 
-interface NavbarProps {
-  teams: Team[];
-  selectedTeam: number;
-  setSelectedTeam: Dispatch<SetStateAction<number>>;
-};
-
-const Navbar: React.FC<NavbarProps> = (props) => {
-
-  const { teams, selectedTeam, setSelectedTeam } = props;
+const Navbar: React.FC = () => {
 
   const bgColor = useColorModeValue("white", "black");
   const hoverColor = useColorModeValue("blackAlpha.200", "whiteAlpha.200");
+
+  const { data } = useQuery(GET_TEAMS);
+
+
+  const router = useRouter();
+
+  const teamId = router.query.teamId;
+  const projectId = router.query.projectId?.[0];
+
+  useEffect(() => {
+    console.log({ teamId, projectId });
+  }, [teamId, projectId]);
 
   return (
     <Box w="full" display={"flex"} alignItems={"center"} justifyContent={"center"}>
@@ -128,37 +148,87 @@ const Navbar: React.FC<NavbarProps> = (props) => {
             height={100}
             alt='planet cast logo'
           />
-          <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
-          <Menu>
-            <MenuButton as={Button} w="full" variant={"outline"} rightIcon={<ChevronsUpDown />}>
-              {teams[selectedTeam].name}
-            </MenuButton>
-            <MenuList alignItems={'center'} backgroundColor={useColorModeValue("white", "black")}>
-              {teams.map((team, idx) => (
-                <Box key={idx}>
+
+          { teamId &&
+            <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4} h="full">
+              <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
+              {data?.getTeams?.filter((team: Team) => team.slug === teamId).map((team: Team, idx: number) => (
+                <Link href={`/dashboard/${team.slug}`} key={idx}>
+                  <Text>
+                    {team.name}
+                  </Text>
+                </Link>
+              ))}
+              <Menu>
+                <MenuButton as={IconButton} variant={"ghost"} icon={<ChevronsUpDown />} />
+                <MenuList alignItems={'center'} backgroundColor={bgColor}>
+                  {data?.getTeams?.map((team: Team, idx: number) => (
+                    <Box key={idx}>
+                      <MenuItem
+                        backgroundColor={bgColor}
+                        _hover={{
+                          backgroundColor: hoverColor
+                        }}
+                        key={idx}
+                      >
+                        {team.name}
+                      </MenuItem>
+                      <MenuDivider />
+                    </Box>
+                  ))}
                   <MenuItem
                     backgroundColor={bgColor}
                     _hover={{
                       backgroundColor: hoverColor
                     }}
-                    onClick={() => setSelectedTeam(idx)}
-                    key={idx}
                   >
-                    {team.name}
+                    Create New Team
                   </MenuItem>
-                  <MenuDivider />
-                </Box>
+                </MenuList>
+              </Menu>
+            </HStack>
+          }
+
+          { projectId &&
+            <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4} h="full">
+              <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
+              {data?.getTeams?.filter((team: Team) => team.slug === teamId).map((team: Team, idx: number) => (
+                <Link href={`/dashboard/${teamId}/${team.slug}`} key={idx}>
+                  <Text>
+                    {team.name}
+                  </Text>
+                </Link>
               ))}
-              <MenuItem
-                backgroundColor={bgColor}
-                _hover={{
-                  backgroundColor: hoverColor
-                }}
-              >
-                Create New Team
-              </MenuItem>
-            </MenuList>
-          </Menu>
+              <Menu>
+                <MenuButton as={IconButton} variant={"ghost"} icon={<ChevronsUpDown />} />
+                <MenuList alignItems={'center'} backgroundColor={bgColor}>
+                  {data?.getTeams?.map((team: Team, idx: number) => (
+                    <Box key={idx}>
+                      <MenuItem
+                        backgroundColor={bgColor}
+                        _hover={{
+                          backgroundColor: hoverColor
+                        }}
+                        key={idx}
+                      >
+                        {team.name}
+                      </MenuItem>
+                      <MenuDivider />
+                    </Box>
+                  ))}
+                  <MenuItem
+                    backgroundColor={bgColor}
+                    _hover={{
+                      backgroundColor: hoverColor
+                    }}
+                  >
+                    Create New Team
+                  </MenuItem>
+                </MenuList>
+              </Menu>
+            </HStack>
+          }
+
         </HStack>
         <HStack>
           <MenuBar />

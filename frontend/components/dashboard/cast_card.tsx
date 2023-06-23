@@ -6,15 +6,20 @@ import {
   Button,
   useColorModeValue,
 } from "@chakra-ui/react";
+import { useRouter } from "next/router";
 
-interface CastCardProps {
+interface ProjectCardProps {
+  projectId: number;
+  teamId: string;
   title: string;
   status: "DRAFT" | "PROCESSING" | "DONE";
 };
 
-const CastCard: React.FC<CastCardProps> = (props) => {
+const ProjectCard: React.FC<ProjectCardProps> = (props) => {
 
-  const { title, status } = props;
+  const { title, status, projectId, teamId } = props;
+
+  const router = useRouter();
 
   return (
     <Box
@@ -29,6 +34,7 @@ const CastCard: React.FC<CastCardProps> = (props) => {
         bg: useColorModeValue('white', 'whiteAlpha.100'),
       }}
       cursor={"pointer"}
+      onClick={() => router.push(`/dashboard/${teamId}/${projectId}`)}
     >
       <HStack>
         <Text
@@ -59,4 +65,4 @@ const CastCard: React.FC<CastCardProps> = (props) => {
   );
 };
 
-export default CastCard;
+export default ProjectCard;

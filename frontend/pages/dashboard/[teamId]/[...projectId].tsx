@@ -1,7 +1,7 @@
+import Navbar from "@/components/dashboard/navbar";
 import {
   Box,
   useColorModeValue,
-  Text,
 } from "@chakra-ui/react";
 import { NextPage } from "next";
 
@@ -20,7 +20,7 @@ const Dashboard: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Box position={"fixed"} top={0} left={0} w="full" p="10px" backgroundColor={useColorModeValue("white", "black")} zIndex={1000}>
-        <Text>LMAO</Text>
+        <Navbar />
       </Box>
       <Box
         display={"flex"}

@@ -11,7 +11,11 @@ import CastCard from "./cast_card";
 import Image from "next/image";
 import NewCastModal from "../new_cast_modal";
 
-const DashboardTab: React.FC = () => {
+interface DashboardTabProps {
+  teamId: string;
+};
+
+const DashboardTab: React.FC<DashboardTabProps> = ({ teamId }) => {
   const imageSize = useBreakpointValue({ base: 70 });
   const { onOpen, isOpen, onClose } = useDisclosure();
 
@@ -65,6 +69,8 @@ const DashboardTab: React.FC = () => {
               <CastCard
                 title="This Week In Startups Ep 1024"
                 status="DONE"
+                teamId={teamId}
+                projectId={idx}
               />
             </GridItem>
           ))}
