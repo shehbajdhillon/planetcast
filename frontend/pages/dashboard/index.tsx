@@ -16,11 +16,11 @@ import { v4 } from 'uuid';
 
 import Image from "next/image";
 import { LayoutDashboard } from "lucide-react";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import useWindowDimensions from "@/hooks/useWindowDimensions";
 import DashboardTab from "@/components/dashboard/dashboard_tab";
 import Head from "next/head";
-import { MenuBar } from "@/components/dashboard/navbar";
+import Navbar, { MenuBar } from "@/components/dashboard/navbar";
 import { gql } from "@apollo/client";
 import { clerkClient, getAuth } from "@clerk/nextjs/server";
 import { GetApolloClient } from "@/apollo-client";
@@ -32,6 +32,7 @@ const GET_TEAMS = gql`
       slug
       name
       teamType
+      created
     }
   }
 `;
@@ -43,6 +44,7 @@ const CREATE_TEAM = gql`
       slug
       name
       teamType
+      created
     }
   }
 `;
@@ -102,10 +104,14 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
   );
 };
 
+export interface DashboardPageProps {
+  teams: Team[];
+};
 
-const Dashboard: NextPage = () => {
+const Dashboard: NextPage<DashboardPageProps> = ({ teams }) => {
 
   const { height } = useWindowDimensions();
+  const [selectedTeam, setSelectedTeam] = useState(0);
 
   return (
     <Box>
@@ -118,6 +124,9 @@ const Dashboard: NextPage = () => {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+      <Box position={"fixed"} top={0} left={0} w="full" p="10px" backgroundColor={useColorModeValue("white", "black")} zIndex={1000}>
+        <Navbar teams={teams} setSelectedTeam={setSelectedTeam} selectedTeam={selectedTeam} />
+      </Box>
       <Box
         display={"flex"}
         justifyContent={"center"}

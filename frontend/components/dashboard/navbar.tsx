@@ -1,8 +1,6 @@
 import {
-  Badge,
   Box,
   HStack,
-  Heading,
   MenuItem,
   Menu,
   MenuDivider,
@@ -13,9 +11,13 @@ import {
   Text,
   useColorMode,
   useColorModeValue,
+  Divider,
+  Button,
 } from '@chakra-ui/react';
 import { useClerk, useUser } from '@clerk/nextjs';
+import { ChevronsUpDown } from 'lucide-react';
 import Image from 'next/image';
+import { Dispatch, SetStateAction, useState } from 'react';
 
 export const MenuBar: React.FC = () => {
 
@@ -97,7 +99,19 @@ export const MenuBar: React.FC = () => {
   )
 };
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+  teams: Team[];
+  selectedTeam: number;
+  setSelectedTeam: Dispatch<SetStateAction<number>>;
+};
+
+const Navbar: React.FC<NavbarProps> = (props) => {
+
+  const { teams, selectedTeam, setSelectedTeam } = props;
+
+  const bgColor = useColorModeValue("white", "black");
+  const hoverColor = useColorModeValue("blackAlpha.200", "whiteAlpha.200");
+
   return (
     <Box w="full" display={"flex"} alignItems={"center"} justifyContent={"center"}>
       <Box
@@ -107,26 +121,45 @@ const Navbar: React.FC = () => {
         background={useColorModeValue("white", "black")}
         maxW={"1920px"}
       >
-        <Box display={"flex"} alignItems={"center"} justifyContent={"center"}>
+        <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4}>
           <Image
             src={useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg')}
             width={60}
             height={100}
             alt='planet cast logo'
           />
-          <Heading
-            fontSize={"30px"}
-            display={{ base: "none", md:"flex" }}
-            fontWeight={"semibold"}
-          >
-            PlanetCast
-          </Heading>
-          <Badge
-            ml="5px"
-          >
-            Beta
-          </Badge>
-        </Box>
+          <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
+          <Menu>
+            <MenuButton as={Button} w="full" variant={"outline"} rightIcon={<ChevronsUpDown />}>
+              {teams[selectedTeam].name}
+            </MenuButton>
+            <MenuList alignItems={'center'} backgroundColor={useColorModeValue("white", "black")}>
+              {teams.map((team, idx) => (
+                <Box key={idx}>
+                  <MenuItem
+                    backgroundColor={bgColor}
+                    _hover={{
+                      backgroundColor: hoverColor
+                    }}
+                    onClick={() => setSelectedTeam(idx)}
+                    key={idx}
+                  >
+                    {team.name}
+                  </MenuItem>
+                  <MenuDivider />
+                </Box>
+              ))}
+              <MenuItem
+                backgroundColor={bgColor}
+                _hover={{
+                  backgroundColor: hoverColor
+                }}
+              >
+                Create New Team
+              </MenuItem>
+            </MenuList>
+          </Menu>
+        </HStack>
         <HStack>
           <MenuBar />
         </HStack>

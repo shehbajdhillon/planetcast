@@ -10,17 +10,14 @@ import {
 import CastCard from "./cast_card";
 import Image from "next/image";
 import NewCastModal from "../new_cast_modal";
-import Navbar from "./navbar";
 
 const DashboardTab: React.FC = () => {
   const imageSize = useBreakpointValue({ base: 70 });
   const { onOpen, isOpen, onClose } = useDisclosure();
+
   return (
     <Box w="full" h="full" display={"flex"} flexDir={"column"}>
       <NewCastModal onOpen={onOpen} isOpen={isOpen} onClose={onClose} />
-      <Box position={"fixed"} top={0} left={0} w="full" p="10px" backgroundColor={useColorModeValue("white", "black")} zIndex={1000}>
-        <Navbar />
-      </Box>
       <Center>
         <Grid
           py={{ base: "100px" }}
