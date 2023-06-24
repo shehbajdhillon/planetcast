@@ -19,7 +19,7 @@ import useWindowDimensions from "@/hooks/useWindowDimensions";
 import DashboardTab from "@/components/dashboard/dashboard_tab";
 import Head from "next/head";
 import Navbar, { MenuBar } from "@/components/dashboard/navbar";
-import { gql, useQuery } from "@apollo/client";
+import { Team } from "@/types";
 
 
 interface SidebarProps {
@@ -76,16 +76,6 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
   );
 };
 
-const GET_PROJECTS = gql`
-  query GetProjects($teamSlug: String!) {
-    getTeamById(teamSlug: $teamSlug) {
-      slug
-      projects {
-        id
-      }
-    }
-  }
-`;
 
 export interface DashboardPageProps {
   teams: Team[];
@@ -93,12 +83,6 @@ export interface DashboardPageProps {
 };
 
 const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug }) => {
-
-  const { data, loading, error } = useQuery(GET_PROJECTS, { variables: { teamSlug } });
-
-  useEffect(() => {
-    console.log({ teamSlug });
-  }, [teamSlug]);
 
   const { height } = useWindowDimensions();
 

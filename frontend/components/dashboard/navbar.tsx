@@ -23,6 +23,7 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
 import NProgress from 'nprogress';
+import { Team } from '@/types';
 
 const GET_TEAMS = gql`
   query GetTeams {

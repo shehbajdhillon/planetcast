@@ -28,6 +28,7 @@ interface NewCastModalProps {
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
+  refetch: () => void;
 };
 
 const NewCastModal: React.FC<NewCastModalProps> = (props) => {
