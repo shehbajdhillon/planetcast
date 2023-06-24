@@ -4,6 +4,7 @@ export interface Team {
   name: string;
   teamType: 'PERSONAL' | 'TEAM';
   created: string;
+  projects: Project[];
 };
 
 export interface Project {
