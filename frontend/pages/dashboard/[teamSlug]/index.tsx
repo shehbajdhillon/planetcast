@@ -20,6 +20,8 @@ import DashboardTab from "@/components/dashboard/dashboard_tab";
 import Head from "next/head";
 import Navbar, { MenuBar } from "@/components/dashboard/navbar";
 import { Team } from "@/types";
+import { gql, useQuery } from "@apollo/client";
+import { useRouter } from "next/router";
 
 
 interface SidebarProps {
@@ -76,6 +78,18 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
   );
 };
 
+const GET_TEAMS = gql`
+  query GetTeams {
+    getTeams {
+      slug
+      name
+      projects {
+        id
+        title
+      }
+    }
+  }
+`;
 
 export interface DashboardPageProps {
   teams: Team[];
@@ -85,6 +99,11 @@ export interface DashboardPageProps {
 const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug }) => {
 
   const { height } = useWindowDimensions();
+
+  const { data, refetch } = useQuery(GET_TEAMS);
+
+  const teams = data?.getTeams;
+  const projects = data?.getTeams.find((team: Team) => team.slug === teamSlug)?.projects;
 
   return (
     <Box>
@@ -98,7 +117,7 @@ const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug }) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Box position={"fixed"} top={0} left={0} w="full" p="10px" backgroundColor={useColorModeValue("white", "black")} zIndex={1000}>
-        <Navbar />
+        <Navbar teamSlug={teamSlug} projects={projects} teams={teams} />
       </Box>
       <Box
         display={"flex"}
@@ -122,7 +141,7 @@ const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug }) => {
             display={"flex"}
             flexDir={"column"}
           >
-            <DashboardTab teamSlug={teamSlug} />
+            <DashboardTab teamSlug={teamSlug} projects={projects} refetch={refetch} />
           </GridItem>
         </Grid>
       </Box>

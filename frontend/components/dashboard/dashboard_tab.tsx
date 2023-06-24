@@ -10,30 +10,18 @@ import {
 import CastCard from "./cast_card";
 import Image from "next/image";
 import NewCastModal from "../new_cast_modal";
-import { gql, useQuery } from "@apollo/client";
 import { Project } from "@/types";
 
 interface DashboardTabProps {
   teamSlug: string;
+  projects: Project[];
+  refetch: () => void;
 };
 
-const GET_PROJECTS = gql`
-  query GetProjects($teamSlug: String!) {
-    getTeamById(teamSlug: $teamSlug) {
-      slug
-      projects {
-        id
-        title
-      }
-    }
-  }
-`;
-
-const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug }) => {
+const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug, projects, refetch }) => {
   const imageSize = useBreakpointValue({ base: 70 });
   const { onOpen, isOpen, onClose } = useDisclosure();
 
-  const { data, refetch } = useQuery(GET_PROJECTS, { variables: { teamSlug } });
 
   return (
     <Box w="full" h="full" display={"flex"} flexDir={"column"}>
@@ -80,7 +68,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug }) => {
               </Center>
             </Box>
           </GridItem>
-          {data?.getTeamById?.projects.map((project: Project, idx: number) => (
+          {projects?.map((project: Project, idx: number) => (
             <GridItem colSpan={2} key={idx}>
               <CastCard
                 title={project.title}

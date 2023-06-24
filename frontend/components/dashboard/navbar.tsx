@@ -1,4 +1,3 @@
-import { gql, useQuery } from '@apollo/client';
 import {
   Box,
   HStack,
@@ -23,19 +22,7 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
 import NProgress from 'nprogress';
-import { Team } from '@/types';
-
-const GET_TEAMS = gql`
-  query GetTeams {
-    getTeams {
-      id
-      slug
-      name
-      teamType
-      created
-    }
-  }
-`;
+import { Project, Team } from '@/types';
 
 export const MenuBar: React.FC = () => {
 
@@ -117,18 +104,19 @@ export const MenuBar: React.FC = () => {
   )
 };
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+  teams: Team[];
+  projects: Project[];
+  teamSlug: string;
+  projectId?: number;
+};
+
+const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId }) => {
 
   const bgColor = useColorModeValue("white", "black");
   const hoverColor = useColorModeValue("blackAlpha.200", "whiteAlpha.200");
 
-  const { data } = useQuery(GET_TEAMS);
-
-
   const router = useRouter();
-
-  const teamSlug = router.query.teamSlug;
-  const projectId = router.query.projectId?.[0];
 
   useEffect(() => {
     const handleRouteStart = () => NProgress.start();
@@ -147,8 +135,8 @@ const Navbar: React.FC = () => {
   }, [router.events]);
 
   useEffect(() => {
-    console.log({ teamSlug, projectId });
-  }, [teamSlug, projectId]);
+    console.log({ teamSlug, projectId, teams, projects });
+  }, [teamSlug, projectId, teams, projects]);
 
   return (
     <Box w="full" display={"flex"} alignItems={"center"} justifyContent={"center"}>
@@ -170,7 +158,7 @@ const Navbar: React.FC = () => {
           { teamSlug &&
             <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4} h="full">
               <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
-              {data?.getTeams?.filter((team: Team) => team.slug === teamSlug).map((team: Team, idx: number) => (
+              {teams?.filter((team: Team) => team.slug === teamSlug).map((team: Team, idx: number) => (
                 <Link href={`/dashboard/${team.slug}`} key={idx}>
                   <Text>
                     {team.name}
@@ -180,7 +168,7 @@ const Navbar: React.FC = () => {
               <Menu>
                 <MenuButton as={IconButton} variant={"ghost"} icon={<ChevronsUpDown />} />
                 <MenuList alignItems={'center'} backgroundColor={bgColor}>
-                  {data?.getTeams?.map((team: Team, idx: number) => (
+                  {teams?.map((team: Team, idx: number) => (
                     <Box key={idx}>
                       <MenuItem
                         backgroundColor={bgColor}
@@ -195,14 +183,6 @@ const Navbar: React.FC = () => {
                       <MenuDivider />
                     </Box>
                   ))}
-                  <MenuItem
-                    backgroundColor={bgColor}
-                    _hover={{
-                      backgroundColor: hoverColor
-                    }}
-                  >
-                    Create New Team
-                  </MenuItem>
                 </MenuList>
               </Menu>
             </HStack>
@@ -211,17 +191,17 @@ const Navbar: React.FC = () => {
           { projectId &&
             <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4} h="full">
               <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
-              {data?.getTeams?.filter((team: Team) => team.slug === teamSlug).map((team: Team, idx: number) => (
-                <Link href={`/dashboard/${teamSlug}/${team.slug}`} key={idx}>
+              {projects?.filter((project: Project) => project.id === projectId).map((project: Project, idx: number) => (
+                <Link href={`/dashboard/${teamSlug}/${projectId}`} key={idx}>
                   <Text>
-                    {team.name}
+                    {project.title}
                   </Text>
                 </Link>
               ))}
               <Menu>
                 <MenuButton as={IconButton} variant={"ghost"} icon={<ChevronsUpDown />} />
                 <MenuList alignItems={'center'} backgroundColor={bgColor}>
-                  {data?.getTeams?.map((team: Team, idx: number) => (
+                  {projects?.map((project: Project, idx: number) => (
                     <Box key={idx}>
                       <MenuItem
                         backgroundColor={bgColor}
@@ -229,21 +209,13 @@ const Navbar: React.FC = () => {
                           backgroundColor: hoverColor
                         }}
                         key={idx}
-                        onClick={() => router.push(`/dashboard/${teamSlug}/${team.slug}`)}
+                        onClick={() => router.push(`/dashboard/${teamSlug}/${project.id}`)}
                       >
-                        {team.name}
+                        {project.title}
                       </MenuItem>
                       <MenuDivider />
                     </Box>
                   ))}
-                  <MenuItem
-                    backgroundColor={bgColor}
-                    _hover={{
-                      backgroundColor: hoverColor
-                    }}
-                  >
-                    Create New Team
-                  </MenuItem>
                 </MenuList>
               </Menu>
             </HStack>
