@@ -25,7 +25,7 @@ const HeroSection: React.FC = () => {
           textAlign={"center"}
           fontWeight={"semibold"}
         >
-          Cast Content Across the {' '}
+          Broadcast Your Content Across the {' '}
           <Text
             as={"span"}
             bgGradient={'linear(to-tl, orange, red)'}
