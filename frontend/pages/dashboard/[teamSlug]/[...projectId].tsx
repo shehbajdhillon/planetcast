@@ -3,6 +3,7 @@ import { Team } from "@/types";
 import { gql, useQuery } from "@apollo/client";
 import {
   Box,
+  Heading,
   Text,
   useColorModeValue,
 } from "@chakra-ui/react";
@@ -17,6 +18,37 @@ import {
   Tab,
   TabList
 } from '@chakra-ui/react';
+
+
+const SettingsTab: React.FC = () => {
+  return (
+    <Box
+      display={"flex"}
+      alignItems={"center"}
+      justifyContent={"center"}
+      w={"full"}
+    >
+      <Box w="full" maxW={"1920px"}>
+        <Heading>SETTINGS</Heading>
+      </Box>
+    </Box>
+  );
+};
+
+const ProjectTab: React.FC = () => {
+  return (
+    <Box
+      display={"flex"}
+      alignItems={"center"}
+      justifyContent={"center"}
+      w={"full"}
+    >
+      <Box w="full" maxW={"1920px"}>
+        <Heading>PROJECT</Heading>
+      </Box>
+    </Box>
+  );
+};
 
 const GET_TEAMS = gql`
   query GetTeams {
@@ -60,7 +92,7 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
         <Navbar projects={projects} teams={teams} teamSlug={teamSlug} projectId={projectId} />
       </Box>
 
-      <Box pt={"85px"}>
+      <Box pt={"70px"}>
         <Tabs
           variant="line"
           colorScheme="gray"
@@ -85,8 +117,10 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
           </Box>
           <TabPanels overflow={'auto'} pt={10}>
             <TabPanel>
+              <ProjectTab />
             </TabPanel>
             <TabPanel>
+              <SettingsTab />
             </TabPanel>
           </TabPanels>
         </Tabs>
