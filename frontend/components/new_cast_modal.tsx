@@ -1,3 +1,4 @@
+import { SupportedLanguage, SupportedLanguages } from '@/types';
 import {
   Modal,
   ModalOverlay,
@@ -36,6 +37,23 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
 
   const [castTitle, setCastTitle] = useState("");
   const [mediaFile, setMediaFile] = useState<any>();
+  const [sourceLanguage, setSourceLanguage] = useState<SupportedLanguage>("ENGLISH");
+  const [targetLanguage, setTargetLanguage] = useState<SupportedLanguage>("HINDI");
+
+  const [formValid, setFormValid] = useState(false);
+
+
+  useEffect(() => {
+    const checkFormValid = () => {
+      if (!castTitle.length) return false;
+      if (!mediaFile) return false;
+      if (sourceLanguage === targetLanguage) return false;
+      if (SupportedLanguages.indexOf(sourceLanguage) === -1) return false;
+      if (SupportedLanguages.indexOf(targetLanguage) === -1) return false;
+      return true;
+    };
+    setFormValid(checkFormValid());
+  }, [castTitle, mediaFile, sourceLanguage, targetLanguage]);
 
   const fileToDataUri = (file: File) => {
     const reader = new FileReader();
@@ -109,8 +127,10 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
                 >
                   Source Language
                 </FormLabel>
-                <Select>
-                  <option value='ENGLISH'>ENGLISH</option>
+                <Select value={sourceLanguage} onChange={(e) => setSourceLanguage((e.target.value as SupportedLanguage))}>
+                  {SupportedLanguages.map((lang, idx) => (
+                    <option key={idx} value={lang}>{lang}</option>
+                  ))}
                 </Select>
               </Stack>
               <Spacer />
@@ -121,8 +141,10 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
                 >
                   Target Language
                 </FormLabel>
-                <Select>
-                  <option value='HINDI'>HINDI</option>
+                <Select value={targetLanguage} onChange={(e) => setTargetLanguage((e.target.value as SupportedLanguage))}>
+                  {SupportedLanguages.map((lang, idx) => (
+                    <option key={idx} value={lang}>{lang}</option>
+                  ))}
                 </Select>
               </Stack>
             </HStack>
@@ -136,6 +158,7 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
               colorScheme="green"
               onClick={onClose}
               px="25px"
+              isDisabled={!formValid}
             >
               Submit
             </Button>

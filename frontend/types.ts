@@ -10,8 +10,13 @@ export interface Project {
   id: number;
   teamId: number;
   title: string;
-  sourceLanguage: string;
+  sourceLanguage: SupportedLanguage;
   targetLanguage: string;
   sourceMedia: string;
   targetMedia: string;
 };
+
+export const SupportedLanguages = ["ENGLISH", "HINDI"] as const;
+
+export type SupportedLanguage = typeof SupportedLanguages[number];
+
