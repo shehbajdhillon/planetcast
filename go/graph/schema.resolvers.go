@@ -47,6 +47,12 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 	return project, nil
 }
 
+// DeleteProject is the resolver for the deleteProject field.
+func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (database.Project, error) {
+	project, _ := r.DB.DeleteProjectById(ctx, projectID)
+	return project, nil
+}
+
 // GetTeams is the resolver for the getTeams field.
 func (r *queryResolver) GetTeams(ctx context.Context) ([]database.Team, error) {
 	teams := []database.Team{}

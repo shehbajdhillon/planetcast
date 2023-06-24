@@ -8,6 +8,7 @@ scalar Upload
 
 directive @loggedIn on FIELD_DEFINITION
 directive @memberTeam on ARGUMENT_DEFINITION
+directive @ownsProject on ARGUMENT_DEFINITION
 
 type Team {
   id: Int64!
@@ -42,6 +43,7 @@ type Query {
 type Mutation {
   createTeam(slug: String!, name: String!, teamType: TeamType!): Team! @loggedIn
   createProject(teamSlug: String! @memberTeam, title: String!, sourceLanguage: SupportedLanguage!, targetLanguage: SupportedLanguage!, sourceMedia: Upload!): Project! @loggedIn
+  deleteProject(projectId: Int64! @ownsProject): Project! @loggedIn
 }
 
 enum TeamType {

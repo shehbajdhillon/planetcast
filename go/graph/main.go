@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"planetcastdev/auth"
@@ -33,6 +34,18 @@ func GenerateServer(queries *database.Queries) *handler.Server {
 		}
 		teamSlug := teamSlugField.(string)
 		if memberTeam(ctx, teamSlug, queries) == false {
+			return nil, fmt.Errorf("Access Denied")
+		}
+		return next(ctx)
+	}
+
+	gqlConfig.Directives.OwnsProject = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+		projectIdField := obj.(map[string]interface{})["projectId"]
+		if projectIdField == nil {
+			return nil, fmt.Errorf("Access Denied")
+		}
+		projectId, err := projectIdField.(json.Number).Int64()
+		if err != nil || ownsProject(ctx, projectId, queries) == false {
 			return nil, fmt.Errorf("Access Denied")
 		}
 		return next(ctx)
@@ -83,18 +96,26 @@ func isLoggedIn(ctx context.Context) bool {
 }
 
 func memberTeam(ctx context.Context, teamSlug string, queries *database.Queries) bool {
-  if !isLoggedIn(ctx) {
-    return false
-  }
+	if !isLoggedIn(ctx) {
+		return false
+	}
+	userEmail, _ := auth.EmailFromContext(ctx)
+	user, _ := queries.GetUserByEmail(ctx, userEmail)
+	team, _ := queries.GetTeamBySlug(ctx, teamSlug)
 
-  userEmail, _ := auth.EmailFromContext(ctx)
-  user, _ := queries.GetUserByEmail(ctx, userEmail)
-  team, _ := queries.GetTeamBySlug(ctx, teamSlug)
+	_, err := queries.GetTeamMembershipByTeamIdUserId(ctx, database.GetTeamMembershipByTeamIdUserIdParams{
+		UserID: user.ID,
+		TeamID: team.ID,
+	})
 
-  _, err := queries.GetTeamMembershipByTeamIdUserId(ctx, database.GetTeamMembershipByTeamIdUserIdParams{
-    UserID: user.ID,
-    TeamID: team.ID,
-  })
+	return err == nil
+}
 
-  return err == nil
+func ownsProject(ctx context.Context, projectId int64, queries *database.Queries) bool {
+	project, err := queries.GetProjectById(ctx, projectId)
+	if err != nil {
+		return false
+	}
+	team, err := queries.GetTeamById(ctx, project.TeamID)
+	return err != nil && memberTeam(ctx, team.Slug, queries)
 }

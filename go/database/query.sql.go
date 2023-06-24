@@ -111,6 +111,44 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 	return i, err
 }
 
+const deleteProjectById = `-- name: DeleteProjectById :one
+DELETE FROM project WHERE id = $1 RETURNING id, team_id, title, source_language, target_language, source_media, target_media
+`
+
+func (q *Queries) DeleteProjectById(ctx context.Context, id int64) (Project, error) {
+	row := q.db.QueryRowContext(ctx, deleteProjectById, id)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.Title,
+		&i.SourceLanguage,
+		&i.TargetLanguage,
+		&i.SourceMedia,
+		&i.TargetMedia,
+	)
+	return i, err
+}
+
+const getProjectById = `-- name: GetProjectById :one
+SELECT id, team_id, title, source_language, target_language, source_media, target_media FROM project WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetProjectById(ctx context.Context, id int64) (Project, error) {
+	row := q.db.QueryRowContext(ctx, getProjectById, id)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.Title,
+		&i.SourceLanguage,
+		&i.TargetLanguage,
+		&i.SourceMedia,
+		&i.TargetMedia,
+	)
+	return i, err
+}
+
 const getProjectByProjectIdTeamId = `-- name: GetProjectByProjectIdTeamId :one
 SELECT id, team_id, title, source_language, target_language, source_media, target_media FROM project WHERE id = $1 AND team_id = $2 LIMIT 1
 `
