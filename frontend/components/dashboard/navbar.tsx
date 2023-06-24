@@ -160,7 +160,14 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
               <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
               {teams?.filter((team: Team) => team.slug === teamSlug).map((team: Team, idx: number) => (
                 <Link href={`/dashboard/${team.slug}`} key={idx}>
-                  <Text>
+                  <Text
+                    noOfLines={1}
+                    maxWidth={{
+                      base: "25px",
+                      sm: "80px",
+                      md: "500px",
+                    }}
+                  >
                     {team.name}
                   </Text>
                 </Link>
@@ -193,7 +200,14 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
               <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
               {projects?.filter((project: Project) => project.id === projectId).map((project: Project, idx: number) => (
                 <Link href={`/dashboard/${teamSlug}/${projectId}`} key={idx}>
-                  <Text>
+                  <Text
+                    noOfLines={1}
+                    maxWidth={{
+                      base: "25px",
+                      sm: "80px",
+                      md: "500px",
+                    }}
+                  >
                     {project.title}
                   </Text>
                 </Link>
