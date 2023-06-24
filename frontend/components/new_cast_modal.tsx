@@ -11,7 +11,6 @@ import {
   HStack,
   FormControl,
   FormLabel,
-  useColorModeValue,
   Input,
   Stack,
   Box,
@@ -31,7 +30,7 @@ interface NewCastModalProps {
   refetch: () => void;
 };
 
-const NewCastModal: React.FC<NewCastModalProps> = (props) => {
+const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
 
   const { isOpen, onClose } = props;
 
@@ -154,4 +153,4 @@ const NewCastModal: React.FC<NewCastModalProps> = (props) => {
   );
 };
 
-export default NewCastModal;
+export default NewProjectModal;
