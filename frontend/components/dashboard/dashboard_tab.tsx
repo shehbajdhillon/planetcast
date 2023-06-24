@@ -37,7 +37,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug }) => {
 
   return (
     <Box w="full" h="full" display={"flex"} flexDir={"column"}>
-      <NewCastModal onOpen={onOpen} isOpen={isOpen} onClose={onClose} refetch={refetch} />
+      <NewCastModal onOpen={onOpen} isOpen={isOpen} onClose={onClose} refetch={refetch} teamSlug={teamSlug} />
       <Center>
         <Grid
           py={{ base: "100px" }}

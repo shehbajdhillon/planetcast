@@ -1,4 +1,5 @@
 import { SupportedLanguage, SupportedLanguages } from '@/types';
+import { gql, useMutation } from '@apollo/client';
 import {
   Modal,
   ModalOverlay,
@@ -24,50 +25,59 @@ import { useEffect, useState } from 'react';
 
 import Dropzone from "react-dropzone";
 
+const CREATE_PROJECT = gql`
+  mutation CreateProject($teamSlug: String!, $title: String!, $sourceLanguage: SupportedLanguage!, $targetLanguage: SupportedLanguage!, $sourceMedia: Upload!) {
+    createProject(teamSlug: $teamSlug, title: $title, sourceLanguage: $sourceLanguage, targetLanguage: $targetLanguage, sourceMedia: $sourceMedia) {
+      id
+      title
+    }
+  }
+`;
+
 interface NewCastModalProps {
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
   refetch: () => void;
+  teamSlug: string;
 };
 
 const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
 
-  const { isOpen, onClose } = props;
+  const { isOpen, onClose, teamSlug, refetch } = props;
 
-  const [castTitle, setCastTitle] = useState("");
-  const [mediaFile, setMediaFile] = useState<any>();
+  const [title, setTitle] = useState("");
+  const [sourceMedia, setSourceMedia] = useState<File>();
   const [sourceLanguage, setSourceLanguage] = useState<SupportedLanguage>("ENGLISH");
   const [targetLanguage, setTargetLanguage] = useState<SupportedLanguage>("HINDI");
 
   const [formValid, setFormValid] = useState(false);
 
+  const [createProjectMutation] = useMutation(CREATE_PROJECT);
+
+  const createProject = async () => {
+    const res = await createProjectMutation({ variables: { title, teamSlug, sourceLanguage, targetLanguage, sourceMedia } });
+    if (res) {
+      refetch();
+      onClose();
+    }
+  };
 
   useEffect(() => {
     const checkFormValid = () => {
-      if (!castTitle.length) return false;
-      if (!mediaFile) return false;
+      if (!title.length) return false;
+      if (!sourceMedia) return false;
       if (sourceLanguage === targetLanguage) return false;
       if (SupportedLanguages.indexOf(sourceLanguage) === -1) return false;
       if (SupportedLanguages.indexOf(targetLanguage) === -1) return false;
       return true;
     };
     setFormValid(checkFormValid());
-  }, [castTitle, mediaFile, sourceLanguage, targetLanguage]);
-
-  const fileToDataUri = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target)
-        setMediaFile(event.target.result);
-    };
-    reader.readAsDataURL(file);
-  };
-
+  }, [title, sourceMedia, sourceLanguage, targetLanguage]);
 
   useEffect(() => {
-    setCastTitle("");
-    setMediaFile(undefined);
+    setTitle("");
+    setSourceMedia(undefined);
   }, [isOpen, onClose]);
 
   return (
@@ -87,8 +97,8 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
               </FormLabel>
               <Input
                 placeholder="PlanetCast Episode #234"
-                onChange={(e) => setCastTitle(e.target.value)}
-                value={castTitle}
+                onChange={(e) => setTitle(e.target.value)}
+                value={title}
               />
             </Stack>
             <Stack spacing={-1} py="10px">
@@ -98,7 +108,7 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
               >
                 Media File
               </FormLabel>
-              <Dropzone onDrop={(acceptedFiles) => setMediaFile(acceptedFiles[0])}>
+              <Dropzone onDrop={(acceptedFiles) => { console.log({ acceptedFiles }); setSourceMedia(acceptedFiles[0]); }}>
                 {({ getRootProps, getInputProps }) => (
                   <Box
                     w="full"
@@ -112,7 +122,7 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
                     <Center>
                       <input {...getInputProps()} type='file' />
                       <Text py="20px">
-                        { !mediaFile ? "Upload Media File" : (mediaFile as File).name }
+                        { !sourceMedia? "Upload Media File" : (sourceMedia as File).name }
                       </Text>
                     </Center>
                   </Box>
@@ -156,7 +166,7 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
               leftIcon={<Check />}
               w="full"
               colorScheme="green"
-              onClick={onClose}
+              onClick={createProject}
               px="25px"
               isDisabled={!formValid}
             >
