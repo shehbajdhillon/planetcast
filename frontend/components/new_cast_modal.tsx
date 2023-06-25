@@ -108,7 +108,10 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
               >
                 Media File
               </FormLabel>
-              <Dropzone onDrop={(acceptedFiles) => setSourceMedia(acceptedFiles[0])}>
+              <Dropzone
+                accept={{ 'video/mp4': ['.mp4', '.MP4'] }}
+                onDrop={(acceptedFiles) => setSourceMedia(acceptedFiles[0])}
+              >
                 {({ getRootProps, getInputProps }) => (
                   <Box
                     w="full"
