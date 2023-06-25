@@ -117,5 +117,5 @@ func ownsProject(ctx context.Context, projectId int64, queries *database.Queries
 		return false
 	}
 	team, err := queries.GetTeamById(ctx, project.TeamID)
-	return err != nil && memberTeam(ctx, team.Slug, queries)
+	return err == nil && memberTeam(ctx, team.Slug, queries)
 }
