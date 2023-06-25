@@ -1,8 +1,10 @@
 import Navbar from "@/components/dashboard/navbar";
 import { Team } from "@/types";
-import { gql, useQuery } from "@apollo/client";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import {
   Box,
+  Button,
+  Center,
   Heading,
   Text,
   useColorModeValue,
@@ -18,9 +20,33 @@ import {
   Tab,
   TabList
 } from '@chakra-ui/react';
+import { useRouter } from "next/router";
 
 
-const SettingsTab: React.FC = () => {
+const DELETE_PROJECT = gql`
+  mutation DeleteProject($projectId: Int64!) {
+    deleteProject(projectId: $projectId) {
+      id
+    }
+  }
+`;
+
+interface SettingsTabProps {
+  projectId: number;
+  teamSlug: string;
+};
+
+const SettingsTab: React.FC<SettingsTabProps> = ({ projectId, teamSlug }) => {
+
+  const [deleteProjectMutation, {}] = useMutation(DELETE_PROJECT);
+
+  const router = useRouter();
+
+  const deleteProject = async () => {
+    const res = await deleteProjectMutation({ variables: { projectId } });
+    if (res) router.push(`/dashboard/${teamSlug}`);
+  };
+
   return (
     <Box
       display={"flex"}
@@ -29,7 +55,11 @@ const SettingsTab: React.FC = () => {
       w={"full"}
     >
       <Box w="full" maxW={"1920px"}>
-        <Heading>SETTINGS</Heading>
+        <Center>
+          <Button colorScheme="red" onClick={deleteProject}>
+            Delete Project
+          </Button>
+        </Center>
       </Box>
     </Box>
   );
@@ -120,7 +150,7 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
               <ProjectTab />
             </TabPanel>
             <TabPanel>
-              <SettingsTab />
+              <SettingsTab projectId={projectId} teamSlug={teamSlug} />
             </TabPanel>
           </TabPanels>
         </Tabs>
