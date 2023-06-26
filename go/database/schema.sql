@@ -39,7 +39,5 @@ CREATE TABLE project (
   team_id BIGINT REFERENCES team (id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL,
   source_language SUPPORTED_LANGUAGE NOT NULL,
-  target_language SUPPORTED_LANGUAGE NOT NULL,
-  source_media TEXT NOT NULL,
-  target_media TEXT NOT NULL
+  source_media TEXT NOT NULL
 );

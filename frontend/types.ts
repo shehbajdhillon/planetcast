@@ -12,9 +12,7 @@ export interface Project {
   teamId: number;
   title: string;
   sourceLanguage: SupportedLanguage;
-  targetLanguage: string;
   sourceMedia: string;
-  targetMedia: string;
 };
 
 export const SupportedLanguages = ["ENGLISH", "HINDI"] as const;

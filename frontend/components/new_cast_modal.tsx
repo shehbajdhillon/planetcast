@@ -28,8 +28,8 @@ import Dropzone from "react-dropzone";
 import NProgress from 'nprogress';
 
 const CREATE_PROJECT = gql`
-  mutation CreateProject($teamSlug: String!, $title: String!, $sourceLanguage: SupportedLanguage!, $targetLanguage: SupportedLanguage!, $sourceMedia: Upload!) {
-    createProject(teamSlug: $teamSlug, title: $title, sourceLanguage: $sourceLanguage, targetLanguage: $targetLanguage, sourceMedia: $sourceMedia) {
+  mutation CreateProject($teamSlug: String!, $title: String!, $sourceLanguage: SupportedLanguage!, $sourceMedia: Upload!) {
+    createProject(teamSlug: $teamSlug, title: $title, sourceLanguage: $sourceLanguage, sourceMedia: $sourceMedia) {
       id
       title
     }
@@ -51,14 +51,13 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
   const [title, setTitle] = useState("");
   const [sourceMedia, setSourceMedia] = useState<File>();
   const [sourceLanguage, setSourceLanguage] = useState<SupportedLanguage>("ENGLISH");
-  const [targetLanguage, setTargetLanguage] = useState<SupportedLanguage>("HINDI");
 
   const [formValid, setFormValid] = useState(false);
 
   const [createProjectMutation, { data, loading }] = useMutation(CREATE_PROJECT);
 
   const createProject = async () => {
-    const res = await createProjectMutation({ variables: { title, teamSlug, sourceLanguage, targetLanguage, sourceMedia } });
+    const res = await createProjectMutation({ variables: { title, teamSlug, sourceLanguage, sourceMedia } });
     if (res) {
       refetch();
       onClose();
@@ -82,13 +81,11 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
     const checkFormValid = () => {
       if (!title.length) return false;
       if (!sourceMedia) return false;
-      if (sourceLanguage === targetLanguage) return false;
       if (SupportedLanguages.indexOf(sourceLanguage) === -1) return false;
-      if (SupportedLanguages.indexOf(targetLanguage) === -1) return false;
       return true;
     };
     setFormValid(checkFormValid());
-  }, [title, sourceMedia, sourceLanguage, targetLanguage]);
+  }, [title, sourceMedia, sourceLanguage]);
 
   useEffect(() => {
     setTitle("");
@@ -162,19 +159,6 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
                 </Select>
               </Stack>
               <Spacer />
-              <Stack spacing={-1} py="10px" w="full">
-                <FormLabel
-                  fontWeight={'600'}
-                  fontSize={'lg'}
-                >
-                  Target Language
-                </FormLabel>
-                <Select value={targetLanguage} onChange={(e) => setTargetLanguage((e.target.value as SupportedLanguage))}>
-                  {SupportedLanguages.map((lang, idx) => (
-                    <option key={idx} value={lang}>{lang}</option>
-                  ))}
-                </Select>
-              </Stack>
             </HStack>
           </FormControl>
         </ModalBody>

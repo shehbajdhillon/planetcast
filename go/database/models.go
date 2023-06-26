@@ -142,9 +142,7 @@ type Project struct {
 	TeamID         int64
 	Title          string
 	SourceLanguage SupportedLanguage
-	TargetLanguage SupportedLanguage
 	SourceMedia    string
-	TargetMedia    string
 }
 
 type Team struct {

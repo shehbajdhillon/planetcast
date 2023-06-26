@@ -24,9 +24,7 @@ type Project {
   teamId: Int64!
   title: String!
   sourceLanguage: SupportedLanguage!
-  targetLanguage: SupportedLanguage!
   sourceMedia: String!
-  targetMedia: String!
 }
 
 type Userinfo {
@@ -42,7 +40,7 @@ type Query {
 
 type Mutation {
   createTeam(slug: String!, name: String!, teamType: TeamType!): Team! @loggedIn
-  createProject(teamSlug: String! @memberTeam, title: String!, sourceLanguage: SupportedLanguage!, targetLanguage: SupportedLanguage!, sourceMedia: Upload!): Project! @loggedIn
+  createProject(teamSlug: String! @memberTeam, title: String!, sourceLanguage: SupportedLanguage!, sourceMedia: Upload!): Project! @loggedIn
   deleteProject(projectId: Int64! @ownsProject): Project! @loggedIn
 }
 

@@ -34,7 +34,7 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 }
 
 // CreateProject is the resolver for the createProject field.
-func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceLanguage database.SupportedLanguage, targetLanguage database.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error) {
+func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceLanguage database.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 
 	fileName := sourceMedia.Filename + uuid.NewString() + ".mp4"
@@ -44,9 +44,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 		TeamID:         team.ID,
 		Title:          title,
 		SourceLanguage: sourceLanguage,
-		TargetLanguage: targetLanguage,
 		SourceMedia:    fileName,
-		TargetMedia:    fileName,
 	})
 
 	return project, nil
@@ -86,7 +84,6 @@ func (r *teamResolver) Created(ctx context.Context, obj *database.Team) (string,
 
 // Projects is the resolver for the projects field.
 func (r *teamResolver) Projects(ctx context.Context, obj *database.Team, projectID *int64) ([]database.Project, error) {
-
 	projects := []database.Project{}
 
 	if projectID != nil {

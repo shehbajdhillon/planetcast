@@ -54,16 +54,14 @@ func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) (Userinfo, err
 }
 
 const createProject = `-- name: CreateProject :one
-INSERT INTO project (team_id, title, source_language, target_language, source_media, target_media) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, team_id, title, source_language, target_language, source_media, target_media
+INSERT INTO project (team_id, title, source_language, source_media) VALUES ($1, $2, $3, $4) RETURNING id, team_id, title, source_language, source_media
 `
 
 type CreateProjectParams struct {
 	TeamID         int64
 	Title          string
 	SourceLanguage SupportedLanguage
-	TargetLanguage SupportedLanguage
 	SourceMedia    string
-	TargetMedia    string
 }
 
 func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error) {
@@ -71,9 +69,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		arg.TeamID,
 		arg.Title,
 		arg.SourceLanguage,
-		arg.TargetLanguage,
 		arg.SourceMedia,
-		arg.TargetMedia,
 	)
 	var i Project
 	err := row.Scan(
@@ -81,9 +77,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		&i.TeamID,
 		&i.Title,
 		&i.SourceLanguage,
-		&i.TargetLanguage,
 		&i.SourceMedia,
-		&i.TargetMedia,
 	)
 	return i, err
 }
@@ -112,7 +106,7 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 }
 
 const deleteProjectById = `-- name: DeleteProjectById :one
-DELETE FROM project WHERE id = $1 RETURNING id, team_id, title, source_language, target_language, source_media, target_media
+DELETE FROM project WHERE id = $1 RETURNING id, team_id, title, source_language, source_media
 `
 
 func (q *Queries) DeleteProjectById(ctx context.Context, id int64) (Project, error) {
@@ -123,15 +117,13 @@ func (q *Queries) DeleteProjectById(ctx context.Context, id int64) (Project, err
 		&i.TeamID,
 		&i.Title,
 		&i.SourceLanguage,
-		&i.TargetLanguage,
 		&i.SourceMedia,
-		&i.TargetMedia,
 	)
 	return i, err
 }
 
 const getProjectById = `-- name: GetProjectById :one
-SELECT id, team_id, title, source_language, target_language, source_media, target_media FROM project WHERE id = $1 LIMIT 1
+SELECT id, team_id, title, source_language, source_media FROM project WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetProjectById(ctx context.Context, id int64) (Project, error) {
@@ -142,15 +134,13 @@ func (q *Queries) GetProjectById(ctx context.Context, id int64) (Project, error)
 		&i.TeamID,
 		&i.Title,
 		&i.SourceLanguage,
-		&i.TargetLanguage,
 		&i.SourceMedia,
-		&i.TargetMedia,
 	)
 	return i, err
 }
 
 const getProjectByProjectIdTeamId = `-- name: GetProjectByProjectIdTeamId :one
-SELECT id, team_id, title, source_language, target_language, source_media, target_media FROM project WHERE id = $1 AND team_id = $2 LIMIT 1
+SELECT id, team_id, title, source_language, source_media FROM project WHERE id = $1 AND team_id = $2 LIMIT 1
 `
 
 type GetProjectByProjectIdTeamIdParams struct {
@@ -166,15 +156,13 @@ func (q *Queries) GetProjectByProjectIdTeamId(ctx context.Context, arg GetProjec
 		&i.TeamID,
 		&i.Title,
 		&i.SourceLanguage,
-		&i.TargetLanguage,
 		&i.SourceMedia,
-		&i.TargetMedia,
 	)
 	return i, err
 }
 
 const getProjectsByTeamId = `-- name: GetProjectsByTeamId :many
-SELECT id, team_id, title, source_language, target_language, source_media, target_media FROM project WHERE team_id = $1
+SELECT id, team_id, title, source_language, source_media FROM project WHERE team_id = $1
 `
 
 func (q *Queries) GetProjectsByTeamId(ctx context.Context, teamID int64) ([]Project, error) {
@@ -191,9 +179,7 @@ func (q *Queries) GetProjectsByTeamId(ctx context.Context, teamID int64) ([]Proj
 			&i.TeamID,
 			&i.Title,
 			&i.SourceLanguage,
-			&i.TargetLanguage,
 			&i.SourceMedia,
-			&i.TargetMedia,
 		); err != nil {
 			return nil, err
 		}
