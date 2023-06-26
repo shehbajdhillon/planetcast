@@ -5,6 +5,8 @@ import {
   Box,
   Button,
   Center,
+  Grid,
+  GridItem,
   Heading,
   Text,
   useColorModeValue,
@@ -74,7 +76,29 @@ const ProjectTab: React.FC = () => {
       w={"full"}
     >
       <Box w="full" maxW={"1920px"}>
-        <Heading>PROJECT</Heading>
+
+        <Grid
+          templateAreas={{
+            base: `
+              "video"
+              "transcript"
+            `,
+            lg: `"video transcript"`
+          }}
+          gridTemplateColumns={{ base: "1fr", lg: "2fr 1fr" }}
+          w="full"
+          h={"full"}
+        >
+
+          <GridItem area={'video'} h="full" w="full" borderWidth={"1px"} rounded={"lg"}>
+            <Heading>VIDEO</Heading>
+          </GridItem>
+
+          <GridItem area={'transcript'} h="full" w="full" borderWidth={"1px"} rounded="lg">
+            <Heading>TRANSCRIPT</Heading>
+          </GridItem>
+
+        </Grid>
       </Box>
     </Box>
   );
@@ -103,6 +127,7 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
   const { data } = useQuery(GET_TEAMS);
 
   const textColor = useColorModeValue("black", "white");
+  const bgColor = useColorModeValue("white", "black");
 
   const teams = data?.getTeams;
   const projects = data?.getTeams.find((team: Team) => team.slug === teamSlug)?.projects;
@@ -140,7 +165,7 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
             alignItems={"center"}
             justifyContent={"center"}
           >
-            <TabList pl={'25px'} w="full" maxW={"1920px"}>
+            <TabList pl={'25px'} w="full" maxW={"1920px"} backgroundColor={bgColor}>
               <Tab><Text textColor={textColor}>Project</Text></Tab>
               <Tab><Text textColor={textColor}>Settings</Text></Tab>
             </TabList>
