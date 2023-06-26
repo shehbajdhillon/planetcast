@@ -21,9 +21,11 @@ import {
   Select,
 } from '@chakra-ui/react';
 import { Check } from 'lucide-react';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
 import Dropzone from "react-dropzone";
+import NProgress from 'nprogress';
 
 const CREATE_PROJECT = gql`
   mutation CreateProject($teamSlug: String!, $title: String!, $sourceLanguage: SupportedLanguage!, $targetLanguage: SupportedLanguage!, $sourceMedia: Upload!) {
@@ -53,7 +55,7 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
 
   const [formValid, setFormValid] = useState(false);
 
-  const [createProjectMutation] = useMutation(CREATE_PROJECT);
+  const [createProjectMutation, { data, loading }] = useMutation(CREATE_PROJECT);
 
   const createProject = async () => {
     const res = await createProjectMutation({ variables: { title, teamSlug, sourceLanguage, targetLanguage, sourceMedia } });
@@ -62,6 +64,19 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
       onClose();
     }
   };
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (data?.createProject) {
+      router.push(`/dashboard/${teamSlug}/${data?.createProject.id}`)
+    };
+  }, [data, router, teamSlug]);
+
+  useEffect(() => {
+    if (loading) NProgress.start();
+    else NProgress.done();
+  }, [loading]);
 
   useEffect(() => {
     const checkFormValid = () => {
@@ -171,7 +186,7 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
               colorScheme="green"
               onClick={createProject}
               px="25px"
-              isDisabled={!formValid}
+              isDisabled={!formValid || loading}
             >
               Submit
             </Button>
