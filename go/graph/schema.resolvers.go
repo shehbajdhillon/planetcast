@@ -86,16 +86,26 @@ func (r *teamResolver) Created(ctx context.Context, obj *database.Team) (string,
 
 // Projects is the resolver for the projects field.
 func (r *teamResolver) Projects(ctx context.Context, obj *database.Team, projectID *int64) ([]database.Project, error) {
+
+	projects := []database.Project{}
+
 	if projectID != nil {
 		project, _ := r.DB.GetProjectByProjectIdTeamId(ctx, database.GetProjectByProjectIdTeamIdParams{
 			ID:     *projectID,
 			TeamID: obj.ID,
 		})
-		return []database.Project{project}, nil
+		projects = []database.Project{project}
+	} else {
+		projects, _ = r.DB.GetProjectsByTeamId(ctx, obj.ID)
 	}
 
-	projects, _ := r.DB.GetProjectsByTeamId(ctx, obj.ID)
-	return projects, nil
+	filteredProject := []database.Project{}
+	for _, p := range projects {
+		p.SourceMedia = r.Storage.GetFileLink(p.SourceMedia)
+		filteredProject = append(filteredProject, p)
+	}
+
+	return filteredProject, nil
 }
 
 // Mutation returns MutationResolver implementation.
