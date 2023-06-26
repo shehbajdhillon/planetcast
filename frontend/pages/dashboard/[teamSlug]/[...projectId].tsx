@@ -1,5 +1,5 @@
 import Navbar from "@/components/dashboard/navbar";
-import { Team } from "@/types";
+import { Project, Team } from "@/types";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import {
   Box,
@@ -23,6 +23,7 @@ import {
   TabList
 } from '@chakra-ui/react';
 import { useRouter } from "next/router";
+import VideoPlayer from "@/components/video_player";
 
 
 const DELETE_PROJECT = gql`
@@ -67,7 +68,13 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ projectId, teamSlug }) => {
   );
 };
 
-const ProjectTab: React.FC = () => {
+interface ProjectTabProps {
+  project: Project;
+  teamSlug: string;
+};
+
+const ProjectTab: React.FC<ProjectTabProps> = ({ project }) => {
+
   return (
     <Box
       display={"flex"}
@@ -88,10 +95,11 @@ const ProjectTab: React.FC = () => {
           gridTemplateColumns={{ base: "1fr", lg: "2fr 1fr" }}
           w="full"
           h={"full"}
+          gap={"10px"}
         >
 
           <GridItem area={'video'} h="full" w="full" borderWidth={"1px"} rounded={"lg"}>
-            <Heading>VIDEO</Heading>
+            <VideoPlayer src={project?.sourceMedia} />
           </GridItem>
 
           <GridItem area={'transcript'} h="full" w="full" borderWidth={"1px"} rounded="lg">
@@ -112,6 +120,8 @@ const GET_TEAMS = gql`
       projects {
         id
         title
+        sourceMedia
+        sourceLanguage
       }
     }
   }
@@ -131,6 +141,7 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
 
   const teams = data?.getTeams;
   const projects = data?.getTeams.find((team: Team) => team.slug === teamSlug)?.projects;
+  const currentProject = projects?.find((project: Project) => project.id === projectId);
 
   return (
     <Box>
@@ -172,7 +183,7 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
           </Box>
           <TabPanels overflow={'auto'} pt={10}>
             <TabPanel>
-              <ProjectTab />
+              <ProjectTab project={currentProject} teamSlug={teamSlug} />
             </TabPanel>
             <TabPanel>
               <SettingsTab projectId={projectId} teamSlug={teamSlug} />
