@@ -1,6 +1,8 @@
 FROM golang:1.19.9-bullseye
 
 RUN apt-get update -qq && apt-get install ffmpeg -y
+RUN apt-get install python3-pip -y
+RUN pip install openai-whisper
 
 WORKDIR /app
 
