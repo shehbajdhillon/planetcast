@@ -8,6 +8,7 @@ import {
   Grid,
   GridItem,
   Heading,
+  Spinner,
   Text,
   useColorModeValue,
 } from "@chakra-ui/react";
@@ -134,7 +135,7 @@ interface ProjectDashboardProps {
 
 const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId }) => {
 
-  const { data } = useQuery(GET_TEAMS);
+  const { data, loading } = useQuery(GET_TEAMS);
 
   const textColor = useColorModeValue("black", "white");
   const bgColor = useColorModeValue("white", "black");
@@ -158,39 +159,49 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
         <Navbar projects={projects} teams={teams} teamSlug={teamSlug} projectId={projectId} />
       </Box>
 
-      <Box pt={"70px"}>
-        <Tabs
-          variant="line"
-          colorScheme="gray"
-          isLazy
-          onChange={(index) => {
-            switch (index) {
-            }
-          }}
-        >
-          <Box
-            position={'fixed'}
-            w={'100%'}
-            zIndex={'999'}
-            display={"flex"}
-            alignItems={"center"}
-            justifyContent={"center"}
+      { !loading && data ?
+
+        <Box pt={"70px"}>
+          <Tabs
+            variant="line"
+            colorScheme="gray"
+            isLazy
+            onChange={(index) => {
+              switch (index) {
+              }
+            }}
           >
-            <TabList pl={'25px'} w="full" maxW={"1920px"} backgroundColor={bgColor}>
-              <Tab><Text textColor={textColor}>Project</Text></Tab>
-              <Tab><Text textColor={textColor}>Settings</Text></Tab>
-            </TabList>
-          </Box>
-          <TabPanels overflow={'auto'} pt={10}>
-            <TabPanel>
-              <ProjectTab project={currentProject} teamSlug={teamSlug} />
-            </TabPanel>
-            <TabPanel>
-              <SettingsTab projectId={projectId} teamSlug={teamSlug} />
-            </TabPanel>
-          </TabPanels>
-        </Tabs>
-      </Box>
+            <Box
+              position={'fixed'}
+              w={'100%'}
+              zIndex={'999'}
+              display={"flex"}
+              alignItems={"center"}
+              justifyContent={"center"}
+            >
+              <TabList pl={'25px'} w="full" maxW={"1920px"} backgroundColor={bgColor}>
+                <Tab><Text textColor={textColor}>Project</Text></Tab>
+                <Tab><Text textColor={textColor}>Settings</Text></Tab>
+              </TabList>
+            </Box>
+            <TabPanels overflow={'auto'} pt={10}>
+              <TabPanel>
+                <ProjectTab project={currentProject} teamSlug={teamSlug} />
+              </TabPanel>
+              <TabPanel>
+                <SettingsTab projectId={projectId} teamSlug={teamSlug} />
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
+        </Box>
+
+        :
+
+        <Center pt="100px">
+          <Spinner />
+        </Center>
+
+      }
 
     </Box>
   );
