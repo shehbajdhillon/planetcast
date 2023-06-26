@@ -86,6 +86,8 @@ const GET_TEAMS = gql`
       projects {
         id
         title
+        sourceMedia
+        sourceLanguage
       }
     }
   }
