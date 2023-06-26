@@ -99,12 +99,14 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project }) => {
           gap={"10px"}
         >
 
-          <GridItem area={'video'} h="full" w="full" borderWidth={"1px"} rounded={"lg"}>
+          <GridItem area={'video'} h="full" w="full" rounded={"lg"}>
             <VideoPlayer src={project?.sourceMedia} />
           </GridItem>
 
           <GridItem area={'transcript'} h="full" w="full" borderWidth={"1px"} rounded="lg">
-            <Heading>TRANSCRIPT</Heading>
+            <Center h="full">
+              <Button> Generate Transcript </Button>
+            </Center>
           </GridItem>
 
         </Grid>
