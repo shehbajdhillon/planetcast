@@ -10,6 +10,7 @@ import (
 	"planetcastdev/database"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/google/uuid"
 )
 
 // CreateTeam is the resolver for the createTeam field.
@@ -35,13 +36,17 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 // CreateProject is the resolver for the createProject field.
 func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceLanguage database.SupportedLanguage, targetLanguage database.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
+
+	fileName := sourceMedia.Filename + uuid.NewString() + ".mp4"
+	r.Storage.Upload(fileName, sourceMedia.File)
+
 	project, _ := r.DB.CreateProject(ctx, database.CreateProjectParams{
 		TeamID:         team.ID,
 		Title:          title,
 		SourceLanguage: sourceLanguage,
 		TargetLanguage: targetLanguage,
-		SourceMedia:    sourceMedia.Filename,
-		TargetMedia:    sourceMedia.Filename,
+		SourceMedia:    fileName,
+		TargetMedia:    fileName,
 	})
 
 	return project, nil

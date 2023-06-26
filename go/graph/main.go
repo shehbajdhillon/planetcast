@@ -7,6 +7,7 @@ import (
 	"log"
 	"planetcastdev/auth"
 	"planetcastdev/database"
+	"planetcastdev/storage"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -16,9 +17,9 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 )
 
-func GenerateServer(queries *database.Queries) *handler.Server {
+func GenerateServer(queries *database.Queries, storage *storage.Storage) *handler.Server {
 
-	gqlConfig := Config{Resolvers: &Resolver{DB: queries}}
+	gqlConfig := Config{Resolvers: &Resolver{DB: queries, Storage: storage}}
 
 	gqlConfig.Directives.LoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 		if isLoggedIn(ctx) == false {

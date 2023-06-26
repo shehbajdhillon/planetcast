@@ -1,6 +1,9 @@
 package graph
 
-import "planetcastdev/database"
+import (
+	"planetcastdev/database"
+	"planetcastdev/storage"
+)
 
 //go:generate go run github.com/99designs/gqlgen generate
 
@@ -9,5 +12,6 @@ import "planetcastdev/database"
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	DB *database.Queries
+	DB      *database.Queries
+	Storage *storage.Storage
 }

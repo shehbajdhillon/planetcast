@@ -7,6 +7,7 @@ import (
 	"planetcastdev/auth"
 	"planetcastdev/database"
 	"planetcastdev/graph"
+	"planetcastdev/storage"
 
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
@@ -31,6 +32,8 @@ func main() {
 
 	production := os.Getenv("PRODUCTION")
 
+	Storage := storage.Connect()
+
 	router := chi.NewRouter()
 	router.Use(auth.Middleware())
 	router.Use(cors.New(cors.Options{
@@ -42,7 +45,7 @@ func main() {
 
 	Database := database.Connect()
 
-	srv := graph.GenerateServer(Database)
+	srv := graph.GenerateServer(Database, Storage)
 	router.Handle("/", srv)
 
 	if production == "" {
