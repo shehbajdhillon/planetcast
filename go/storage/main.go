@@ -55,6 +55,7 @@ func Connect() *Storage {
 func (s *Storage) Upload(fileName string, file io.ReadSeeker) {
 
 	AWS_VIDEO_UPLOAD_BUCKET := os.Getenv("AWS_VIDEO_UPLOAD_BUCKET")
+	file.Seek(0, io.SeekStart)
 
 	//write input to s3
 	_, err := s.uploader.Upload(&s3manager.UploadInput{

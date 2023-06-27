@@ -8,6 +8,7 @@ import (
 	"context"
 	"planetcastdev/auth"
 	"planetcastdev/database"
+	"planetcastdev/dubbing"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/google/uuid"
@@ -37,8 +38,11 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceLanguage database.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 
-	fileName := sourceMedia.Filename + uuid.NewString() + ".mp4"
+	fileNameIdentifier := sourceMedia.Filename + uuid.NewString()
+	fileName := fileNameIdentifier + ".mp4"
+
 	r.Storage.Upload(fileName, sourceMedia.File)
+	go dubbing.Dub(sourceLanguage, sourceLanguage, fileNameIdentifier, sourceMedia.File)
 
 	project, _ := r.DB.CreateProject(ctx, database.CreateProjectParams{
 		TeamID:         team.ID,
