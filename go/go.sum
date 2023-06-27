@@ -60,6 +60,8 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.2 h1:+h33VjcLVPDHtOdpUCuF+7gSuG3yGIftsP1YvFihtJ8=
+github.com/tabbed/pqtype v0.1.1 h1:PhEcb9JZ8jr7SUjJDFjRPxny0M8fkXZrxn/a9yQfoZg=
+github.com/tabbed/pqtype v0.1.1/go.mod h1:HLt2kLJPcUhODQkYn3mJkMHXVsuv3Z2n5NZEeKXL0Uk=
 github.com/urfave/cli/v2 v2.25.5 h1:d0NIAyhh5shGscroL7ek/Ya9QYQE0KNabJgiUinIQkc=
 github.com/urfave/cli/v2 v2.25.5/go.mod h1:GHupkWPMM0M/sj1a2b4wUrWBPzazNrIjouW6fmdJLxc=
 github.com/vektah/gqlparser/v2 v2.5.3 h1:goUwv4+blhtwR3GwefadPVI4ubYc/WZSypljWMQa6IE=

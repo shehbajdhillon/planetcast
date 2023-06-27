@@ -41,15 +41,17 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 	fileNameIdentifier := sourceMedia.Filename + uuid.NewString()
 	fileName := fileNameIdentifier + ".mp4"
 
-	r.Storage.Upload(fileName, sourceMedia.File)
-	go dubbing.Dub(sourceLanguage, sourceLanguage, fileNameIdentifier, sourceMedia.File)
-
 	project, _ := r.DB.CreateProject(ctx, database.CreateProjectParams{
 		TeamID:         team.ID,
 		Title:          title,
 		SourceLanguage: sourceLanguage,
 		SourceMedia:    fileName,
 	})
+
+	r.Storage.Upload(fileName, sourceMedia.File)
+
+	newCtx := context.Background()
+	go dubbing.CreateTransformation(newCtx, project.ID, sourceLanguage, fileNameIdentifier, sourceMedia.File, r.DB)
 
 	return project, nil
 }

@@ -8,6 +8,8 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"time"
+
+	"github.com/tabbed/pqtype"
 )
 
 type MembershipType string
@@ -159,6 +161,14 @@ type TeamMembership struct {
 	UserID         int64
 	MembershipType MembershipType
 	Created        time.Time
+}
+
+type Transformation struct {
+	ID             int64
+	ProjectID      int64
+	TargetLanguage SupportedLanguage
+	TargetMedia    string
+	Transcript     pqtype.NullRawMessage
 }
 
 type Userinfo struct {

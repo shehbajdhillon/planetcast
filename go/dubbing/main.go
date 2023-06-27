@@ -1,29 +1,30 @@
 package dubbing
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
 	"log"
 	"os/exec"
 	"planetcastdev/database"
+
+	"github.com/tabbed/pqtype"
 )
 
 type WhisperOutput struct {
-	Text     string    `json:"text"`
 	Language string    `json:"language"`
 	Segments []Segment `json:"segments"`
 }
 
 type Segment struct {
 	Id    int64   `json:"id"`
-	Seek  int64   `json:"seek"`
 	Start float64 `json:"start"`
 	End   float64 `json:"end"`
 	Text  string  `json:"text"`
 }
 
-func Dub(sourceLanguage database.SupportedLanguage, targetLanguage database.SupportedLanguage, fileNameIdentifier string, file io.ReadSeeker) {
+func getTranscript(fileNameIdentifier string, file io.ReadSeeker) WhisperOutput {
 
 	file.Seek(0, io.SeekStart)
 
@@ -58,5 +59,24 @@ func Dub(sourceLanguage database.SupportedLanguage, targetLanguage database.Supp
 
 	log.Println(whisperOutput.Segments)
 
-	//get whisper output and parse it
+	return whisperOutput
+}
+
+func CreateTransformation(ctx context.Context, projectId int64, targetLanguage database.SupportedLanguage, fileNameIdentifier string, file io.ReadSeeker, queries *database.Queries) (database.Transformation, error) {
+	transcript := getTranscript(fileNameIdentifier, file)
+	jsonBytes, err := json.Marshal(transcript)
+
+	transformation, err := queries.CreateTransformation(ctx, database.CreateTransformationParams{
+		ProjectID:      projectId,
+		TargetLanguage: targetLanguage,
+		TargetMedia:    "",
+		Transcript:     pqtype.NullRawMessage{RawMessage: jsonBytes, Valid: true},
+	})
+
+	if err != nil {
+		log.Println("Error occured:", err.Error())
+		return database.Transformation{}, err
+	}
+
+	return transformation, nil
 }

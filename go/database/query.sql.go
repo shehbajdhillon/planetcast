@@ -7,6 +7,8 @@ package database
 
 import (
 	"context"
+
+	"github.com/tabbed/pqtype"
 )
 
 const addTeamMembership = `-- name: AddTeamMembership :one
@@ -101,6 +103,35 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 		&i.Name,
 		&i.TeamType,
 		&i.Created,
+	)
+	return i, err
+}
+
+const createTransformation = `-- name: CreateTransformation :one
+INSERT INTO transformation (project_id, target_language, target_media, transcript) VALUES ($1, $2, $3, $4) RETURNING id, project_id, target_language, target_media, transcript
+`
+
+type CreateTransformationParams struct {
+	ProjectID      int64
+	TargetLanguage SupportedLanguage
+	TargetMedia    string
+	Transcript     pqtype.NullRawMessage
+}
+
+func (q *Queries) CreateTransformation(ctx context.Context, arg CreateTransformationParams) (Transformation, error) {
+	row := q.db.QueryRowContext(ctx, createTransformation,
+		arg.ProjectID,
+		arg.TargetLanguage,
+		arg.TargetMedia,
+		arg.Transcript,
+	)
+	var i Transformation
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.TargetLanguage,
+		&i.TargetMedia,
+		&i.Transcript,
 	)
 	return i, err
 }
@@ -311,6 +342,50 @@ func (q *Queries) GetUserById(ctx context.Context, id int64) (Userinfo, error) {
 		&i.Email,
 		&i.FullName,
 		&i.Created,
+	)
+	return i, err
+}
+
+const updateTargetMediaById = `-- name: UpdateTargetMediaById :one
+UPDATE transformation SET target_media = $2 WHERE project_id = $1 RETURNING id, project_id, target_language, target_media, transcript
+`
+
+type UpdateTargetMediaByIdParams struct {
+	ProjectID   int64
+	TargetMedia string
+}
+
+func (q *Queries) UpdateTargetMediaById(ctx context.Context, arg UpdateTargetMediaByIdParams) (Transformation, error) {
+	row := q.db.QueryRowContext(ctx, updateTargetMediaById, arg.ProjectID, arg.TargetMedia)
+	var i Transformation
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.TargetLanguage,
+		&i.TargetMedia,
+		&i.Transcript,
+	)
+	return i, err
+}
+
+const updateTranscriptById = `-- name: UpdateTranscriptById :one
+UPDATE transformation SET transcript = $2 WHERE project_id = $1 RETURNING id, project_id, target_language, target_media, transcript
+`
+
+type UpdateTranscriptByIdParams struct {
+	ProjectID  int64
+	Transcript pqtype.NullRawMessage
+}
+
+func (q *Queries) UpdateTranscriptById(ctx context.Context, arg UpdateTranscriptByIdParams) (Transformation, error) {
+	row := q.db.QueryRowContext(ctx, updateTranscriptById, arg.ProjectID, arg.Transcript)
+	var i Transformation
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.TargetLanguage,
+		&i.TargetMedia,
+		&i.Transcript,
 	)
 	return i, err
 }

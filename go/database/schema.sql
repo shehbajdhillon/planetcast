@@ -41,3 +41,12 @@ CREATE TABLE project (
   source_language SUPPORTED_LANGUAGE NOT NULL,
   source_media TEXT NOT NULL
 );
+
+DROP TABLE IF EXISTS transformation CASCADE;
+CREATE TABLE transformation (
+  id BIGSERIAL PRIMARY KEY NOT NULL,
+  project_id BIGINT REFERENCES project (id) ON DELETE CASCADE NOT NULL,
+  target_language SUPPORTED_LANGUAGE NOT NULL,
+  target_media TEXT NOT NULL,
+  transcript jsonb
+);
