@@ -155,7 +155,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
             alt='planet cast logo'
           />
 
-          { teamSlug &&
+          { teamSlug && teams &&
             <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4} h="full">
               <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
               {teams?.filter((team: Team) => team.slug === teamSlug).map((team: Team, idx: number) => (
@@ -195,7 +195,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
             </HStack>
           }
 
-          { projectId &&
+          { projectId && projects &&
             <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4} h="full">
               <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
               {projects?.filter((project: Project) => project.id === projectId).map((project: Project, idx: number) => (
