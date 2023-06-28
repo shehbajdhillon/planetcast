@@ -4,11 +4,11 @@
 }
 
 :root {
-  --bar-bg-color: #000
+  --bar-bg-color: linear-gradient(to left, #007CF0, #01DFD8)
 }
 
 [data-theme="dark"] {
-  --bar-bg-color: #fff
+  --bar-bg-color: linear-gradient(to left, #007CF0, #01DFD8)
 }
 
 #nprogress .bar {
