@@ -187,7 +187,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
                       >
                         {team.name}
                       </MenuItem>
-                      <MenuDivider />
+                      { idx < teams.length - 1 && <MenuDivider /> }
                     </Box>
                   ))}
                 </MenuList>
@@ -227,7 +227,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
                       >
                         {project.title}
                       </MenuItem>
-                      <MenuDivider />
+                      { idx < projects.length - 1 && <MenuDivider /> }
                     </Box>
                   ))}
                 </MenuList>
