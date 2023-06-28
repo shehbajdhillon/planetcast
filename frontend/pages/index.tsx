@@ -11,6 +11,7 @@ import {
 import Head from 'next/head'
 
 import useWindowDimensions from '@/hooks/useWindowDimensions';
+import Image from 'next/image';
 
 const HeroSection: React.FC = () => {
   return (
@@ -18,14 +19,49 @@ const HeroSection: React.FC = () => {
       spacing={"25px"}
       display={"flex"}
       alignItems={{ base: "center" }}
+      direction={{ base: "column-reverse", md: "row" }}
+      maxW={"1920px"}
+      mx={"10px"}
     >
-      <Box>
+      <Box
+        w="full"
+        maxW={{ md: "75%" }}
+        alignItems={{ base: "center", md: "left" }}
+        justifyContent={{ base: "center", md: "left" }}
+        display={"flex"}
+        flexDir={"column"}
+      >
         <Heading
-          size={"4xl"}
-          textAlign={"center"}
+          size={{ base: '3xl', md: "4xl" }}
+          textAlign={{ base: "center", md: "left" }}
           fontWeight={"semibold"}
+          w={{ md: "full" }}
         >
-          Broadcast Content Across the {' '}
+          Dub
+        </Heading>
+        <Heading
+          size={{ base: '3xl', md: "4xl" }}
+          textAlign={{ base: "center", md: "left" }}
+          fontWeight={"semibold"}
+          w={{ md: "full" }}
+        >
+          Translate
+        </Heading>
+        <Heading
+          size={{ base: '3xl', md: "4xl" }}
+          textAlign={{ base: "center", md: "left" }}
+          fontWeight={"semibold"}
+          w={{ md: "full" }}
+        >
+          Broadcast
+        </Heading>
+        <Heading
+          size={{ base: '3xl', md: "4xl" }}
+          textAlign={{ base: "center", md: "left" }}
+          fontWeight={"semibold"}
+          w={{ md: "full" }}
+        >
+          Content Across the {' '}
           <Text
             as={"span"}
             bgGradient={'linear(to-tr, #007CF0, #01DFD8)'}
@@ -34,33 +70,41 @@ const HeroSection: React.FC = () => {
             Planet
           </Text>
         </Heading>
+        <HStack w={{ md: "full" }} pt="10px">
+          <Button
+            size={"lg"}
+            backgroundColor={useColorModeValue("black", "white")}
+            textColor={useColorModeValue("white", "black")}
+            borderColor={useColorModeValue("black", "white")}
+            borderWidth={"1px"}
+            _hover={{
+              backgroundColor: useColorModeValue("white", "black"),
+              textColor: useColorModeValue("black", "white")
+            }}
+          >
+            Try for Free
+          </Button>
+          <Button
+            size={"lg"}
+            variant={"outline"}
+            _hover={{
+              backgroundColor: useColorModeValue("black", "white:"),
+              textColor: useColorModeValue("white", "black"),
+              bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
+            }}
+          >
+            Read More
+          </Button>
+        </HStack>
       </Box>
-      <HStack>
-        <Button
-          size={"lg"}
-          backgroundColor={useColorModeValue("black", "white")}
-          textColor={useColorModeValue("white", "black")}
-          borderColor={useColorModeValue("black", "white")}
-          borderWidth={"1px"}
-          _hover={{
-            backgroundColor: useColorModeValue("white", "black"),
-            textColor: useColorModeValue("black", "white")
-          }}
-        >
-          Try for Free
-        </Button>
-        <Button
-          size={"lg"}
-          variant={"outline"}
-          _hover={{
-            backgroundColor: useColorModeValue("black", "white:"),
-            textColor: useColorModeValue("white", "black"),
-            bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
-          }}
-        >
-          Read More
-        </Button>
-      </HStack>
+      <Box maxW={{ base: "200px", md: "25%" }}>
+        <Image
+          height={1000}
+          width={400}
+          src={useColorModeValue('/planetcastgradientlight.svg', '/planetcastgradientdark.svg')}
+          alt='planet cast gradient logo'
+        />
+      </Box>
     </Stack>
   );
 };
