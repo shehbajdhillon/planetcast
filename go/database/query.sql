@@ -51,3 +51,12 @@ UPDATE transformation SET transcript = $2 WHERE project_id = $1 RETURNING *;
 
 -- name: UpdateTargetMediaById :one
 UPDATE transformation SET target_media = $2 WHERE project_id = $1 RETURNING *;
+
+-- name: GetTransformationById :one
+SELECT * FROM transformation WHERE id = $1 LIMIT 1;
+
+-- name: GetTransformationsByProjectId :many
+SELECT * FROM transformation WHERE project_id = $1;
+
+-- name: GetTransformationByTransformationIdProjectId :one
+SELECT * FROM transformation WHERE id = $1 AND project_id = $2 LIMIT 1;

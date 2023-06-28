@@ -25,6 +25,15 @@ type Project {
   title: String!
   sourceLanguage: SupportedLanguage!
   sourceMedia: String!
+  transformations(transformationId: Int64): [Transformation!]!
+}
+
+type Transformation {
+  id: Int64!
+  projectId: Int64!
+  targetLanguage: SupportedLanguage!
+  targetMedia: String!
+  transcript: String!
 }
 
 type Userinfo {

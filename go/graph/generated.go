@@ -38,8 +38,10 @@ type Config struct {
 
 type ResolverRoot interface {
 	Mutation() MutationResolver
+	Project() ProjectResolver
 	Query() QueryResolver
 	Team() TeamResolver
+	Transformation() TransformationResolver
 }
 
 type DirectiveRoot struct {
@@ -56,11 +58,12 @@ type ComplexityRoot struct {
 	}
 
 	Project struct {
-		ID             func(childComplexity int) int
-		SourceLanguage func(childComplexity int) int
-		SourceMedia    func(childComplexity int) int
-		TeamID         func(childComplexity int) int
-		Title          func(childComplexity int) int
+		ID              func(childComplexity int) int
+		SourceLanguage  func(childComplexity int) int
+		SourceMedia     func(childComplexity int) int
+		TeamID          func(childComplexity int) int
+		Title           func(childComplexity int) int
+		Transformations func(childComplexity int, transformationID *int64) int
 	}
 
 	Query struct {
@@ -77,6 +80,14 @@ type ComplexityRoot struct {
 		TeamType func(childComplexity int) int
 	}
 
+	Transformation struct {
+		ID             func(childComplexity int) int
+		ProjectID      func(childComplexity int) int
+		TargetLanguage func(childComplexity int) int
+		TargetMedia    func(childComplexity int) int
+		Transcript     func(childComplexity int) int
+	}
+
 	Userinfo struct {
 		Email    func(childComplexity int) int
 		FullName func(childComplexity int) int
@@ -89,6 +100,9 @@ type MutationResolver interface {
 	CreateProject(ctx context.Context, teamSlug string, title string, sourceLanguage database.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error)
 	DeleteProject(ctx context.Context, projectID int64) (database.Project, error)
 }
+type ProjectResolver interface {
+	Transformations(ctx context.Context, obj *database.Project, transformationID *int64) ([]database.Transformation, error)
+}
 type QueryResolver interface {
 	GetTeams(ctx context.Context) ([]database.Team, error)
 	GetTeamByID(ctx context.Context, teamSlug string) (database.Team, error)
@@ -96,6 +110,9 @@ type QueryResolver interface {
 type TeamResolver interface {
 	Created(ctx context.Context, obj *database.Team) (string, error)
 	Projects(ctx context.Context, obj *database.Team, projectID *int64) ([]database.Project, error)
+}
+type TransformationResolver interface {
+	Transcript(ctx context.Context, obj *database.Transformation) (string, error)
 }
 
 type executableSchema struct {
@@ -184,6 +201,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Project.Title(childComplexity), true
 
+	case "Project.transformations":
+		if e.complexity.Project.Transformations == nil {
+			break
+		}
+
+		args, err := ec.field_Project_transformations_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Project.Transformations(childComplexity, args["transformationId"].(*int64)), true
+
 	case "Query.getTeamById":
 		if e.complexity.Query.GetTeamByID == nil {
 			break
@@ -249,6 +278,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Team.TeamType(childComplexity), true
+
+	case "Transformation.id":
+		if e.complexity.Transformation.ID == nil {
+			break
+		}
+
+		return e.complexity.Transformation.ID(childComplexity), true
+
+	case "Transformation.projectId":
+		if e.complexity.Transformation.ProjectID == nil {
+			break
+		}
+
+		return e.complexity.Transformation.ProjectID(childComplexity), true
+
+	case "Transformation.targetLanguage":
+		if e.complexity.Transformation.TargetLanguage == nil {
+			break
+		}
+
+		return e.complexity.Transformation.TargetLanguage(childComplexity), true
+
+	case "Transformation.targetMedia":
+		if e.complexity.Transformation.TargetMedia == nil {
+			break
+		}
+
+		return e.complexity.Transformation.TargetMedia(childComplexity), true
+
+	case "Transformation.transcript":
+		if e.complexity.Transformation.Transcript == nil {
+			break
+		}
+
+		return e.complexity.Transformation.Transcript(childComplexity), true
 
 	case "Userinfo.email":
 		if e.complexity.Userinfo.Email == nil {
@@ -510,6 +574,21 @@ func (ec *executionContext) field_Mutation_deleteProject_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Project_transformations_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int64
+	if tmp, ok := rawArgs["transformationId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transformationId"))
+		arg0, err = ec.unmarshalOInt642ᚖint64(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["transformationId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -764,6 +843,8 @@ func (ec *executionContext) fieldContext_Mutation_createProject(ctx context.Cont
 				return ec.fieldContext_Project_sourceLanguage(ctx, field)
 			case "sourceMedia":
 				return ec.fieldContext_Project_sourceMedia(ctx, field)
+			case "transformations":
+				return ec.fieldContext_Project_transformations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Project", field.Name)
 		},
@@ -851,6 +932,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteProject(ctx context.Cont
 				return ec.fieldContext_Project_sourceLanguage(ctx, field)
 			case "sourceMedia":
 				return ec.fieldContext_Project_sourceMedia(ctx, field)
+			case "transformations":
+				return ec.fieldContext_Project_transformations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Project", field.Name)
 		},
@@ -1085,6 +1168,73 @@ func (ec *executionContext) fieldContext_Project_sourceMedia(ctx context.Context
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Project_transformations(ctx context.Context, field graphql.CollectedField, obj *database.Project) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Project_transformations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Project().Transformations(rctx, obj, fc.Args["transformationId"].(*int64))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]database.Transformation)
+	fc.Result = res
+	return ec.marshalNTransformation2ᚕplanetcastdevᚋdatabaseᚐTransformationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Project_transformations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Project",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Transformation_id(ctx, field)
+			case "projectId":
+				return ec.fieldContext_Transformation_projectId(ctx, field)
+			case "targetLanguage":
+				return ec.fieldContext_Transformation_targetLanguage(ctx, field)
+			case "targetMedia":
+				return ec.fieldContext_Transformation_targetMedia(ctx, field)
+			case "transcript":
+				return ec.fieldContext_Transformation_transcript(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Transformation", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Project_transformations_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -1654,6 +1804,8 @@ func (ec *executionContext) fieldContext_Team_projects(ctx context.Context, fiel
 				return ec.fieldContext_Project_sourceLanguage(ctx, field)
 			case "sourceMedia":
 				return ec.fieldContext_Project_sourceMedia(ctx, field)
+			case "transformations":
+				return ec.fieldContext_Project_transformations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Project", field.Name)
 		},
@@ -1668,6 +1820,226 @@ func (ec *executionContext) fieldContext_Team_projects(ctx context.Context, fiel
 	if fc.Args, err = ec.field_Team_projects_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Transformation_id(ctx context.Context, field graphql.CollectedField, obj *database.Transformation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Transformation_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt642int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Transformation_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Transformation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int64 does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Transformation_projectId(ctx context.Context, field graphql.CollectedField, obj *database.Transformation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Transformation_projectId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProjectID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt642int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Transformation_projectId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Transformation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int64 does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Transformation_targetLanguage(ctx context.Context, field graphql.CollectedField, obj *database.Transformation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Transformation_targetLanguage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TargetLanguage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(database.SupportedLanguage)
+	fc.Result = res
+	return ec.marshalNSupportedLanguage2planetcastdevᚋdatabaseᚐSupportedLanguage(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Transformation_targetLanguage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Transformation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type SupportedLanguage does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Transformation_targetMedia(ctx context.Context, field graphql.CollectedField, obj *database.Transformation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Transformation_targetMedia(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TargetMedia, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Transformation_targetMedia(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Transformation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Transformation_transcript(ctx context.Context, field graphql.CollectedField, obj *database.Transformation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Transformation_transcript(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Transformation().Transcript(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Transformation_transcript(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Transformation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -3662,28 +4034,64 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 		case "id":
 			out.Values[i] = ec._Project_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "teamId":
 			out.Values[i] = ec._Project_teamId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "title":
 			out.Values[i] = ec._Project_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "sourceLanguage":
 			out.Values[i] = ec._Project_sourceLanguage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "sourceMedia":
 			out.Values[i] = ec._Project_sourceMedia(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "transformations":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Project_transformations(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3878,6 +4286,96 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Team_projects(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var transformationImplementors = []string{"Transformation"}
+
+func (ec *executionContext) _Transformation(ctx context.Context, sel ast.SelectionSet, obj *database.Transformation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, transformationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Transformation")
+		case "id":
+			out.Values[i] = ec._Transformation_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "projectId":
+			out.Values[i] = ec._Transformation_projectId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "targetLanguage":
+			out.Values[i] = ec._Transformation_targetLanguage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "targetMedia":
+			out.Values[i] = ec._Transformation_targetMedia(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "transcript":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Transformation_transcript(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -4488,6 +4986,54 @@ func (ec *executionContext) marshalNTeamType2planetcastdevᚋdatabaseᚐTeamType
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNTransformation2planetcastdevᚋdatabaseᚐTransformation(ctx context.Context, sel ast.SelectionSet, v database.Transformation) graphql.Marshaler {
+	return ec._Transformation(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTransformation2ᚕplanetcastdevᚋdatabaseᚐTransformationᚄ(ctx context.Context, sel ast.SelectionSet, v []database.Transformation) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTransformation2planetcastdevᚋdatabaseᚐTransformation(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (graphql.Upload, error) {

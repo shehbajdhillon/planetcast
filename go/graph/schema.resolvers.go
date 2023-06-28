@@ -62,6 +62,20 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (
 	return project, nil
 }
 
+// Transformations is the resolver for the transformations field.
+func (r *projectResolver) Transformations(ctx context.Context, obj *database.Project, transformationID *int64) ([]database.Transformation, error) {
+	if transformationID != nil {
+		transformation, _ := r.DB.GetTransformationByTransformationIdProjectId(ctx, database.GetTransformationByTransformationIdProjectIdParams{
+			ID:        *transformationID,
+			ProjectID: obj.ID,
+		})
+		return []database.Transformation{transformation}, nil
+	}
+
+	transformations, _ := r.DB.GetTransformationsByProjectId(ctx, obj.ID)
+	return transformations, nil
+}
+
 // GetTeams is the resolver for the getTeams field.
 func (r *queryResolver) GetTeams(ctx context.Context) ([]database.Team, error) {
 	teams := []database.Team{}
@@ -111,8 +125,17 @@ func (r *teamResolver) Projects(ctx context.Context, obj *database.Team, project
 	return filteredProject, nil
 }
 
+// Transcript is the resolver for the transcript field.
+func (r *transformationResolver) Transcript(ctx context.Context, obj *database.Transformation) (string, error) {
+	jsonBytes := obj.Transcript.RawMessage
+	return string(jsonBytes), nil
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
+// Project returns ProjectResolver implementation.
+func (r *Resolver) Project() ProjectResolver { return &projectResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
@@ -120,6 +143,11 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
+// Transformation returns TransformationResolver implementation.
+func (r *Resolver) Transformation() TransformationResolver { return &transformationResolver{r} }
+
 type mutationResolver struct{ *Resolver }
+type projectResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type teamResolver struct{ *Resolver }
+type transformationResolver struct{ *Resolver }

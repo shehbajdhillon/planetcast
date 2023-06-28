@@ -314,6 +314,78 @@ func (q *Queries) GetTeamMemebershipsByUserId(ctx context.Context, userID int64)
 	return items, nil
 }
 
+const getTransformationById = `-- name: GetTransformationById :one
+SELECT id, project_id, target_language, target_media, transcript FROM transformation WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetTransformationById(ctx context.Context, id int64) (Transformation, error) {
+	row := q.db.QueryRowContext(ctx, getTransformationById, id)
+	var i Transformation
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.TargetLanguage,
+		&i.TargetMedia,
+		&i.Transcript,
+	)
+	return i, err
+}
+
+const getTransformationByTransformationIdProjectId = `-- name: GetTransformationByTransformationIdProjectId :one
+SELECT id, project_id, target_language, target_media, transcript FROM transformation WHERE id = $1 AND project_id = $2 LIMIT 1
+`
+
+type GetTransformationByTransformationIdProjectIdParams struct {
+	ID        int64
+	ProjectID int64
+}
+
+func (q *Queries) GetTransformationByTransformationIdProjectId(ctx context.Context, arg GetTransformationByTransformationIdProjectIdParams) (Transformation, error) {
+	row := q.db.QueryRowContext(ctx, getTransformationByTransformationIdProjectId, arg.ID, arg.ProjectID)
+	var i Transformation
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.TargetLanguage,
+		&i.TargetMedia,
+		&i.Transcript,
+	)
+	return i, err
+}
+
+const getTransformationsByProjectId = `-- name: GetTransformationsByProjectId :many
+SELECT id, project_id, target_language, target_media, transcript FROM transformation WHERE project_id = $1
+`
+
+func (q *Queries) GetTransformationsByProjectId(ctx context.Context, projectID int64) ([]Transformation, error) {
+	rows, err := q.db.QueryContext(ctx, getTransformationsByProjectId, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Transformation
+	for rows.Next() {
+		var i Transformation
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProjectID,
+			&i.TargetLanguage,
+			&i.TargetMedia,
+			&i.Transcript,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, email, full_name, created FROM userinfo WHERE email = $1 LIMIT 1
 `
