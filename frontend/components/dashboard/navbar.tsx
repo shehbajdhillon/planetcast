@@ -163,8 +163,8 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
                   <Text
                     noOfLines={1}
                     maxWidth={{
-                      base: "25px",
-                      sm: "80px",
+                      base: projectId ? "33px" : "157px",
+                      sm: projectId ? "116px" : "232px",
                       md: "500px",
                     }}
                   >
@@ -203,8 +203,8 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
                   <Text
                     noOfLines={1}
                     maxWidth={{
-                      base: "25px",
-                      sm: "80px",
+                      base: "33px",
+                      sm: "116px",
                       md: "500px",
                     }}
                   >
