@@ -16,7 +16,6 @@ import Image from 'next/image';
 const HeroSection: React.FC = () => {
   return (
     <Stack
-      spacing={"25px"}
       display={"flex"}
       alignItems={{ base: "center" }}
       direction={{ base: "column-reverse", md: "row" }}
@@ -129,7 +128,6 @@ export default function Home() {
         justifyContent={"center"}
         flexDir={"column"}
         height={height}
-        p="10px"
       >
         <Box
           h="full"
