@@ -53,7 +53,7 @@ interface VideoPlayerProps {
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ src }) => {
   const playerRef = useRef<Player | null>(null);
   const videoJsOptions = {
-    autoplay: true,
+    autoplay: false,
     controls: true,
     responsive: true,
     fluid: true,

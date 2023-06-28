@@ -1,5 +1,5 @@
 import Navbar from "@/components/dashboard/navbar";
-import { Project, Team } from "@/types";
+import { Project, Segment, Team } from "@/types";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import {
   Box,
@@ -7,9 +7,9 @@ import {
   Center,
   Grid,
   GridItem,
-  Heading,
   Spinner,
   Text,
+  VStack,
   useColorModeValue,
 } from "@chakra-ui/react";
 import { GetServerSideProps, NextPage } from "next";
@@ -25,6 +25,7 @@ import {
 } from '@chakra-ui/react';
 import { useRouter } from "next/router";
 import VideoPlayer from "@/components/video_player";
+import useWindowDimensions from "@/hooks/useWindowDimensions";
 
 
 const DELETE_PROJECT = gql`
@@ -74,7 +75,28 @@ interface ProjectTabProps {
   teamSlug: string;
 };
 
-const ProjectTab: React.FC<ProjectTabProps> = ({ project }) => {
+const GET_TRANSCRIPT = gql`
+  query GetTranscript($teamSlug: String!, $projectId: Int64!) {
+    getTeamById(teamSlug: $teamSlug) {
+      projects(projectId: $projectId) {
+        transformations {
+          id
+          transcript
+        }
+      }
+    }
+  }
+`;
+
+const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
+
+  const { data }
+    = useQuery(GET_TRANSCRIPT, { variables: { teamSlug, projectId: project.id } });
+
+  const transcript = data?.getTeamById?.projects?.[0].transformations?.[0]?.transcript
+  const parseTranscript = transcript && JSON.parse(transcript)
+
+  const { height } = useWindowDimensions();
 
   return (
     <Box
@@ -103,10 +125,20 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project }) => {
             <VideoPlayer src={project?.sourceMedia} />
           </GridItem>
 
-          <GridItem area={'transcript'} h="full" w="full" borderWidth={"1px"} rounded="lg">
-            <Center h="full">
-              <Button> Generate Transcript </Button>
-            </Center>
+          <GridItem area={'transcript'} h="full" w="full" borderWidth={"1px"} rounded="lg" maxH={(height as number) - 200} hidden={!parseTranscript}>
+            <VStack overflow={"auto"} p="10px" h="full">
+              {parseTranscript?.segments.map((segment: Segment, idx: number) => (
+                <Text
+                  w="full"
+                  borderWidth={"1px"}
+                  rounded="lg"
+                  p="10px"
+                  key={idx}
+                >
+                  { segment.text.trim() }
+                </Text>
+              ))}
+            </VStack>
           </GridItem>
 
         </Grid>

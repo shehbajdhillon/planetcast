@@ -15,6 +15,13 @@ export interface Project {
   sourceMedia: string;
 };
 
+export interface Segment {
+  id: number;
+  start: number;
+  end: number;
+  text: string;
+};
+
 export const SupportedLanguages = ["ENGLISH", "HINDI"] as const;
 
 export type SupportedLanguage = typeof SupportedLanguages[number];
