@@ -28,7 +28,7 @@ const HeroSection: React.FC = () => {
           Broadcast Content Across the {' '}
           <Text
             as={"span"}
-            bgGradient={'linear(to-tl, orange, red)'}
+            bgGradient={'linear(to-tr, #007CF0, #01DFD8)'}
             bgClip='text'
           >
             Planet
@@ -55,7 +55,7 @@ const HeroSection: React.FC = () => {
           _hover={{
             backgroundColor: useColorModeValue("black", "white:"),
             textColor: useColorModeValue("white", "black"),
-            bgGradient: 'linear(to-tl, orange, red)',
+            bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
           }}
         >
           Read More
