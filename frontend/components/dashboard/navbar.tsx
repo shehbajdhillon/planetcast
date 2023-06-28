@@ -159,7 +159,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
             <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4} h="full">
               <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
               {teams?.filter((team: Team) => team.slug === teamSlug).map((team: Team, idx: number) => (
-                <Link href={`/dashboard/${team.slug}`} key={idx}>
+                <Link href={`/${team.slug}`} key={idx}>
                   <Text
                     noOfLines={1}
                     maxWidth={{
@@ -183,7 +183,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
                           backgroundColor: hoverColor
                         }}
                         key={idx}
-                        onClick={() => router.push(`/dashboard/${team.slug}`)}
+                        onClick={() => router.push(`/${team.slug}`)}
                       >
                         {team.name}
                       </MenuItem>
@@ -199,7 +199,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
             <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4} h="full">
               <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
               {projects?.filter((project: Project) => project.id === projectId).map((project: Project, idx: number) => (
-                <Link href={`/dashboard/${teamSlug}/${projectId}`} key={idx}>
+                <Link href={`/${teamSlug}/${projectId}`} key={idx}>
                   <Text
                     noOfLines={1}
                     maxWidth={{
@@ -223,7 +223,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
                           backgroundColor: hoverColor
                         }}
                         key={idx}
-                        onClick={() => router.push(`/dashboard/${teamSlug}/${project.id}`)}
+                        onClick={() => router.push(`/${teamSlug}/${project.id}`)}
                       >
                         {project.title}
                       </MenuItem>

@@ -53,7 +53,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   return {
     redirect: {
       permanent: false,
-      destination: `dashboard/${teams[0].slug}`
+      destination: `${teams[0].slug}`
     },
     props: { teams }
   }

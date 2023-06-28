@@ -34,7 +34,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
         bg: useColorModeValue('white', 'whiteAlpha.100'),
       }}
       cursor={"pointer"}
-      onClick={() => router.push(`/dashboard/${teamSlug}/${projectId}`)}
+      onClick={() => router.push(`/${teamSlug}/${projectId}`)}
     >
       <HStack>
         <Text

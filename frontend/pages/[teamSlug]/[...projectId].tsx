@@ -49,7 +49,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ projectId, teamSlug }) => {
 
   const deleteProject = async () => {
     const res = await deleteProjectMutation({ variables: { projectId } });
-    if (res) router.push(`/dashboard/${teamSlug}`);
+    if (res) router.push(`/${teamSlug}`);
   };
 
   return (
