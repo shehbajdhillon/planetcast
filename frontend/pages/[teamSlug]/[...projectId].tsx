@@ -92,7 +92,7 @@ const GET_TRANSCRIPT = gql`
 const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
 
   const { data }
-    = useQuery(GET_TRANSCRIPT, { variables: { teamSlug, projectId: project.id } });
+    = useQuery(GET_TRANSCRIPT, { variables: { teamSlug, projectId: project?.id } });
 
   const transcript = data?.getTeamById?.projects?.[0].transformations?.[0]?.transcript
   const parseTranscript = transcript && JSON.parse(transcript)
@@ -226,7 +226,7 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
             </Box>
             <TabPanels overflow={'auto'} pt={10}>
               <TabPanel>
-                <ProjectTab project={currentProject} teamSlug={teamSlug} />
+                { currentProject && <ProjectTab project={currentProject} teamSlug={teamSlug} /> }
               </TabPanel>
               <TabPanel>
                 <SettingsTab projectId={projectId} teamSlug={teamSlug} />
