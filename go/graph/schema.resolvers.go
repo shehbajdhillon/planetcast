@@ -64,16 +64,28 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (
 
 // Transformations is the resolver for the transformations field.
 func (r *projectResolver) Transformations(ctx context.Context, obj *database.Project, transformationID *int64) ([]database.Transformation, error) {
+
+	transformations := []database.Transformation{}
+
 	if transformationID != nil {
 		transformation, _ := r.DB.GetTransformationByTransformationIdProjectId(ctx, database.GetTransformationByTransformationIdProjectIdParams{
 			ID:        *transformationID,
 			ProjectID: obj.ID,
 		})
-		return []database.Transformation{transformation}, nil
+		transformations = []database.Transformation{transformation}
+	} else {
+		transformations, _ = r.DB.GetTransformationsByProjectId(ctx, obj.ID)
 	}
 
-	transformations, _ := r.DB.GetTransformationsByProjectId(ctx, obj.ID)
-	return transformations, nil
+	filteredTransformation := []database.Transformation{}
+	for _, t := range transformations {
+		if len(t.TargetMedia) > 0 {
+			t.TargetMedia = r.Storage.GetFileLink(t.TargetMedia)
+		}
+		filteredTransformation = append(filteredTransformation, t)
+	}
+
+	return filteredTransformation, nil
 }
 
 // GetTeams is the resolver for the getTeams field.

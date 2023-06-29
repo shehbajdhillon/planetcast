@@ -69,7 +69,7 @@ func CreateTransformation(ctx context.Context, projectId int64, targetLanguage d
 	transformation, err := queries.CreateTransformation(ctx, database.CreateTransformationParams{
 		ProjectID:      projectId,
 		TargetLanguage: targetLanguage,
-		TargetMedia:    "",
+		TargetMedia:    fileNameIdentifier + ".mp4",
 		Transcript:     pqtype.NullRawMessage{RawMessage: jsonBytes, Valid: true},
 	})
 
