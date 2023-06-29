@@ -7,6 +7,7 @@ import {
   Center,
   Grid,
   GridItem,
+  Heading,
   Spinner,
   Text,
   VStack,
@@ -96,8 +97,6 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
   const transcript = data?.getTeamById?.projects?.[0].transformations?.[0]?.transcript
   const parseTranscript = transcript && JSON.parse(transcript)
 
-  const { height } = useWindowDimensions();
-
   return (
     <Box
       display={"flex"}
@@ -125,7 +124,13 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
             <VideoPlayer src={project?.sourceMedia} />
           </GridItem>
 
-          <GridItem area={'transcript'} h="full" w="full" borderWidth={"1px"} rounded="lg" maxH={(height as number) - 200} hidden={!parseTranscript}>
+          <GridItem area={'transcript'} h="full" w="full" borderWidth={"1px"} rounded="lg" maxH={"596px"}>
+
+          { !parseTranscript ?
+            <Center h="full">
+              <Heading>Fetching Transcript <Spinner /></Heading>
+            </Center>
+            :
             <VStack overflow={"auto"} p="10px" h="full">
               {parseTranscript?.segments.map((segment: Segment, idx: number) => (
                 <Text
@@ -139,6 +144,7 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
                 </Text>
               ))}
             </VStack>
+          }
           </GridItem>
 
         </Grid>
