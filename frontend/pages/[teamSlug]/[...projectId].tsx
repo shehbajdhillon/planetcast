@@ -103,7 +103,7 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
 
   const transformationsArray = data?.getTeamById?.projects?.[0].transformations;
   const transformation = transformationsArray && transformationsArray[currentTransformation];
-  const parseTranscript = transformation && JSON.parse(transformation.transcript)
+  const parseTranscript = transformation && transformation.transcript && JSON.parse(transformation.transcript)
 
   useEffect(() => {
     console.log({ transformation });
