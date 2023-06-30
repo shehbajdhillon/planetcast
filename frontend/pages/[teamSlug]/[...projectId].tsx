@@ -7,7 +7,9 @@ import {
   Center,
   Grid,
   GridItem,
+  HStack,
   Heading,
+  IconButton,
   Spinner,
   Text,
   VStack,
@@ -26,7 +28,8 @@ import {
 } from '@chakra-ui/react';
 import { useRouter } from "next/router";
 import VideoPlayer from "@/components/video_player";
-import useWindowDimensions from "@/hooks/useWindowDimensions";
+import { useEffect, useState } from "react";
+import { PlusIcon } from "lucide-react";
 
 
 const DELETE_PROJECT = gql`
@@ -82,6 +85,8 @@ const GET_TRANSCRIPT = gql`
       projects(projectId: $projectId) {
         transformations {
           id
+          targetMedia
+          targetLanguage
           transcript
         }
       }
@@ -91,11 +96,26 @@ const GET_TRANSCRIPT = gql`
 
 const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
 
-  const { data }
+  const { data, loading }
     = useQuery(GET_TRANSCRIPT, { variables: { teamSlug, projectId: project?.id } });
 
-  const transcript = data?.getTeamById?.projects?.[0].transformations?.[0]?.transcript
-  const parseTranscript = transcript && JSON.parse(transcript)
+  const [currentTransformation, setCurrentTransformation] = useState(0);
+
+  const transformationsArray = data?.getTeamById?.projects?.[0].transformations;
+  const transformation = transformationsArray && transformationsArray[currentTransformation];
+  const parseTranscript = transformation && JSON.parse(transformation.transcript)
+
+  useEffect(() => {
+    console.log({ transformation });
+  }, [transformation]);
+
+  if (loading) {
+    return (
+      <Center h="full" w="full">
+        <Spinner size={"lg"} />
+      </Center>
+    )
+  }
 
   return (
     <Box
@@ -120,8 +140,21 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
           gap={"10px"}
         >
 
-          <GridItem area={'video'} h="full" w="full" rounded={"lg"}>
-            <VideoPlayer src={project?.sourceMedia} />
+          <GridItem area={'video'} h="full" w="full" rounded={"lg"} maxW={"1280px"}>
+            <VideoPlayer src={transformation?.targetMedia} />
+            <HStack overflow={"auto"} spacing={"10px"} pt="10px">
+              { transformationsArray?.map((t: any, idx: number) => (
+                <Button
+                  key={idx}
+                  onClick={() => setCurrentTransformation(idx)}
+                  variant={idx === currentTransformation ? "solid" : "outline"}
+                  pointerEvents={idx === currentTransformation ? "none" : "auto"}
+                >
+                  {t?.targetLanguage}
+                </Button>
+              ))}
+              <IconButton aria-label="add new dubbing" icon={<PlusIcon />} variant={"ghost"} />
+            </HStack>
           </GridItem>
 
           <GridItem area={'transcript'} h="full" w="full" borderWidth={"1px"} rounded="lg" maxH={"596px"}>
@@ -238,7 +271,7 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
         :
 
         <Center pt="100px">
-          <Spinner />
+          <Spinner size={"lg"} />
         </Center>
 
       }
