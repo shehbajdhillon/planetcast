@@ -48,9 +48,10 @@ const VideoJS: React.FC<VideoJSProps> = (props: any) => {
 
 interface VideoPlayerProps {
   src: string;
+  onTimeUpdate?: (time: number) => void;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ src }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, onTimeUpdate }) => {
   const playerRef = useRef<Player | null>(null);
   const videoJsOptions = {
     autoplay: false,
@@ -73,6 +74,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src }) => {
     // You can handle player events here, for example:
     player.on('waiting', () => {
       videojs.log('player is waiting');
+    });
+
+    player.on('timeupdate', () => {
+      onTimeUpdate?.(player.currentTime());
     });
 
     player.on('dispose', () => {

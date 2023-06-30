@@ -28,7 +28,7 @@ import {
 } from '@chakra-ui/react';
 import { useRouter } from "next/router";
 import VideoPlayer from "@/components/video_player";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PlusIcon } from "lucide-react";
 
 
@@ -96,18 +96,21 @@ const GET_TRANSCRIPT = gql`
 
 const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
 
-  const { data, loading }
-    = useQuery(GET_TRANSCRIPT, { variables: { teamSlug, projectId: project?.id } });
-
   const [currentTransformation, setCurrentTransformation] = useState(0);
+  const [transformationPresent, setTranformationPresent] = useState(false);
+
+  const { data, loading }
+    = useQuery(GET_TRANSCRIPT, { variables: { teamSlug, projectId: project?.id }, pollInterval: transformationPresent ? 0 : 10000 });
 
   const transformationsArray = data?.getTeamById?.projects?.[0].transformations;
   const transformation = transformationsArray && transformationsArray[currentTransformation];
   const parseTranscript = transformation && transformation.transcript && JSON.parse(transformation.transcript)
 
   useEffect(() => {
-    console.log({ transformation });
-  }, [transformation]);
+    if (transformationsArray?.length) {
+      setTranformationPresent(true);
+    }
+  }, [transformationsArray]);
 
   if (loading) {
     return (
@@ -141,8 +144,8 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
         >
 
           <GridItem area={'video'} h="full" w="full" rounded={"lg"} maxW={"1280px"}>
-            <VideoPlayer src={transformation?.targetMedia} />
-            <HStack overflow={"auto"} spacing={"10px"} pt="10px">
+            <VideoPlayer src={transformation ? transformation?.targetMedia : project.sourceMedia } />
+            <HStack overflow={"auto"} spacing={"10px"} pt="10px" hidden={!transformationsArray?.length}>
               { transformationsArray?.map((t: any, idx: number) => (
                 <Button
                   key={idx}
@@ -161,7 +164,7 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
 
           { !parseTranscript ?
             <Center h="full">
-              <Heading>Fetching Transcript <Spinner /></Heading>
+              <Heading>Generating Transcript <Spinner /></Heading>
             </Center>
             :
             <VStack overflow={"auto"} p="10px" h="full">
