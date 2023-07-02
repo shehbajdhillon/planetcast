@@ -1,4 +1,4 @@
-import { Project } from "@/types";
+import { Project, Transformation } from "@/types";
 import {
   Box,
   HStack,
@@ -6,8 +6,10 @@ import {
   Text,
   Button,
   useColorModeValue,
+  Spinner,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
+import { useState } from "react";
 
 interface ProjectCardProps {
   teamSlug: string;
@@ -17,8 +19,12 @@ interface ProjectCardProps {
 const ProjectCard: React.FC<ProjectCardProps> = (props) => {
 
   const { project, teamSlug } = props;
+  const transformations: Transformation[] = project?.transformations;
+
+  const [transformationIdx, setTransformationIdx] = useState(0);
 
   const router = useRouter();
+  console.log({ transformations});
 
   return (
     <Box
@@ -57,7 +63,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
           alignContent="right"
           pointerEvents={"none"}
         >
-          {"LMAO"}
+          {transformations.length ? transformations?.[0].targetLanguage : <Text>PROCESSING <Spinner size={"xs"} /></Text>}
         </Button>
       </HStack>
     </Box>

@@ -88,6 +88,11 @@ const GET_TEAMS = gql`
         title
         sourceMedia
         sourceLanguage
+        transformations {
+          id
+          targetMedia
+          targetLanguage
+        }
       }
     }
   }
