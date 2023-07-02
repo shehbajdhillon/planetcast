@@ -30,7 +30,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
   return (
     <Box
       borderWidth={"1px"}
-      w={{ base: "330px", md: "400px" }}
+      w={{ base: "330px", md: "360px" }}
       rounded={"lg"}
       _hover={{
         borderColor: useColorModeValue('gray.300', 'whiteAlpha.500'),

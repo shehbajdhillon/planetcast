@@ -41,7 +41,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug, projects, refetch
           <Box
             onClick={onOpen}
             borderWidth={"1px"}
-            w={{ base: "330px", md: "400px" }}
+            w={{ base: "330px", md: "360px" }}
             h={"full"}
             rounded={"lg"}
             _hover={{
