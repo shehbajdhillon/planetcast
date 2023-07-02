@@ -30,6 +30,9 @@ import { useRouter } from "next/router";
 import VideoPlayer from "@/components/video_player";
 import { useEffect, useRef, useState } from "react";
 import { PlusIcon } from "lucide-react";
+import { useVideoSeekStore } from "@/stores/video_seek_store";
+import { formatTime } from "@/utils";
+import { text } from "stream/consumers";
 
 
 const DELETE_PROJECT = gql`
@@ -106,6 +109,9 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
   const transformation = transformationsArray && transformationsArray[currentTransformation];
   const parseTranscript = transformation && transformation.transcript && JSON.parse(transformation.transcript)
 
+  const setCurrentSeek = useVideoSeekStore((state) => state.setCurrentSeek);
+  const onTimeUpdate = (time: number) => setCurrentSeek(time);
+
   useEffect(() => {
     if (transformationsArray?.length) {
       setTranformationPresent(true);
@@ -144,7 +150,7 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
         >
 
           <GridItem area={'video'} h="full" w="full" rounded={"lg"} maxW={"1280px"}>
-            <VideoPlayer src={transformation ? transformation?.targetMedia : project.sourceMedia } />
+            <VideoPlayer src={transformation ? transformation?.targetMedia : project.sourceMedia } onTimeUpdate={onTimeUpdate} />
             <HStack overflow={"auto"} spacing={"10px"} pt="10px" hidden={!transformationsArray?.length}>
               { transformationsArray?.map((t: any, idx: number) => (
                 <Button
@@ -167,25 +173,61 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
               <Heading>Generating Transcript <Spinner /></Heading>
             </Center>
             :
-            <VStack overflow={"auto"} p="10px" h="full">
-              {parseTranscript?.segments.map((segment: Segment, idx: number) => (
-                <Text
-                  w="full"
-                  borderWidth={"1px"}
-                  rounded="lg"
-                  p="10px"
-                  key={idx}
-                >
-                  { segment.text.trim() }
-                </Text>
-              ))}
-            </VStack>
+            <TranscriptView segments={parseTranscript?.segments} />
           }
           </GridItem>
 
         </Grid>
       </Box>
     </Box>
+  );
+};
+
+interface TranscriptViewProps {
+  segments: Segment[];
+};
+
+const TranscriptView: React.FC<TranscriptViewProps> = ({ segments }) => {
+
+  const currentSeek = useVideoSeekStore((state) => state.currentSeek);
+
+  useEffect(() => {
+    console.log({ currentSeek });
+  }, [currentSeek]);
+
+  const highlight = (segment: Segment) => {
+    return segment.start <= currentSeek && currentSeek <= segment.end;
+  };
+
+  const bgColorHighlight = useColorModeValue("black", "white");
+  const textColor = useColorModeValue("white", "black");
+
+  return (
+    <VStack overflow={"auto"} p="10px" h="full">
+      {segments.map((segment: Segment, idx: number) => (
+        <Button
+          key={idx}
+          rounded="10px"
+          whiteSpace={'normal'}
+          height="auto"
+          blockSize={'auto'}
+          w="full"
+          justifyContent="left"
+          leftIcon={<Text>{formatTime(segment.start)}</Text>}
+          variant={highlight(segment) ? 'solid' : 'outline'}
+          textColor={highlight(segment) ? textColor : 'inherit'}
+          bgColor={highlight(segment) ? bgColorHighlight : 'inherit'}
+        >
+          <Text
+            key={idx}
+            textAlign={"left"}
+            padding={2}
+          >
+            { segment.text.trim() }
+          </Text>
+        </Button>
+      ))}
+    </VStack>
   );
 };
 
