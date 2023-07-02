@@ -114,6 +114,10 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
   const onTimeUpdate = (time: number) => setCurrentSeek(time);
 
   useEffect(() => {
+    setCurrentSeek(0);
+  }, [setCurrentSeek]);
+
+  useEffect(() => {
     if (transformationsArray?.length) {
       setTranformationPresent(true);
     }
@@ -193,14 +197,15 @@ const TranscriptView: React.FC<TranscriptViewProps> = ({ segments }) => {
   const currentSeek = useVideoSeekStore((state) => state.currentSeek);
   const [autoScroll, setAutoScroll] = useState(true);
 
+  const parentId = "transcript-parent-view"
   const transcriptMessageId = (segment: Segment) => `transcript-message-${segment.id}`
 
   const highlight = (segment: Segment) => {
     if (segment.start <= currentSeek && currentSeek <= segment.end) {
       if (autoScroll) {
-        document.getElementById(transcriptMessageId(segment))?.scrollIntoView({
-          behavior: 'smooth'
-        });
+        const topPosition = document.getElementById(transcriptMessageId(segment))?.offsetTop;
+        const parentDiv = document.getElementById(parentId);
+        if (parentDiv && topPosition) parentDiv.scrollTop = topPosition;
       }
       return true;
     };
@@ -209,6 +214,11 @@ const TranscriptView: React.FC<TranscriptViewProps> = ({ segments }) => {
 
   const bgColorHighlight = useColorModeValue("black", "white");
   const textColor = useColorModeValue("white", "black");
+
+  useEffect(() => {
+    const parentDiv = document.getElementById(parentId);
+    if (parentDiv) parentDiv.scrollTop = 0;
+  }, []);
 
   return (
     <VStack h="full" p="10px">
@@ -221,7 +231,7 @@ const TranscriptView: React.FC<TranscriptViewProps> = ({ segments }) => {
       >
         Auto Scroll
       </Checkbox>
-      <VStack overflow={"auto"} h="full">
+      <VStack overflow={"scroll"} h="full" id={parentId} position={"relative"}>
         {segments.map((segment: Segment, idx: number) => (
           <Button
             key={idx}
