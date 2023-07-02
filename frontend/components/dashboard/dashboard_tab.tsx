@@ -3,7 +3,7 @@ import {
   Center,
   Grid,
   GridItem,
-  useBreakpointValue,
+  Text,
   useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
@@ -19,64 +19,61 @@ interface DashboardTabProps {
 };
 
 const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug, projects, refetch }) => {
-  const imageSize = useBreakpointValue({ base: 70 });
   const { onOpen, isOpen, onClose } = useDisclosure();
-
-
   return (
     <Box w="full" h="full" display={"flex"} flexDir={"column"}>
       <NewCastModal onOpen={onOpen} isOpen={isOpen} onClose={onClose} refetch={refetch} teamSlug={teamSlug} />
       <Center>
-        <Grid
-          py={{ base: "100px" }}
-          px={{ base: "35px", lg: "70px" }}
-          placeItems={'center'}
-          columnGap={'25px'}
-          rowGap={'25px'}
-          templateColumns={[
-            'repeat(2, 1fr)',
-            'repeat(2, 1fr)',
-            'repeat(4, 1fr)',
-            'repeat(6, 1fr)',
-          ]}
-        >
-          <GridItem colSpan={2} w="full" h="full">
-            <Box
-              onClick={onOpen}
-              borderWidth={"1px"}
-              maxW="400px"
-              minW="270px"
-              w="full"
-              h={"full"}
-              p={6}
-              rounded={"lg"}
-              _hover={{
-                borderColor: useColorModeValue('gray.300', 'whiteAlpha.500'),
-                boxShadow: 'lg',
-                bg: useColorModeValue('white', 'black'),
-              }}
-              cursor={"pointer"}
-            >
-              <Center h="full" w="full">
-                <Image
-                  src={useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg')}
-                  width={imageSize}
-                  height={100}
-                  style={{ borderRadius: "20px" }}
-                  alt='planet cast logo'
-                />
-              </Center>
-            </Box>
-          </GridItem>
-          {projects?.map((project: Project, idx: number) => (
-            <GridItem colSpan={2} key={idx}>
-              <ProjectCard
-                teamSlug={teamSlug}
-                project={project}
+      <Grid
+        py={{ base: "100px" }}
+        px={{ base: "35px", lg: "70px" }}
+        placeItems={'center'}
+        rowGap={'60px'}
+        columnGap={'60px'}
+        templateColumns={{
+          base: 'repeat(2, 1fr)',
+          md: 'repeat(4, 1fr)',
+          xl: 'repeat(6, 1fr)'
+        }}
+      >
+
+        <GridItem colSpan={2} h="full">
+          <Box
+            onClick={onOpen}
+            borderWidth={"1px"}
+            w={{ base: "330px", md: "400px" }}
+            h={"full"}
+            rounded={"lg"}
+            _hover={{
+              borderColor: useColorModeValue('gray.300', 'whiteAlpha.500'),
+              boxShadow: 'lg',
+              bg: useColorModeValue('white', 'black'),
+            }}
+            cursor={"pointer"}
+          >
+            <Center h="full" flexDirection={"column"}>
+              <Image
+                src={useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg')}
+                width={70}
+                height={100}
+                style={{ borderRadius: "20px" }}
+                alt='planet cast logo'
               />
-            </GridItem>
-          ))}
-        </Grid>
+              <Text>New Project</Text>
+            </Center>
+          </Box>
+        </GridItem>
+
+        {projects?.map((project: Project, idx: number) => (
+          <GridItem colSpan={2} key={idx}>
+            <ProjectCard
+              teamSlug={teamSlug}
+              project={project}
+            />
+          </GridItem>
+        ))}
+
+      </Grid>
       </Center>
     </Box>
   );

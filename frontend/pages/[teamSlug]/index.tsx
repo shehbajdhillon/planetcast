@@ -5,7 +5,6 @@ import {
   GridItem,
   useColorModeValue,
   Center,
-  useBreakpointValue,
   Text,
 } from "@chakra-ui/react";
 import { NextPage, GetServerSideProps } from "next";
@@ -35,8 +34,6 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
 
   const { tabIdx, setTabIdx } = props;
 
-  const imageSize = useBreakpointValue({ base: 40, lg: 60 });
-
   return (
     <Box
       display={"flex"}
@@ -49,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
       <Center mb={{ base: "0px", md: "20px" }}>
         <Image
           src={useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg')}
-          width={imageSize}
+          width={50}
           height={100}
           alt='planet cast logo'
         />

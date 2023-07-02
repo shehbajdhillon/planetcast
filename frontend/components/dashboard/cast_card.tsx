@@ -10,6 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import VideoPlayer from "../video_player";
 
 interface ProjectCardProps {
   teamSlug: string;
@@ -29,9 +30,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
   return (
     <Box
       borderWidth={"1px"}
-      p={6}
-      maxW="400px"
-      minW="270px"
+      w={{ base: "330px", md: "400px" }}
       rounded={"lg"}
       _hover={{
         borderColor: useColorModeValue('gray.300', 'whiteAlpha.500'),
@@ -39,33 +38,35 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
         bg: useColorModeValue('white', 'whiteAlpha.100'),
       }}
       cursor={"pointer"}
-      onClick={() => router.push(`/${teamSlug}/${project.id}`)}
     >
-      <HStack>
-        <Text
-          textTransform="capitalize"
-          maxW="400px"
-          fontWeight={700}
-          fontSize={'lg'}
-          letterSpacing={1.1}
-          noOfLines={1}
-        >
-          {project.title}
-        </Text>
+      <HStack py="10px">
+        <VideoPlayer src={transformations.length ? transformations?.[0].targetMedia : project.sourceMedia } style={{ borderRadius: "100px" }}/>
       </HStack>
-      <Spacer />
-      <HStack pt="20px">
-        <Button
-          borderWidth="1px"
-          size={'xs'}
-          textTransform="capitalize"
-          fontWeight="medium"
-          alignContent="right"
-          pointerEvents={"none"}
-        >
-          {transformations.length ? transformations?.[0].targetLanguage : <Text>PROCESSING <Spinner size={"xs"} /></Text>}
-        </Button>
-      </HStack>
+      <Box p="5px" onClick={() => router.push(`/${teamSlug}/${project.id}`)} borderTopWidth={"1px"}>
+        <HStack p="5px">
+          <Text
+            textTransform="capitalize"
+            fontWeight={700}
+            fontSize={'lg'}
+            letterSpacing={1.1}
+            noOfLines={1}
+          >
+            {project.title}
+          </Text>
+        </HStack>
+        <HStack px="5px" pb="5px">
+          <Button
+            borderWidth="1px"
+            size={'xs'}
+            textTransform="capitalize"
+            fontWeight="medium"
+            alignContent="right"
+            pointerEvents={"none"}
+          >
+            {transformations.length ? transformations?.[0].targetLanguage : <Text>PROCESSING <Spinner size={"xs"} /></Text>}
+          </Button>
+        </HStack>
+      </Box>
     </Box>
   );
 };

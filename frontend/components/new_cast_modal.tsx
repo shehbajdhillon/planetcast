@@ -96,7 +96,7 @@ const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
     <Modal isOpen={isOpen} onClose={onClose} isCentered size={{ base: "lg", md: "2xl" }}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>New Cast</ModalHeader>
+        <ModalHeader>New Project</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <FormControl isRequired={true}>

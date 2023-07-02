@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { CSSProperties, useEffect, useRef } from 'react';
 import videojs from 'video.js';
 import Player from 'video.js/dist/types/player';
 import 'video.js/dist/video-js.css';
@@ -6,12 +6,13 @@ import 'video.js/dist/video-js.css';
 interface VideoJSProps {
   onReady: (player: Player) => void;
   options: Record<string, any>;
+  style?: CSSProperties;
 }
 
 const VideoJS: React.FC<VideoJSProps> = (props: any) => {
   const videoRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<Player | null>(null);
-  const { options, onReady } = props;
+  const { options, onReady, style } = props;
 
   useEffect(() => {
     if (!playerRef.current) {
@@ -40,8 +41,8 @@ const VideoJS: React.FC<VideoJSProps> = (props: any) => {
   }, [playerRef]);
 
   return (
-    <div data-vjs-player style={{ width: '100%' }}>
-      <div ref={videoRef}/>
+    <div data-vjs-player style={{ width: '100%', ...style }}>
+      <div ref={videoRef} style={{ ...style }}/>
     </div>
   );
 };
@@ -49,9 +50,10 @@ const VideoJS: React.FC<VideoJSProps> = (props: any) => {
 interface VideoPlayerProps {
   src: string;
   onTimeUpdate?: (time: number) => void;
+  style?: CSSProperties;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, onTimeUpdate }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, onTimeUpdate, style }) => {
   const playerRef = useRef<Player | null>(null);
   const videoJsOptions = {
     autoplay: false,
@@ -85,7 +87,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, onTimeUpdate }) => {
     });
   };
 
-  return <VideoJS options={videoJsOptions} onReady={handlePlayerReady} />;
+  return <VideoJS style={style} options={videoJsOptions} onReady={handlePlayerReady} />;
 };
 
 export default VideoPlayer;
