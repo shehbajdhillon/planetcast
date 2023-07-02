@@ -7,7 +7,7 @@ import {
   useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
-import CastCard from "./cast_card";
+import ProjectCard from "./cast_card";
 import Image from "next/image";
 import NewCastModal from "../new_cast_modal";
 import { Project } from "@/types";
@@ -70,11 +70,9 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug, projects, refetch
           </GridItem>
           {projects?.map((project: Project, idx: number) => (
             <GridItem colSpan={2} key={idx}>
-              <CastCard
-                title={project.title}
-                status="DONE"
+              <ProjectCard
                 teamSlug={teamSlug}
-                projectId={project.id}
+                project={project}
               />
             </GridItem>
           ))}

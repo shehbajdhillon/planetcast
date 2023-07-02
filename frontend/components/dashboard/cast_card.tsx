@@ -1,3 +1,4 @@
+import { Project } from "@/types";
 import {
   Box,
   HStack,
@@ -9,15 +10,13 @@ import {
 import { useRouter } from "next/router";
 
 interface ProjectCardProps {
-  projectId: number;
   teamSlug: string;
-  title: string;
-  status: "DRAFT" | "PROCESSING" | "DONE";
+  project: Project
 };
 
 const ProjectCard: React.FC<ProjectCardProps> = (props) => {
 
-  const { title, status, projectId, teamSlug } = props;
+  const { project, teamSlug } = props;
 
   const router = useRouter();
 
@@ -34,7 +33,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
         bg: useColorModeValue('white', 'whiteAlpha.100'),
       }}
       cursor={"pointer"}
-      onClick={() => router.push(`/${teamSlug}/${projectId}`)}
+      onClick={() => router.push(`/${teamSlug}/${project.id}`)}
     >
       <HStack>
         <Text
@@ -45,7 +44,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
           letterSpacing={1.1}
           noOfLines={1}
         >
-          {title}
+          {project.title}
         </Text>
       </HStack>
       <Spacer />
@@ -58,7 +57,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
           alignContent="right"
           pointerEvents={"none"}
         >
-          {status}
+          {"LMAO"}
         </Button>
       </HStack>
     </Box>
