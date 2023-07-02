@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   Center,
+  Checkbox,
   Grid,
   GridItem,
   HStack,
@@ -190,43 +191,62 @@ interface TranscriptViewProps {
 const TranscriptView: React.FC<TranscriptViewProps> = ({ segments }) => {
 
   const currentSeek = useVideoSeekStore((state) => state.currentSeek);
+  const [autoScroll, setAutoScroll] = useState(true);
 
-  useEffect(() => {
-    console.log({ currentSeek });
-  }, [currentSeek]);
+  const transcriptMessageId = (segment: Segment) => `transcript-message-${segment.id}`
 
   const highlight = (segment: Segment) => {
-    return segment.start <= currentSeek && currentSeek <= segment.end;
+    if (segment.start <= currentSeek && currentSeek <= segment.end) {
+      if (autoScroll) {
+        document.getElementById(transcriptMessageId(segment))?.scrollIntoView({
+          behavior: 'smooth'
+        });
+      }
+      return true;
+    };
+    return false;
   };
 
   const bgColorHighlight = useColorModeValue("black", "white");
   const textColor = useColorModeValue("white", "black");
 
   return (
-    <VStack overflow={"auto"} p="10px" h="full">
-      {segments.map((segment: Segment, idx: number) => (
-        <Button
-          key={idx}
-          rounded="10px"
-          whiteSpace={'normal'}
-          height="auto"
-          blockSize={'auto'}
-          w="full"
-          justifyContent="left"
-          leftIcon={<Text>{formatTime(segment.start)}</Text>}
-          variant={highlight(segment) ? 'solid' : 'outline'}
-          textColor={highlight(segment) ? textColor : 'inherit'}
-          bgColor={highlight(segment) ? bgColorHighlight : 'inherit'}
-        >
-          <Text
+    <VStack h="full" p="10px">
+      <Checkbox
+        w="full"
+        pl="1px"
+        colorScheme="gray"
+        isChecked={autoScroll}
+        onChange={(e) => setAutoScroll(e.target.checked)}
+      >
+        Auto Scroll
+      </Checkbox>
+      <VStack overflow={"auto"} h="full">
+        {segments.map((segment: Segment, idx: number) => (
+          <Button
             key={idx}
-            textAlign={"left"}
-            padding={2}
+            rounded="10px"
+            whiteSpace={'normal'}
+            height="auto"
+            blockSize={'auto'}
+            w="full"
+            justifyContent="left"
+            leftIcon={<Text>{formatTime(segment.start)}</Text>}
+            variant={highlight(segment) ? 'solid' : 'outline'}
+            textColor={highlight(segment) ? textColor : 'inherit'}
+            bgColor={highlight(segment) ? bgColorHighlight : 'inherit'}
+            id={transcriptMessageId(segment)}
           >
-            { segment.text.trim() }
-          </Text>
-        </Button>
-      ))}
+            <Text
+              key={idx}
+              textAlign={"left"}
+              padding={2}
+            >
+              { segment.text.trim() }
+            </Text>
+          </Button>
+        ))}
+      </VStack>
     </VStack>
   );
 };
