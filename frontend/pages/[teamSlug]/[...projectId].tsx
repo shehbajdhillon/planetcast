@@ -15,6 +15,7 @@ import {
   Text,
   VStack,
   useColorModeValue,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { GetServerSideProps, NextPage } from "next";
 
@@ -34,6 +35,7 @@ import { PlusIcon } from "lucide-react";
 import { useVideoSeekStore } from "@/stores/video_seek_store";
 import { formatTime } from "@/utils";
 import { text } from "stream/consumers";
+import NewTransformationModel from "@/components/new_transformation_modal";
 
 
 const DELETE_PROJECT = gql`
@@ -167,7 +169,7 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
                   {t?.targetLanguage}
                 </Button>
               ))}
-              <IconButton aria-label="add new dubbing" icon={<PlusIcon />} variant={"ghost"} />
+              <NewTransformationModel project={project} />
             </HStack>
           </GridItem>
 
