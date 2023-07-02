@@ -7,6 +7,8 @@ import {
   Button,
   Text,
   useColorModeValue,
+  Center,
+  VStack,
 } from '@chakra-ui/react';
 import Head from 'next/head'
 
@@ -108,36 +110,72 @@ const HeroSection: React.FC = () => {
   );
 };
 
+const BenefitsSection: React.FC = () => {
+  return (
+    <Stack
+      w="full"
+      direction={{ base: "column", md: "row" }}
+      h="full"
+      spacing={0}
+    >
+      <VStack w="full" h="full">
+        <Center h="full">
+
+          <Heading>Reach 100m+ People</Heading>
+
+        </Center>
+      </VStack>
+
+      <VStack w="full" h="full">
+        <Center h="full">
+          Reach 10x platforms easily
+        </Center>
+      </VStack>
+
+      <VStack w="full" h="full">
+        <Center h="full">
+          Reach 10x platforms easily
+        </Center>
+      </VStack>
+
+    </Stack>
+  );
+};
+
 export default function Home() {
 
   const { height } = useWindowDimensions();
 
+  const bgColor = useColorModeValue("white", "black");
+
   return (
-    <>
+    <VStack>
+
       <Head>
         <title>PlanetCast</title>
         <meta name="description" content="Cast your Content Across the Planet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Box position={"fixed"} top={0} left={0} w="full" p="10px">
+
+      <Box position={"fixed"} top={0} left={0} w="full" p="10px" backgroundColor={bgColor} zIndex={100}>
         <Navbar marketing />
       </Box>
-      <Box
-        display={"flex"}
-        justifyContent={"center"}
-        flexDir={"column"}
+
+      <VStack
+        w="full"
         height={height}
       >
-        <Box
+
+        <Center
           h="full"
-          display={'grid'}
-          placeItems={"center"}
+          maxW={"1920px"}
         >
           <HeroSection />
-        </Box>
-      </Box>
-    </>
+        </Center>
+      </VStack>
+
+    </VStack>
   )
 }
 
