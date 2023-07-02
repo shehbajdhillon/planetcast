@@ -13,6 +13,15 @@ export interface Project {
   title: string;
   sourceLanguage: SupportedLanguage;
   sourceMedia: string;
+  transformations: Transformation[];
+};
+
+export interface Transformation {
+  id: number;
+  projectId: number;
+  targetMedia: string;
+  targetLanguage: SupportedLanguage;
+  transcript: string;
 };
 
 export interface Segment {
