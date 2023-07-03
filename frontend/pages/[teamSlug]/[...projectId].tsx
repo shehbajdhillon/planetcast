@@ -94,6 +94,7 @@ const GET_TRANSCRIPT = gql`
           targetMedia
           targetLanguage
           transcript
+          isSource
         }
       }
     }
@@ -108,7 +109,8 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
   const { data, loading }
     = useQuery(GET_TRANSCRIPT, { variables: { teamSlug, projectId: project?.id }, pollInterval: transformationPresent ? 0 : 10000 });
 
-  const transformationsArray = data?.getTeamById?.projects?.[0].transformations;
+  const currentProject: Project = data?.getTeamById?.projects?.[0];
+  const transformationsArray = currentProject && currentProject.transformations;
   const transformation = transformationsArray && transformationsArray[currentTransformation];
   const parseTranscript = transformation && transformation.transcript && JSON.parse(transformation.transcript)
 
@@ -169,7 +171,7 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
                   {t?.targetLanguage}
                 </Button>
               ))}
-              <NewTransformationModel project={project} />
+              <NewTransformationModel project={currentProject} />
             </HStack>
           </GridItem>
 

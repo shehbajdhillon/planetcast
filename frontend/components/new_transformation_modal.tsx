@@ -1,6 +1,6 @@
 import { Project } from "@/types";
 import {
-    Box,
+  Box,
   Button,
   IconButton,
   Modal,
@@ -13,6 +13,7 @@ import {
   useDisclosure
 } from "@chakra-ui/react";
 import { PlusIcon } from "lucide-react";
+import { useEffect } from "react";
 
 interface NewTransformationModelProps {
   project: Project;
@@ -20,7 +21,14 @@ interface NewTransformationModelProps {
 
 const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) => {
 
+  const { project } = props;
   const { onOpen, isOpen, onClose } = useDisclosure();
+
+  const sourceTransformation = project?.transformations?.find(t => t.isSource);
+
+  useEffect(() => {
+    console.log({ sourceTransformation });
+  }, [sourceTransformation]);
 
   return (
 
