@@ -63,7 +63,7 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
                       blockSize={'auto'}
                       w="full"
                       justifyContent="left"
-                      leftIcon={<Text>{formatTime(segment.start)} - {formatTime(segment.end)}</Text>}
+                      leftIcon={<VStack spacing={1}><Text>{formatTime(segment.start)}</Text><Text>{formatTime(segment.end)}</Text></VStack>}
                       variant={'outline'}
                     >
                       <Text
