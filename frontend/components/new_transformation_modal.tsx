@@ -41,7 +41,7 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
 
   return (
     <Box>
-      <IconButton aria-label="add new dubbing" icon={<PlusIcon />} variant={"ghost"} onClick={onOpen} />
+      <Button leftIcon={<PlusIcon />} onClick={onOpen} variant={"outline"}>New Dubbing</Button>
       <Modal isOpen={isOpen} onClose={onClose} size={"6xl"} isCentered>
         <ModalOverlay />
         <ModalContent>
