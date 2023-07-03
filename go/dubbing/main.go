@@ -62,7 +62,7 @@ func getTranscript(fileNameIdentifier string, file io.ReadSeeker) WhisperOutput 
 	return whisperOutput
 }
 
-func CreateTransformation(ctx context.Context, projectId int64, targetLanguage database.SupportedLanguage, fileNameIdentifier string, file io.ReadSeeker, queries *database.Queries) (database.Transformation, error) {
+func CreateTransformation(ctx context.Context, projectId int64, targetLanguage database.SupportedLanguage, fileNameIdentifier string, file io.ReadSeeker, queries *database.Queries, isSource bool) (database.Transformation, error) {
 
 	transcript := getTranscript(fileNameIdentifier, file)
 	jsonBytes, err := json.Marshal(transcript)
@@ -72,6 +72,7 @@ func CreateTransformation(ctx context.Context, projectId int64, targetLanguage d
 		TargetLanguage: targetLanguage,
 		TargetMedia:    fileNameIdentifier + ".mp4",
 		Transcript:     pqtype.NullRawMessage{RawMessage: jsonBytes, Valid: true},
+		IsSource:       isSource,
 	})
 
 	if err != nil {

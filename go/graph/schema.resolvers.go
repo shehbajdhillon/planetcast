@@ -51,7 +51,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 	r.Storage.Upload(fileName, sourceMedia.File)
 
 	newCtx := context.Background()
-	go dubbing.CreateTransformation(newCtx, project.ID, sourceLanguage, fileNameIdentifier, sourceMedia.File, r.DB)
+	go dubbing.CreateTransformation(newCtx, project.ID, sourceLanguage, fileNameIdentifier, sourceMedia.File, r.DB, true)
 
 	return project, nil
 }
@@ -64,7 +64,6 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (
 
 // Transformations is the resolver for the transformations field.
 func (r *projectResolver) Transformations(ctx context.Context, obj *database.Project, transformationID *int64) ([]database.Transformation, error) {
-
 	transformations := []database.Transformation{}
 
 	if transformationID != nil {

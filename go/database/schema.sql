@@ -48,5 +48,6 @@ CREATE TABLE transformation (
   project_id BIGINT REFERENCES project (id) ON DELETE CASCADE NOT NULL,
   target_language SUPPORTED_LANGUAGE NOT NULL,
   target_media TEXT NOT NULL,
-  transcript jsonb
+  transcript jsonb,
+  is_source BOOLEAN NOT NULL
 );

@@ -169,6 +169,7 @@ type Transformation struct {
 	TargetLanguage SupportedLanguage
 	TargetMedia    string
 	Transcript     pqtype.NullRawMessage
+	IsSource       bool
 }
 
 type Userinfo struct {
