@@ -134,10 +134,6 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
     };
   }, [router.events]);
 
-  useEffect(() => {
-    console.log({ teamSlug, projectId, teams, projects });
-  }, [teamSlug, projectId, teams, projects]);
-
   return (
     <Box w="full" display={"flex"} alignItems={"center"} justifyContent={"center"}>
       <Box

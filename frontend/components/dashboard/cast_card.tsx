@@ -2,7 +2,6 @@ import { Project, Transformation } from "@/types";
 import {
   Box,
   HStack,
-  Spacer,
   Text,
   Button,
   useColorModeValue,
@@ -25,7 +24,6 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
   const [transformationIdx, setTransformationIdx] = useState(0);
 
   const router = useRouter();
-  console.log({ transformations});
 
   return (
     <Box
