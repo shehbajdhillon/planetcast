@@ -22,6 +22,7 @@ export interface Transformation {
   targetMedia: string;
   targetLanguage: SupportedLanguage;
   transcript: string;
+  isSource: boolean;
 };
 
 export interface Segment {
