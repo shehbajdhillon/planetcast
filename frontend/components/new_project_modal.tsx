@@ -36,7 +36,7 @@ const CREATE_PROJECT = gql`
   }
 `;
 
-interface NewCastModalProps {
+interface NewProjectModalProps {
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
@@ -44,7 +44,7 @@ interface NewCastModalProps {
   teamSlug: string;
 };
 
-const NewProjectModal: React.FC<NewCastModalProps> = (props) => {
+const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
 
   const { isOpen, onClose, teamSlug, refetch } = props;
 

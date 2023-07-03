@@ -7,9 +7,9 @@ import {
   useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
-import ProjectCard from "./cast_card";
+import ProjectCard from "./project_card";
 import Image from "next/image";
-import NewCastModal from "../new_cast_modal";
+import NewProjectModal from "../new_project_modal";
 import { Project } from "@/types";
 
 interface DashboardTabProps {
@@ -22,7 +22,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug, projects, refetch
   const { onOpen, isOpen, onClose } = useDisclosure();
   return (
     <Box w="full" h="full" display={"flex"} flexDir={"column"}>
-      <NewCastModal onOpen={onOpen} isOpen={isOpen} onClose={onClose} refetch={refetch} teamSlug={teamSlug} />
+      <NewProjectModal onOpen={onOpen} isOpen={isOpen} onClose={onClose} refetch={refetch} teamSlug={teamSlug} />
       <Center>
       <Grid
         py={{ base: "100px" }}
