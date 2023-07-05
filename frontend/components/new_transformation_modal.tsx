@@ -54,7 +54,7 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
               <VStack w="50%">
                 <Button variant={"outline"} pointerEvents={"none"}>{sourceTransformation?.targetLanguage}</Button>
                 <VStack>
-                  {sourceSegments.map((segment: Segment, idx: number) => (
+                  {sourceSegments?.map((segment: Segment, idx: number) => (
                     <Button
                       key={idx}
                       rounded="10px"
