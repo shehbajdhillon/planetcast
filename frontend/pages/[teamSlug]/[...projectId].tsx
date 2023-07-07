@@ -235,8 +235,8 @@ const TranscriptView: React.FC<TranscriptViewProps> = ({ segments }) => {
       >
         Auto Scroll
       </Checkbox>
-      <VStack overflow={"scroll"} h="full" id={parentId} position={"relative"}>
-        {segments.map((segment: Segment, idx: number) => (
+      <VStack overflow={"scroll"} h="full" id={parentId} position={"relative"} w="full">
+        {segments?.map((segment: Segment, idx: number) => (
           <Button
             key={idx}
             rounded="10px"
