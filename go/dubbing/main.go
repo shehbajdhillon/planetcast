@@ -1,12 +1,15 @@
 package dubbing
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
 	"log"
-	"os/exec"
+	"mime/multipart"
+	"net/http"
+	"os"
 	"planetcastdev/database"
 
 	"github.com/tabbed/pqtype"
@@ -28,35 +31,61 @@ func getTranscript(fileNameIdentifier string, file io.ReadSeeker) WhisperOutput 
 
 	file.Seek(0, io.SeekStart)
 
-	//write file to disk
-	body, err := ioutil.ReadAll(file)
-	if err != nil {
-		log.Println(err.Error())
-	}
-	err = ioutil.WriteFile("./"+fileNameIdentifier+".mp4", body, 0644)
-	if err != nil {
-		log.Println(err.Error())
-	}
+	API_KEY := os.Getenv("OPEN_AI_SECRET_KEY")
+	MODEL := "whisper-1"
+	RESPONSE_FORMAT := "verbose_json"
+	URL := "https://api.openai.com/v1/audio/transcriptions"
 
-	//run whisper
-	cmd := exec.Command("whisper", "./"+fileNameIdentifier+".mp4", "--model", "small", "--output_format", "json")
-	log.Println("Running Whisper:", cmd.Args)
+	requestBody := &bytes.Buffer{}
+	writer := multipart.NewWriter(requestBody)
+	part, err := writer.CreateFormFile("file", fileNameIdentifier+".mp4")
 
-	body, err = cmd.Output()
 	if err != nil {
-		log.Println("Whisper error:", err.Error())
-	} else {
-		log.Println("Whisper output file:", fileNameIdentifier+".json")
+		log.Println("Failed to create form file:", err)
+		return WhisperOutput{}
 	}
 
+	_, err = io.Copy(part, file)
+	if err != nil {
+		log.Println("Failed to copy file data:", err)
+		return WhisperOutput{}
+	}
+	writer.WriteField("model", MODEL)
+	writer.WriteField("response_format", RESPONSE_FORMAT)
+	err = writer.Close()
+
+	if err != nil {
+		log.Println("Failed to close writer", err)
+		return WhisperOutput{}
+	}
+
+	req, err := http.NewRequest("POST", URL, requestBody)
+	if err != nil {
+		log.Println("Failed to create request:", err)
+		return WhisperOutput{}
+	}
+
+	req.Header.Add("Authorization", "Bearer "+API_KEY)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	log.Println("Making request:", req.URL.String())
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Request failed:", err)
+		return WhisperOutput{}
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("Failed to read response body:", err)
+		return WhisperOutput{}
+	}
+
+	file.Seek(0, io.SeekStart)
 	var whisperOutput WhisperOutput
-	whisperJson, _ := ioutil.ReadFile("./" + fileNameIdentifier + ".json")
-	json.Unmarshal(whisperJson, &whisperOutput)
-
-	cmd = exec.Command("rm", "./"+fileNameIdentifier+".mp4", "./"+fileNameIdentifier+".json")
-	log.Println(cmd.Args)
-	body, err = cmd.Output()
-
+	json.Unmarshal(responseBody, &whisperOutput)
 	log.Println(whisperOutput.Segments)
 
 	return whisperOutput
