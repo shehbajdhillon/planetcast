@@ -175,11 +175,14 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
             </HStack>
           </GridItem>
 
-          <GridItem area={'transcript'} h="full" w="full" borderWidth={"1px"} rounded="lg" maxH={"596px"}>
+          <GridItem area={'transcript'} p={!parseTranscript ? "10px" : "0px"} h="full" w="full" borderWidth={"1px"} rounded="lg" maxH={"596px"}>
 
           { !parseTranscript ?
             <Center h="full">
-              <Heading>Generating Transcript <Spinner /></Heading>
+              <VStack>
+                <Heading size={"md"}>Generating Transcript</Heading>
+              <Spinner />
+              </VStack>
             </Center>
             :
             <TranscriptView segments={parseTranscript?.segments} />
