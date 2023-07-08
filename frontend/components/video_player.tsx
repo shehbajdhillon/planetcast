@@ -83,7 +83,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, onTimeUpdate, style }) =
     });
 
     player.on('dispose', () => {
-      videojs.log('player will dispose');
     });
   };
 
