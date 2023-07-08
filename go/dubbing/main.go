@@ -39,7 +39,7 @@ func getTranscript(fileNameIdentifier string, file io.ReadSeeker) WhisperOutput 
 	}
 
 	//run whisper
-	cmd := exec.Command("whisper", "./"+fileNameIdentifier+".mp4", "--model", "medium", "--output_format", "json")
+	cmd := exec.Command("whisper", "./"+fileNameIdentifier+".mp4", "--model", "base", "--output_format", "json")
 	log.Println("Running Whisper:", cmd.Args)
 
 	body, err = cmd.Output()
