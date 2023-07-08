@@ -61,7 +61,7 @@ func GenerateServer(queries *database.Queries, storage *storage.Storage) *handle
 	gqlServer.AddTransport(transport.Options{})
 	gqlServer.AddTransport(transport.GET{})
 	gqlServer.AddTransport(transport.POST{})
-	gqlServer.AddTransport(transport.MultipartForm{MaxUploadSize: 2024 * MB, MaxMemory: 1024 * MB})
+	gqlServer.AddTransport(transport.MultipartForm{MaxUploadSize: 30 * MB, MaxMemory: 1024 * MB})
 
 	gqlServer.SetQueryCache(lru.New(1000))
 
