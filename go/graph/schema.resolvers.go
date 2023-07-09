@@ -51,7 +51,14 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 	r.Storage.Upload(fileName, sourceMedia.File)
 
 	newCtx := context.Background()
-	go dubbing.CreateTransformation(newCtx, project.ID, sourceLanguage, fileNameIdentifier, sourceMedia.File, r.DB, true)
+
+	go dubbing.CreateTransformation(newCtx, r.DB, dubbing.CreateTransformationParams{
+		ProjectID:          project.ID,
+		TargetLanguage:     sourceLanguage,
+		FileNameIdentifier: fileNameIdentifier,
+		File:               sourceMedia.File,
+		IsSource:           true,
+	})
 
 	return project, nil
 }

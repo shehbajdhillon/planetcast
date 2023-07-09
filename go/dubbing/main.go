@@ -91,17 +91,29 @@ func getTranscript(fileNameIdentifier string, file io.ReadSeeker) WhisperOutput 
 	return whisperOutput
 }
 
-func CreateTransformation(ctx context.Context, projectId int64, targetLanguage database.SupportedLanguage, fileNameIdentifier string, file io.ReadSeeker, queries *database.Queries, isSource bool) (database.Transformation, error) {
+type CreateTransformationParams struct {
+	ProjectID          int64
+	TargetLanguage     database.SupportedLanguage
+	FileNameIdentifier string
+	File               io.ReadSeeker
+	IsSource           bool
+}
 
-	transcript := getTranscript(fileNameIdentifier, file)
+func CreateTransformation(
+	ctx context.Context,
+	queries *database.Queries,
+	args CreateTransformationParams,
+) (database.Transformation, error) {
+
+	transcript := getTranscript(args.FileNameIdentifier, args.File)
 	jsonBytes, err := json.Marshal(transcript)
 
 	transformation, err := queries.CreateTransformation(ctx, database.CreateTransformationParams{
-		ProjectID:      projectId,
-		TargetLanguage: targetLanguage,
-		TargetMedia:    fileNameIdentifier + ".mp4",
+		ProjectID:      args.ProjectID,
+		TargetLanguage: args.TargetLanguage,
+		TargetMedia:    args.FileNameIdentifier + ".mp4",
 		Transcript:     pqtype.NullRawMessage{RawMessage: jsonBytes, Valid: true},
-		IsSource:       isSource,
+		IsSource:       args.IsSource,
 	})
 
 	if err != nil {
