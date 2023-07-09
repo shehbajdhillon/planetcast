@@ -228,6 +228,24 @@ func (q *Queries) GetProjectsByTeamId(ctx context.Context, teamID int64) ([]Proj
 	return items, nil
 }
 
+const getSourceTransformationByProjectId = `-- name: GetSourceTransformationByProjectId :one
+SELECT id, project_id, target_language, target_media, transcript, is_source FROM transformation WHERE project_id = $1 AND is_source = true LIMIT 1
+`
+
+func (q *Queries) GetSourceTransformationByProjectId(ctx context.Context, projectID int64) (Transformation, error) {
+	row := q.db.QueryRowContext(ctx, getSourceTransformationByProjectId, projectID)
+	var i Transformation
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.TargetLanguage,
+		&i.TargetMedia,
+		&i.Transcript,
+		&i.IsSource,
+	)
+	return i, err
+}
+
 const getTeamById = `-- name: GetTeamById :one
 SELECT id, slug, name, team_type, created FROM team WHERE id = $1 LIMIT 1
 `
@@ -323,6 +341,29 @@ SELECT id, project_id, target_language, target_media, transcript, is_source FROM
 
 func (q *Queries) GetTransformationById(ctx context.Context, id int64) (Transformation, error) {
 	row := q.db.QueryRowContext(ctx, getTransformationById, id)
+	var i Transformation
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.TargetLanguage,
+		&i.TargetMedia,
+		&i.Transcript,
+		&i.IsSource,
+	)
+	return i, err
+}
+
+const getTransformationByProjectIdTargetLanguage = `-- name: GetTransformationByProjectIdTargetLanguage :one
+SELECT id, project_id, target_language, target_media, transcript, is_source FROM transformation WHERE project_id = $1 AND target_language = $2 LIMIT 1
+`
+
+type GetTransformationByProjectIdTargetLanguageParams struct {
+	ProjectID      int64
+	TargetLanguage SupportedLanguage
+}
+
+func (q *Queries) GetTransformationByProjectIdTargetLanguage(ctx context.Context, arg GetTransformationByProjectIdTargetLanguageParams) (Transformation, error) {
+	row := q.db.QueryRowContext(ctx, getTransformationByProjectIdTargetLanguage, arg.ProjectID, arg.TargetLanguage)
 	var i Transformation
 	err := row.Scan(
 		&i.ID,

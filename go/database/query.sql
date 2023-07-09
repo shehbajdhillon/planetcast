@@ -60,3 +60,9 @@ SELECT * FROM transformation WHERE project_id = $1;
 
 -- name: GetTransformationByTransformationIdProjectId :one
 SELECT * FROM transformation WHERE id = $1 AND project_id = $2 LIMIT 1;
+
+-- name: GetSourceTransformationByProjectId :one
+SELECT * FROM transformation WHERE project_id = $1 AND is_source = true LIMIT 1;
+
+-- name: GetTransformationByProjectIdTargetLanguage :one
+SELECT * FROM transformation WHERE project_id = $1 AND target_language = $2 LIMIT 1;
