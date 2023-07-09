@@ -6,12 +6,14 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"planetcastdev/auth"
 	"planetcastdev/database"
 	"planetcastdev/dubbing"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/google/uuid"
+	"github.com/tabbed/pqtype"
 )
 
 // CreateTeam is the resolver for the createTeam field.
@@ -67,6 +69,38 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (database.Project, error) {
 	project, _ := r.DB.DeleteProjectById(ctx, projectID)
 	return project, nil
+}
+
+// CreateTranslation is the resolver for the createTranslation field.
+func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int64, targetLanguage database.SupportedLanguage) (database.Transformation, error) {
+	// fetch source transcript for the project
+	sourceTransformation, err := r.DB.GetSourceTransformationByProjectId(ctx, projectID)
+	if err != nil {
+		return database.Transformation{}, fmt.Errorf("Project Not Processed!")
+	}
+
+	// if target transformation already exists, return that
+	existingTransformation, err := r.DB.GetTransformationByProjectIdTargetLanguage(ctx, database.GetTransformationByProjectIdTargetLanguageParams{
+		ProjectID:      projectID,
+		TargetLanguage: targetLanguage,
+	})
+	if err == nil {
+		return existingTransformation, nil
+	}
+
+	// create empty transformation in target language, if target transformation already exists, return that
+	newTransformation, _ := r.DB.CreateTransformation(ctx, database.CreateTransformationParams{
+		ProjectID:      projectID,
+		TargetLanguage: targetLanguage,
+		TargetMedia:    "",
+		Transcript:     pqtype.NullRawMessage{Valid: false, RawMessage: nil},
+		IsSource:       false,
+	})
+
+	newCtx := context.Background()
+	go dubbing.CreateTranslation(newCtx, sourceTransformation, newTransformation)
+
+	return newTransformation, nil
 }
 
 // Transformations is the resolver for the transformations field.

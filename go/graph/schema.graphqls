@@ -52,6 +52,7 @@ type Mutation {
   createTeam(slug: String!, name: String!, teamType: TeamType!): Team! @loggedIn
   createProject(teamSlug: String! @memberTeam, title: String!, sourceLanguage: SupportedLanguage!, sourceMedia: Upload!): Project! @loggedIn
   deleteProject(projectId: Int64! @ownsProject): Project! @loggedIn
+  createTranslation(projectId: Int64! @ownsProject, targetLanguage: SupportedLanguage!): Transformation! @loggedIn
 }
 
 enum TeamType {

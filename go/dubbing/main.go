@@ -91,6 +91,35 @@ func getTranscript(fileNameIdentifier string, file io.ReadSeeker) WhisperOutput 
 	return whisperOutput
 }
 
+func CreateTranslation(
+	ctx context.Context,
+	sourceTransformationObject database.Transformation,
+	targetTransformationObject database.Transformation,
+) (database.Transformation, error) {
+
+	var whisperOutput WhisperOutput
+	json.Unmarshal(sourceTransformationObject.Transcript.RawMessage, &whisperOutput)
+
+	segments := whisperOutput.Segments
+
+	var refinedSegments []map[string]interface{}
+	for _, segment := range segments {
+		refinedSegments = append(refinedSegments, map[string]interface{}{
+			"id":   segment.Id,
+			"text": segment.Text,
+		})
+	}
+
+	refinedSegmentsJSON, err := json.Marshal(refinedSegments)
+	if err != nil {
+		log.Println("Error occured while refining segments:", err)
+	}
+
+	log.Println(string(refinedSegmentsJSON))
+
+	return targetTransformationObject, nil
+}
+
 type CreateTransformationParams struct {
 	ProjectID          int64
 	TargetLanguage     database.SupportedLanguage
