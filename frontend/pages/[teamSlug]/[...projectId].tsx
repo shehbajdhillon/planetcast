@@ -89,6 +89,7 @@ const GET_TRANSCRIPT = gql`
   query GetTranscript($teamSlug: String!, $projectId: Int64!) {
     getTeamById(teamSlug: $teamSlug) {
       projects(projectId: $projectId) {
+        id
         transformations {
           id
           targetMedia

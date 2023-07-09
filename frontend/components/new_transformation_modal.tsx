@@ -1,10 +1,10 @@
 import { Project, Segment, SupportedLanguage, SupportedLanguages, Transformation } from "@/types";
 import { formatTime } from "@/utils";
+import { gql, useMutation } from "@apollo/client";
 import {
   Box,
   Button,
   FormLabel,
-  IconButton,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -25,6 +25,15 @@ interface NewTransformationModelProps {
   project: Project;
 };
 
+const CREATE_TRANSLATION = gql`
+  mutation CreateTranslation($projectId: Int64!, $targetLanguage: SupportedLanguage!) {
+    createTranslation(projectId: $projectId, targetLanguage: $targetLanguage) {
+      id
+      projectId
+    }
+  }
+`;
+
 const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) => {
 
   const { project } = props;
@@ -34,6 +43,14 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
   const sourceTranscript = sourceTransformation?.transcript && JSON.parse(sourceTransformation.transcript)
   const sourceSegments: Segment[] = sourceTranscript?.segments;
   const [targetLanguage, setTargetLanguage] = useState<SupportedLanguage>();
+
+  const [createTranslationMutation, { loading }] = useMutation(CREATE_TRANSLATION);
+
+  const createTranslation = async () => {
+    const variables = { projectId: project.id, targetLanguage }
+    const res = await createTranslationMutation({ variables });
+    return res
+  };
 
   useEffect(() => {
     setTargetLanguage(undefined);
@@ -91,7 +108,7 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
                       <option key={idx} value={lang}>{lang}</option>
                     ))}
                   </Select>
-                  <Button hidden={!targetLanguage}>
+                  <Button hidden={!targetLanguage} onClick={createTranslation} isDisabled={loading}>
                     Submit
                   </Button>
                 </Stack>
