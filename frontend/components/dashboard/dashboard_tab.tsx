@@ -37,15 +37,14 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug, projects, refetch
         }}
       >
 
-        <GridItem colSpan={2} h="full">
+        <GridItem colSpan={2}>
           <Box
+            p={5}
             onClick={onOpen}
-            borderWidth={"1px"}
-            w={{ base: "330px", md: "360px" }}
-            h={"full"}
             rounded={"lg"}
             _hover={{
               borderColor: useColorModeValue('gray.300', 'whiteAlpha.500'),
+              borderWidth: "1px",
               boxShadow: 'lg',
               bg: useColorModeValue('white', 'black'),
             }}

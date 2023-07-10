@@ -20,27 +20,24 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
 
   const { project, teamSlug } = props;
   const transformations: Transformation[] = project?.transformations;
-
   const [transformationIdx, setTransformationIdx] = useState(0);
 
   const router = useRouter();
 
   return (
     <Box
-      borderWidth={"1px"}
       w={{ base: "330px", md: "360px" }}
       rounded={"lg"}
       _hover={{
         borderColor: useColorModeValue('gray.300', 'whiteAlpha.500'),
-        boxShadow: 'lg',
-        bg: useColorModeValue('white', 'whiteAlpha.100'),
+        bg: useColorModeValue('blackAlpha.50', 'whiteAlpha.200'),
       }}
       cursor={"pointer"}
     >
-      <HStack py="10px">
+      <HStack py="10px" rounded={"lg"}>
         <VideoPlayer src={transformations.length ? transformations?.[0].targetMedia : project.sourceMedia } style={{ borderRadius: "100px" }}/>
       </HStack>
-      <Box p="5px" onClick={() => router.push(`/${teamSlug}/${project.id}`)} borderTopWidth={"1px"}>
+      <Box p="5px" onClick={() => router.push(`/${teamSlug}/${project.id}`)}>
         <HStack p="5px">
           <Text
             textTransform="capitalize"
