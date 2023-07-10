@@ -60,6 +60,7 @@ type SupportedLanguage string
 const (
 	SupportedLanguageENGLISH SupportedLanguage = "ENGLISH"
 	SupportedLanguageHINDI   SupportedLanguage = "HINDI"
+	SupportedLanguageSPANISH SupportedLanguage = "SPANISH"
 )
 
 func (e *SupportedLanguage) Scan(src interface{}) error {

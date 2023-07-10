@@ -63,5 +63,6 @@ enum TeamType {
 enum SupportedLanguage {
   ENGLISH
   HINDI
+  SPANISH
 }
 
