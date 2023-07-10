@@ -92,7 +92,7 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 	newTransformation, _ := r.DB.CreateTransformation(ctx, database.CreateTransformationParams{
 		ProjectID:      projectID,
 		TargetLanguage: targetLanguage,
-		TargetMedia:    "",
+		TargetMedia:    sourceTransformation.TargetMedia,
 		Transcript:     pqtype.NullRawMessage{Valid: false, RawMessage: nil},
 		IsSource:       false,
 	})
