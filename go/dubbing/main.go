@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -11,6 +12,8 @@ import (
 	"net/http"
 	"os"
 	"planetcastdev/database"
+	"strings"
+	"time"
 
 	"github.com/tabbed/pqtype"
 )
@@ -68,7 +71,6 @@ func getTranscript(fileNameIdentifier string, file io.ReadSeeker) WhisperOutput 
 	req.Header.Add("Authorization", "Bearer "+API_KEY)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	log.Println("Making request:", req.URL.String())
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -86,38 +88,9 @@ func getTranscript(fileNameIdentifier string, file io.ReadSeeker) WhisperOutput 
 	file.Seek(0, io.SeekStart)
 	var whisperOutput WhisperOutput
 	json.Unmarshal(responseBody, &whisperOutput)
-	log.Println(whisperOutput.Segments)
+	log.Println("Whisper request processes successfully for:", fileNameIdentifier)
 
 	return whisperOutput
-}
-
-func CreateTranslation(
-	ctx context.Context,
-	sourceTransformationObject database.Transformation,
-	targetTransformationObject database.Transformation,
-) (database.Transformation, error) {
-
-	var whisperOutput WhisperOutput
-	json.Unmarshal(sourceTransformationObject.Transcript.RawMessage, &whisperOutput)
-
-	segments := whisperOutput.Segments
-
-	var refinedSegments []map[string]interface{}
-	for _, segment := range segments {
-		refinedSegments = append(refinedSegments, map[string]interface{}{
-			"id":   segment.Id,
-			"text": segment.Text,
-		})
-	}
-
-	refinedSegmentsJSON, err := json.Marshal(refinedSegments)
-	if err != nil {
-		log.Println("Error occured while refining segments:", err)
-	}
-
-	log.Println(string(refinedSegmentsJSON))
-
-	return targetTransformationObject, nil
 }
 
 type CreateTransformationParams struct {
@@ -151,4 +124,141 @@ func CreateTransformation(
 	}
 
 	return transformation, nil
+}
+
+func CreateTranslation(
+	ctx context.Context,
+	queries *database.Queries,
+	sourceTransformationObject database.Transformation,
+	targetTransformationObject database.Transformation,
+) (database.Transformation, error) {
+
+	// call chatgpt, convert the source text to target text
+	translatedSegments, _ := translateResponse(
+		ctx,
+		sourceTransformationObject,
+		targetTransformationObject.TargetLanguage,
+	)
+
+	// get the target text, and parse it
+	var whisperOutput WhisperOutput
+	json.Unmarshal(targetTransformationObject.Transcript.RawMessage, &whisperOutput)
+	whisperOutput.Segments = translatedSegments
+	whisperOutput.Language = strings.ToLower(string(targetTransformationObject.TargetLanguage))
+
+	// store the target text in db
+	jsonBytes, err := json.Marshal(whisperOutput)
+
+	if err != nil {
+		return database.Transformation{}, fmt.Errorf("Could not process translated segments " + err.Error())
+	}
+
+	targetTransformationObject, err = queries.UpdateTranscriptById(ctx, database.UpdateTranscriptByIdParams{
+		ID:         targetTransformationObject.ID,
+		Transcript: pqtype.NullRawMessage{Valid: true, RawMessage: jsonBytes},
+	})
+
+	if err != nil {
+		return database.Transformation{}, fmt.Errorf("Could not update transformation: " + err.Error())
+	}
+
+	// return the update transformation
+	return targetTransformationObject, nil
+}
+
+type ChatCompletionMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type ChatRequestInput struct {
+	Model    string                  `json:"model"`
+	Messages []ChatCompletionMessage `json:"messages"`
+}
+
+type ChatCompletionChoice struct {
+	Index   int                   `json:"index"`
+	Message ChatCompletionMessage `json:"message"`
+}
+
+type ChatCompletionResponse struct {
+	ID      string                 `json:"id"`
+	Object  string                 `json:"object"`
+	Created int64                  `json:"created"`
+	Model   string                 `json:"model"`
+	Choices []ChatCompletionChoice `json:"choices"`
+}
+
+func translateResponse(
+	ctx context.Context,
+	sourceTransformationObject database.Transformation,
+	targetLanguage database.SupportedLanguage,
+) ([]Segment, error) {
+
+	var whisperOutput WhisperOutput
+	json.Unmarshal(sourceTransformationObject.Transcript.RawMessage, &whisperOutput)
+
+	segments := whisperOutput.Segments
+
+	API_KEY := os.Getenv("OPEN_AI_SECRET_KEY")
+	URL := "https://api.openai.com/v1/chat/completions"
+
+	log.Println("Translating the following segments from", sourceTransformationObject.TargetLanguage, "to", targetLanguage)
+	log.Println(segments)
+
+	for idx, segment := range segments {
+
+		systemPrompt := fmt.Sprintf("Translate the following text from %s to %s. Just give me the output.", sourceTransformationObject.TargetLanguage, targetLanguage)
+		chatGptInput := ChatRequestInput{
+			Model: "gpt-3.5-turbo",
+			Messages: []ChatCompletionMessage{
+				{Role: "system", Content: systemPrompt},
+				{Role: "user", Content: segment.Text},
+			},
+		}
+
+		jsonData, err := json.Marshal(chatGptInput)
+		if err != nil {
+			return []Segment{}, fmt.Errorf("Could not generate request body: " + err.Error())
+		}
+
+		req, err := http.NewRequest("POST", URL, bytes.NewBuffer(jsonData))
+		if err != nil {
+			return []Segment{}, fmt.Errorf("Could not generate POST request: " + err.Error())
+		}
+
+		req.Header.Add("Authorization", "Bearer "+API_KEY)
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return []Segment{}, fmt.Errorf("Could not process request successfully: " + err.Error())
+		}
+
+		defer resp.Body.Close()
+
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return []Segment{}, fmt.Errorf("Could not parse request body successfully: " + err.Error())
+		}
+
+		var chatResponse ChatCompletionResponse
+		json.Unmarshal(respBody, &chatResponse)
+
+		log.Println(segment.Text)
+		segment.Text = chatResponse.Choices[0].Message.Content
+		segments[idx] = segment
+		log.Println(segments[idx].Text)
+		log.Println(idx+1, "/", len(segments))
+
+		time.Sleep(2 * time.Second)
+
+	}
+
+	log.Println("Segments translated successfully")
+	log.Println(segments)
+
+	return segments, nil
+
 }

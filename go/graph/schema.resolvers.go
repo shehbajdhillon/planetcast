@@ -98,7 +98,7 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 	})
 
 	newCtx := context.Background()
-	go dubbing.CreateTranslation(newCtx, sourceTransformation, newTransformation)
+	go dubbing.CreateTranslation(newCtx, r.DB, sourceTransformation, newTransformation)
 
 	return newTransformation, nil
 }
