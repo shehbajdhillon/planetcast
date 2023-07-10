@@ -161,7 +161,7 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
 
           <GridItem area={'video'} h="full" w="full" rounded={"lg"} maxW={"1280px"}>
             <VideoPlayer src={transformation ? transformation?.targetMedia : project.sourceMedia } onTimeUpdate={onTimeUpdate} />
-            <HStack overflow={"auto"} spacing={"10px"} pt="10px" hidden={!transformationsArray?.length}>
+            <HStack display="flex" flexWrap={"wrap"} overflow={"auto"} spacing={"10px"} pt="10px" hidden={!transformationsArray?.length}>
               { transformationsArray?.map((t: any, idx: number) => (
                 <Button
                   key={idx}
