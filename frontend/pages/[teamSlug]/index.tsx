@@ -13,14 +13,12 @@ import { UserResource } from '@clerk/types';
 
 import Image from "next/image";
 import { LayoutDashboard } from "lucide-react";
-import { Dispatch, SetStateAction, useEffect } from "react";
-import useWindowDimensions from "@/hooks/useWindowDimensions";
+import { Dispatch, SetStateAction } from "react";
 import DashboardTab from "@/components/dashboard/dashboard_tab";
 import Head from "next/head";
 import Navbar, { MenuBar } from "@/components/dashboard/navbar";
 import { Team } from "@/types";
 import { gql, useQuery } from "@apollo/client";
-import { useRouter } from "next/router";
 
 
 interface SidebarProps {
@@ -102,8 +100,6 @@ export interface DashboardPageProps {
 
 const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug }) => {
 
-  const { height } = useWindowDimensions();
-
   const { data, refetch } = useQuery(GET_TEAMS);
 
   const teams = data?.getTeams;
@@ -128,7 +124,6 @@ const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug }) => {
         justifyContent={"center"}
       >
         <Grid
-          h={height}
           templateAreas={{
             base: `
               "main"
