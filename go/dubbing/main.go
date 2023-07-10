@@ -246,6 +246,7 @@ func translateResponse(
 		var chatResponse ChatCompletionResponse
 		json.Unmarshal(respBody, &chatResponse)
 
+		log.Println(string(respBody))
 		log.Println(segment.Text)
 		segment.Text = chatResponse.Choices[0].Message.Content
 		segments[idx] = segment
