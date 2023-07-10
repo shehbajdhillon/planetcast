@@ -466,16 +466,16 @@ func (q *Queries) GetUserById(ctx context.Context, id int64) (Userinfo, error) {
 }
 
 const updateTargetMediaById = `-- name: UpdateTargetMediaById :one
-UPDATE transformation SET target_media = $2 WHERE project_id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source
+UPDATE transformation SET target_media = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source
 `
 
 type UpdateTargetMediaByIdParams struct {
-	ProjectID   int64
+	ID          int64
 	TargetMedia string
 }
 
 func (q *Queries) UpdateTargetMediaById(ctx context.Context, arg UpdateTargetMediaByIdParams) (Transformation, error) {
-	row := q.db.QueryRowContext(ctx, updateTargetMediaById, arg.ProjectID, arg.TargetMedia)
+	row := q.db.QueryRowContext(ctx, updateTargetMediaById, arg.ID, arg.TargetMedia)
 	var i Transformation
 	err := row.Scan(
 		&i.ID,
@@ -489,16 +489,16 @@ func (q *Queries) UpdateTargetMediaById(ctx context.Context, arg UpdateTargetMed
 }
 
 const updateTranscriptById = `-- name: UpdateTranscriptById :one
-UPDATE transformation SET transcript = $2 WHERE project_id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source
+UPDATE transformation SET transcript = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source
 `
 
 type UpdateTranscriptByIdParams struct {
-	ProjectID  int64
+	ID         int64
 	Transcript pqtype.NullRawMessage
 }
 
 func (q *Queries) UpdateTranscriptById(ctx context.Context, arg UpdateTranscriptByIdParams) (Transformation, error) {
-	row := q.db.QueryRowContext(ctx, updateTranscriptById, arg.ProjectID, arg.Transcript)
+	row := q.db.QueryRowContext(ctx, updateTranscriptById, arg.ID, arg.Transcript)
 	var i Transformation
 	err := row.Scan(
 		&i.ID,

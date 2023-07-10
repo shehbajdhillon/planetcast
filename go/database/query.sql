@@ -47,10 +47,10 @@ DELETE FROM project WHERE id = $1 RETURNING *;
 INSERT INTO transformation (project_id, target_language, target_media, transcript, is_source) VALUES ($1, $2, $3, $4, $5) RETURNING *;
 
 -- name: UpdateTranscriptById :one
-UPDATE transformation SET transcript = $2 WHERE project_id = $1 RETURNING *;
+UPDATE transformation SET transcript = $2 WHERE id = $1 RETURNING *;
 
 -- name: UpdateTargetMediaById :one
-UPDATE transformation SET target_media = $2 WHERE project_id = $1 RETURNING *;
+UPDATE transformation SET target_media = $2 WHERE id = $1 RETURNING *;
 
 -- name: GetTransformationById :one
 SELECT * FROM transformation WHERE id = $1 LIMIT 1;
