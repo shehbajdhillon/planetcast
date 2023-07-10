@@ -208,53 +208,65 @@ func translateResponse(
 
 	for idx, segment := range segments {
 
-		systemPrompt := fmt.Sprintf("Translate the following text from %s to %s. Just give me the output.", sourceTransformationObject.TargetLanguage, targetLanguage)
-		chatGptInput := ChatRequestInput{
-			Model: "gpt-3.5-turbo",
-			Messages: []ChatCompletionMessage{
-				{Role: "system", Content: systemPrompt},
-				{Role: "user", Content: segment.Text},
-			},
+		retries := 5
+
+		for retries > 0 {
+
+			systemPrompt := fmt.Sprintf("Translate the following text from %s to %s. Just give me the output.", sourceTransformationObject.TargetLanguage, targetLanguage)
+			chatGptInput := ChatRequestInput{
+				Model: "gpt-3.5-turbo",
+				Messages: []ChatCompletionMessage{
+					{Role: "system", Content: systemPrompt},
+					{Role: "user", Content: segment.Text},
+				},
+			}
+
+			jsonData, err := json.Marshal(chatGptInput)
+			if err != nil {
+				return []Segment{}, fmt.Errorf("Could not generate request body: " + err.Error())
+			}
+
+			req, err := http.NewRequest("POST", URL, bytes.NewBuffer(jsonData))
+			if err != nil {
+				return []Segment{}, fmt.Errorf("Could not generate POST request: " + err.Error())
+			}
+
+			req.Header.Add("Authorization", "Bearer "+API_KEY)
+			req.Header.Set("Content-Type", "application/json")
+
+			client := &http.Client{}
+			resp, err := client.Do(req)
+			if err != nil {
+				return []Segment{}, fmt.Errorf("Could not process request successfully: " + err.Error())
+			}
+
+			defer resp.Body.Close()
+
+			respBody, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return []Segment{}, fmt.Errorf("Could not parse request body successfully: " + err.Error())
+			}
+
+			var chatResponse ChatCompletionResponse
+			json.Unmarshal(respBody, &chatResponse)
+
+			log.Println(string(respBody))
+			log.Println(segment.Text)
+
+			time.Sleep(2 * time.Second)
+
+			if len(chatResponse.Choices) == 0 {
+				retries -= 1
+				log.Println("Open AI request failed, sleeping for 5s, retries left:", retries)
+				time.Sleep(5 * time.Second)
+			} else {
+				segment.Text = chatResponse.Choices[0].Message.Content
+				segments[idx] = segment
+				log.Println(segments[idx].Text)
+				log.Println(idx+1, "/", len(segments))
+				break
+			}
 		}
-
-		jsonData, err := json.Marshal(chatGptInput)
-		if err != nil {
-			return []Segment{}, fmt.Errorf("Could not generate request body: " + err.Error())
-		}
-
-		req, err := http.NewRequest("POST", URL, bytes.NewBuffer(jsonData))
-		if err != nil {
-			return []Segment{}, fmt.Errorf("Could not generate POST request: " + err.Error())
-		}
-
-		req.Header.Add("Authorization", "Bearer "+API_KEY)
-		req.Header.Set("Content-Type", "application/json")
-
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			return []Segment{}, fmt.Errorf("Could not process request successfully: " + err.Error())
-		}
-
-		defer resp.Body.Close()
-
-		respBody, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return []Segment{}, fmt.Errorf("Could not parse request body successfully: " + err.Error())
-		}
-
-		var chatResponse ChatCompletionResponse
-		json.Unmarshal(respBody, &chatResponse)
-
-		log.Println(string(respBody))
-		log.Println(segment.Text)
-		segment.Text = chatResponse.Choices[0].Message.Content
-		segments[idx] = segment
-		log.Println(segments[idx].Text)
-		log.Println(idx+1, "/", len(segments))
-
-		time.Sleep(2 * time.Second)
-
 	}
 
 	log.Println("Segments translated successfully")
