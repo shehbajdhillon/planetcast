@@ -64,5 +64,12 @@ enum SupportedLanguage {
   ENGLISH
   HINDI
   SPANISH
+
+  GERMAN
+  POLISH
+  ITALIAN
+
+  FRENCH
+  PORTUGUESE
 }
 

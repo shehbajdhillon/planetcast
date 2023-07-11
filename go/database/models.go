@@ -58,9 +58,14 @@ func (ns NullMembershipType) Value() (driver.Value, error) {
 type SupportedLanguage string
 
 const (
-	SupportedLanguageENGLISH SupportedLanguage = "ENGLISH"
-	SupportedLanguageHINDI   SupportedLanguage = "HINDI"
-	SupportedLanguageSPANISH SupportedLanguage = "SPANISH"
+	SupportedLanguageENGLISH    SupportedLanguage = "ENGLISH"
+	SupportedLanguageHINDI      SupportedLanguage = "HINDI"
+	SupportedLanguageSPANISH    SupportedLanguage = "SPANISH"
+	SupportedLanguageGERMAN     SupportedLanguage = "GERMAN"
+	SupportedLanguagePOLISH     SupportedLanguage = "POLISH"
+	SupportedLanguageITALIAN    SupportedLanguage = "ITALIAN"
+	SupportedLanguageFRENCH     SupportedLanguage = "FRENCH"
+	SupportedLanguagePORTUGUESE SupportedLanguage = "PORTUGUESE"
 )
 
 func (e *SupportedLanguage) Scan(src interface{}) error {

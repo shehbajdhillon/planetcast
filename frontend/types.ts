@@ -32,7 +32,18 @@ export interface Segment {
   text: string;
 };
 
-export const SupportedLanguages = ["ENGLISH", "HINDI", "SPANISH"] as const;
+export const SupportedLanguages = [
+  "ENGLISH",
+  "HINDI",
+  "SPANISH",
+
+  "GERMAN",
+  "POLISH",
+  "ITALIAN",
+
+  "FRENCH",
+  "PORTUGUESE",
+] as const;
 
 export type SupportedLanguage = typeof SupportedLanguages[number];
 
