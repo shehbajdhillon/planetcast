@@ -28,12 +28,14 @@ export const MenuBar: React.FC = () => {
 
   const { toggleColorMode } = useColorMode();
   const { signOut } = useClerk();
+  const { isLoaded, isSignedIn } = useUser();
 
   const { user } = useUser();
 
   return (
     <Menu>
       <MenuButton
+        hidden={!isSignedIn || !isLoaded}
         rounded={'full'}
         cursor={'pointer'}
         borderWidth={"1px"}
