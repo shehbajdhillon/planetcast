@@ -59,14 +59,8 @@ const LoadingGrid: React.FC = () => {
 };
 
 const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug, projects, refetch }) => {
-  const { onOpen, isOpen, onClose } = useDisclosure();
-  const borderColor = useColorModeValue('gray.300', 'whiteAlpha.500');
-  const bgColor = useColorModeValue('white', 'black');
-  const imgSrc = useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg');
-
   return (
     <Box w="full" h="full" display={"flex"} flexDir={"column"}>
-      <NewProjectModal onOpen={onOpen} isOpen={isOpen} onClose={onClose} refetch={refetch} teamSlug={teamSlug} />
       <Center>
       {!projects ? <LoadingGrid /> :
         <Grid
@@ -82,31 +76,8 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug, projects, refetch
           }}
         >
           <GridItem colSpan={2}>
-            <Box
-              p={5}
-              onClick={onOpen}
-              rounded={"lg"}
-              _hover={{
-                borderColor: borderColor,
-                borderWidth: "1px",
-                boxShadow: 'lg',
-                bg: bgColor,
-              }}
-              cursor={"pointer"}
-            >
-              <Center h="full" flexDirection={"column"}>
-                <Image
-                  src={imgSrc}
-                  width={70}
-                  height={100}
-                  style={{ borderRadius: "20px" }}
-                  alt='planet cast logo'
-                />
-                <Text>New Project</Text>
-              </Center>
-            </Box>
+            <NewProjectModal refetch={refetch} teamSlug={teamSlug} />
           </GridItem>
-
           {projects?.map((project: Project, idx: number) => (
             <GridItem colSpan={2} key={idx}>
               <ProjectCard
