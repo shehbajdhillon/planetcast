@@ -71,7 +71,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug, projects, refetch
             xl: 'repeat(6, 1fr)'
           }}
         >
-          <GridItem colSpan={2}>
+          <GridItem colSpan={2} h="full" pt="10px">
             <NewProjectModal refetch={refetch} teamSlug={teamSlug} />
           </GridItem>
           {projects?.map((project: Project, idx: number) => (

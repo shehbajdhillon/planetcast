@@ -106,6 +106,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
       <Box
         p={5}
         borderWidth={"1px"}
+        h={{ base: "186px", md: "203px" }}
+        w={{ base: "330px", md: "360px" }}
         onClick={onOpen}
         rounded={"lg"}
         _hover={{
