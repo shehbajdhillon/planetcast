@@ -34,7 +34,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
       }}
       cursor={"pointer"}
     >
-      <HStack py="10px" rounded={"lg"}>
+      <HStack pb="2px" pt="10px" rounded={"lg"}>
         <VideoPlayer src={transformations.length ? transformations?.[0].targetMedia : project.sourceMedia } style={{ borderRadius: "100px" }}/>
       </HStack>
       <Box p="5px" onClick={() => router.push(`/${teamSlug}/${project.id}`)}>

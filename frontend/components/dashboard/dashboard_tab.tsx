@@ -3,12 +3,9 @@ import {
   Center,
   Grid,
   GridItem,
-  Text,
   useColorModeValue,
-  useDisclosure,
 } from "@chakra-ui/react";
 import ProjectCard from "./project_card";
-import Image from "next/image";
 import NewProjectModal from "../new_project_modal";
 import { Project } from "@/types";
 
@@ -19,13 +16,12 @@ interface DashboardTabProps {
 };
 
 const LoadingBox: React.FC = () => {
-  const bgColor = useColorModeValue("blackAlpha.50", "whiteAlpha.200")
+  const bgColor = useColorModeValue("blackAlpha.300", "whiteAlpha.300")
   return (
     <Box
       w={{ base: '330px', md: '360px' }}
       h={{ base: '282px', md: '300px' }}
       rounded={"lg"}
-      borderWidth={"1px"}
       borderColor={bgColor}
     >
       <Box py="10px" h={{ base: "185px", md: "202px" }} backgroundColor={bgColor} rounded={"lg"} />

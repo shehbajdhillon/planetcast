@@ -105,11 +105,11 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
     <Box>
       <Box
         p={5}
+        borderWidth={"1px"}
         onClick={onOpen}
         rounded={"lg"}
         _hover={{
           borderColor: borderColor,
-          borderWidth: "1px",
           boxShadow: 'lg',
           bg: bgColor,
         }}
