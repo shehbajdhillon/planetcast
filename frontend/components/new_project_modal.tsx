@@ -62,7 +62,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
   const { onOpen, isOpen, onClose } = useDisclosure();
 
   const imgSrc = useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg');
-  const borderColor = useColorModeValue('gray.300', 'whiteAlpha.500');
+  const borderColor = useColorModeValue('blackAlpha.400', 'whiteAlpha.500');
   const bgColor = useColorModeValue('white', 'black');
 
   const createProject = async () => {
@@ -110,7 +110,6 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
         rounded={"lg"}
         _hover={{
           borderColor: borderColor,
-          boxShadow: 'lg',
           bg: bgColor,
         }}
         cursor={"pointer"}
