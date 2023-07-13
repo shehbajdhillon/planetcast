@@ -203,8 +203,7 @@ func translateResponse(
 	API_KEY := os.Getenv("OPEN_AI_SECRET_KEY")
 	URL := "https://api.openai.com/v1/chat/completions"
 
-	log.Println("Translating the following segments from", sourceTransformationObject.TargetLanguage, "to", targetLanguage)
-	log.Println(segments)
+	log.Println("Translating project", sourceTransformationObject.ProjectID, "from", sourceTransformationObject.TargetLanguage, "to", targetLanguage)
 
 	for idx, segment := range segments {
 
@@ -250,9 +249,6 @@ func translateResponse(
 			var chatResponse ChatCompletionResponse
 			json.Unmarshal(respBody, &chatResponse)
 
-			log.Println(string(respBody))
-			log.Println(segment.Text)
-
 			time.Sleep(2 * time.Second)
 
 			if len(chatResponse.Choices) == 0 {
@@ -262,14 +258,11 @@ func translateResponse(
 			} else {
 				segment.Text = chatResponse.Choices[0].Message.Content
 				segments[idx] = segment
-				log.Println(segments[idx].Text)
-				log.Println(idx+1, "/", len(segments))
+				log.Println("Translation Progress for Project", sourceTransformationObject.ProjectID, "from", sourceTransformationObject.TargetLanguage, "to", targetLanguage+":", idx+1, "/", len(segments))
 				break
 			}
 		}
 	}
-
-	log.Println("Segments translated successfully")
 	log.Println(segments)
 
 	return segments, nil
