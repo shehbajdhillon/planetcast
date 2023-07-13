@@ -1,5 +1,4 @@
-import { Project, Segment, SupportedLanguage, SupportedLanguages, Transformation } from "@/types";
-import { formatTime } from "@/utils";
+import { Project, SupportedLanguage, SupportedLanguages, Transformation } from "@/types";
 import { gql, useMutation } from "@apollo/client";
 import {
   Box,
@@ -14,8 +13,6 @@ import {
   ModalOverlay,
   Select,
   Stack,
-  Text,
-  VStack,
   useDisclosure
 } from "@chakra-ui/react";
 import { PlusIcon } from "lucide-react";
@@ -39,10 +36,11 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
   const { project } = props;
   const { onOpen, isOpen, onClose } = useDisclosure();
 
-  const sourceTransformation: Transformation | undefined  = project?.transformations?.find(t => t.isSource);
-  const sourceTranscript = sourceTransformation?.transcript && JSON.parse(sourceTransformation.transcript)
-  const sourceSegments: Segment[] = sourceTranscript?.segments;
-  const [targetLanguage, setTargetLanguage] = useState<SupportedLanguage>();
+  const transformations: Transformation[] | undefined  = project?.transformations;
+  const dubbedLanguages = transformations?.map((t) => t.targetLanguage);
+  const undubbedLanguages = SupportedLanguages.filter((lang) => dubbedLanguages.indexOf(lang) == -1)
+
+  const [targetLanguage, setTargetLanguage] = useState<SupportedLanguage>(undubbedLanguages[0]);
 
   const [createTranslationMutation, { loading }] = useMutation(CREATE_TRANSLATION);
 
@@ -53,48 +51,19 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
   };
 
   useEffect(() => {
-    setTargetLanguage(undefined);
-  }, [isOpen]);
+    setTargetLanguage(undubbedLanguages[0]);
+  }, [isOpen, undubbedLanguages]);
 
   return (
     <Box>
       <Button leftIcon={<PlusIcon />} onClick={onOpen} variant={"outline"}>New Dubbing</Button>
-      <Modal isOpen={isOpen} onClose={onClose} size={"6xl"} isCentered>
+      <Modal isOpen={isOpen} onClose={onClose} isCentered>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>New Dubbing</ModalHeader>
           <ModalCloseButton />
-
-          <ModalBody overflow={"auto"} maxH={"80vh"}>
+          <ModalBody overflow={"auto"}>
             <Stack w="full" h={"full"} direction={"row"}>
-
-              <VStack w="50%">
-                <Button variant={"outline"} pointerEvents={"none"}>{sourceTransformation?.targetLanguage}</Button>
-                <VStack>
-                  {sourceSegments?.map((segment: Segment, idx: number) => (
-                    <Button
-                      key={idx}
-                      rounded="10px"
-                      whiteSpace={'normal'}
-                      height="auto"
-                      blockSize={'auto'}
-                      w="full"
-                      justifyContent="left"
-                      leftIcon={<VStack spacing={1}><Text>{formatTime(segment.start)}</Text><Text>{formatTime(segment.end)}</Text></VStack>}
-                      variant={'outline'}
-                    >
-                      <Text
-                        key={idx}
-                        textAlign={"left"}
-                        padding={2}
-                      >
-                        { segment.text.trim() }
-                      </Text>
-                    </Button>
-                  ))}
-                </VStack>
-              </VStack>
-
               <Box mx="auto">
                 <Stack spacing={2}>
                   <FormLabel
@@ -104,7 +73,7 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
                     Target Language
                   </FormLabel>
                   <Select value={targetLanguage} onChange={(e) => setTargetLanguage((e.target.value as SupportedLanguage))}>
-                    {SupportedLanguages.map((lang, idx) => (
+                    {undubbedLanguages.map((lang, idx) => (
                       <option key={idx} value={lang}>{lang}</option>
                     ))}
                   </Select>
@@ -113,14 +82,11 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
                   </Button>
                 </Stack>
               </Box>
-
             </Stack>
           </ModalBody>
-
           <ModalFooter w="full">
             <Button colorScheme="gray" onClick={onClose}>Close</Button>
           </ModalFooter>
-
         </ModalContent>
       </Modal>
     </Box>
