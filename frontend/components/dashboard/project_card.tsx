@@ -6,10 +6,13 @@ import {
   Button,
   useColorModeValue,
   Spinner,
+  Spacer,
+  IconButton,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import VideoPlayer from "../video_player";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ProjectCardProps {
   teamSlug: string;
@@ -24,6 +27,9 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
 
   const router = useRouter();
 
+  const goNext = () => setTransformationIdx(curr => curr + 1)
+  const goBack = () => setTransformationIdx(curr => curr - 1)
+
   return (
     <Box
       w={{ base: "330px", md: "360px" }}
@@ -35,7 +41,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
       cursor={"pointer"}
     >
       <HStack pb="2px" pt="10px" rounded={"lg"}>
-        <VideoPlayer src={transformations.length ? transformations?.[0].targetMedia : project.sourceMedia } style={{ borderRadius: "100px" }}/>
+        <VideoPlayer src={transformations.length ? transformations?.[transformationIdx].targetMedia : project.sourceMedia } style={{ borderRadius: "100px" }}/>
       </HStack>
       <Box p="5px" onClick={() => router.push(`/${teamSlug}/${project.id}`)}>
         <HStack p="5px">
@@ -58,8 +64,29 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
             alignContent="right"
             pointerEvents={"none"}
           >
-            {transformations.length ? transformations?.[0].targetLanguage : <Text>PROCESSING <Spinner size={"xs"} /></Text>}
+            {transformations.length ? transformations?.[transformationIdx].targetLanguage : <Text>PROCESSING <Spinner size={"xs"} /></Text>}
           </Button>
+          <Spacer />
+          <IconButton
+            icon={<ChevronLeft />}
+            aria-label="choose previous dubbing"
+            variant={"outline"}
+            isDisabled={transformationIdx - 1 < 0}
+            onClick={(e) => {
+              e.stopPropagation();
+              setTransformationIdx(curr => curr - 1)
+            }}
+          />
+          <IconButton
+            icon={<ChevronRight />}
+            aria-label="choose next dubbing"
+            variant={"outline"}
+            isDisabled={transformationIdx + 1 >= transformations.length}
+            onClick={(e) => {
+              e.stopPropagation();
+              setTransformationIdx(curr => curr + 1)
+            }}
+          />
         </HStack>
       </Box>
     </Box>
