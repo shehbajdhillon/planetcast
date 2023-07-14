@@ -80,14 +80,6 @@ export const MenuBar: React.FC = () => {
           _hover={{
             backgroundColor: useColorModeValue("blackAlpha.200", "whiteAlpha.200")
           }}
-        >
-          Settings
-        </MenuItem>
-        <MenuItem
-          backgroundColor={useColorModeValue("white", "black")}
-          _hover={{
-            backgroundColor: useColorModeValue("blackAlpha.200", "whiteAlpha.200")
-          }}
           onClick={toggleColorMode}
         >
           Turn on {useColorModeValue("Dark", "Light")} Mode
