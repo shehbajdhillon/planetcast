@@ -10,12 +10,10 @@ import {
   GridItem,
   HStack,
   Heading,
-  IconButton,
   Spinner,
   Text,
   VStack,
   useColorModeValue,
-  useDisclosure,
 } from "@chakra-ui/react";
 import { GetServerSideProps, NextPage } from "next";
 
@@ -30,11 +28,9 @@ import {
 } from '@chakra-ui/react';
 import { useRouter } from "next/router";
 import VideoPlayer from "@/components/video_player";
-import { useEffect, useRef, useState } from "react";
-import { PlusIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useVideoSeekStore } from "@/stores/video_seek_store";
 import { formatTime } from "@/utils";
-import { text } from "stream/consumers";
 import NewTransformationModel from "@/components/new_transformation_modal";
 
 
@@ -107,7 +103,7 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
   const [currentTransformation, setCurrentTransformation] = useState(0);
   const [transformationPresent, setTranformationPresent] = useState(false);
 
-  const { data, loading }
+  const { data, loading, refetch }
     = useQuery(GET_TRANSCRIPT, { variables: { teamSlug, projectId: project?.id }, pollInterval: transformationPresent ? 0 : 10000 });
 
   const currentProject: Project = data?.getTeamById?.projects?.[0];
@@ -172,7 +168,7 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
                   {t?.targetLanguage}
                 </Button>
               ))}
-              <NewTransformationModel project={currentProject} />
+              <NewTransformationModel project={currentProject} refetch={refetch} />
             </HStack>
           </GridItem>
 

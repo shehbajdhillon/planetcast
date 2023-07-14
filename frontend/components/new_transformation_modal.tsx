@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 
 interface NewTransformationModelProps {
   project: Project;
+  refetch: () => void;
 };
 
 const CREATE_TRANSLATION = gql`
@@ -33,7 +34,7 @@ const CREATE_TRANSLATION = gql`
 
 const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) => {
 
-  const { project } = props;
+  const { project, refetch } = props;
   const { onOpen, isOpen, onClose } = useDisclosure();
 
   const transformations: Transformation[] | undefined  = project?.transformations;
@@ -47,6 +48,10 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
   const createTranslation = async () => {
     const variables = { projectId: project.id, targetLanguage }
     const res = await createTranslationMutation({ variables });
+    if (res) {
+      refetch();
+      onClose();
+    }
     return res
   };
 
