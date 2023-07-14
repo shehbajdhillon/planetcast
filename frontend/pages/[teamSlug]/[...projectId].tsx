@@ -10,9 +10,11 @@ import {
   GridItem,
   HStack,
   Heading,
+  IconButton,
   Spinner,
   Text,
   VStack,
+  useClipboard,
   useColorModeValue,
 } from "@chakra-ui/react";
 import { GetServerSideProps, NextPage } from "next";
@@ -32,6 +34,7 @@ import { useEffect, useState } from "react";
 import { useVideoSeekStore } from "@/stores/video_seek_store";
 import { formatTime } from "@/utils";
 import NewTransformationModel from "@/components/new_transformation_modal";
+import { Clipboard } from "lucide-react";
 
 
 const DELETE_PROJECT = gql`
@@ -216,8 +219,6 @@ const TranscriptView: React.FC<TranscriptViewProps> = ({ segments }) => {
     return false;
   };
 
-  const bgColorHighlight = useColorModeValue("black", "white");
-  const textColor = useColorModeValue("white", "black");
 
   useEffect(() => {
     const parentDiv = document.getElementById(parentId);
@@ -237,31 +238,62 @@ const TranscriptView: React.FC<TranscriptViewProps> = ({ segments }) => {
       </Checkbox>
       <VStack overflow={"scroll"} h="full" id={parentId} position={"relative"} w="full">
         {segments?.map((segment: Segment, idx: number) => (
-          <Button
+          <MessageView
+            segment={segment}
             key={idx}
-            rounded="10px"
-            whiteSpace={'normal'}
-            height="auto"
-            blockSize={'auto'}
-            w="full"
-            justifyContent="left"
-            leftIcon={<Text>{formatTime(segment.start)}</Text>}
-            variant={highlight(segment) ? 'solid' : 'outline'}
-            textColor={highlight(segment) ? textColor : 'inherit'}
-            bgColor={highlight(segment) ? bgColorHighlight : 'inherit'}
-            id={transcriptMessageId(segment)}
-          >
-            <Text
-              key={idx}
-              textAlign={"left"}
-              padding={2}
-            >
-              { segment.text.trim() }
-            </Text>
-          </Button>
+            htmlId={transcriptMessageId(segment)}
+            highlight={highlight(segment)}
+          />
         ))}
       </VStack>
     </VStack>
+  );
+};
+
+interface MessageViewProps {
+  segment: Segment;
+  htmlId: string;
+  highlight: boolean;
+};
+
+const MessageView: React.FC<MessageViewProps> = ({ segment, htmlId, highlight }) => {
+
+  const bgColorHighlight = useColorModeValue("black", "white");
+  const textColor = useColorModeValue("white", "black");
+
+  const { onCopy } = useClipboard(segment.text);
+
+  return (
+    <Box
+      rounded="10px"
+      whiteSpace={'normal'}
+      height="auto"
+      blockSize={'auto'}
+      w="full"
+      justifyContent="left"
+      borderWidth={"1px"}
+      textColor={highlight ? textColor : 'inherit'}
+      bgColor={highlight ? bgColorHighlight : 'inherit'}
+      id={htmlId}
+      p={2}
+    >
+      <HStack>
+        <IconButton
+          aria-label="copy transcript message"
+          icon={<Clipboard size={"20px"} />}
+          size={"0px"}
+          onClick={onCopy}
+          variant={"unstyled"}
+        />
+        <Text>{formatTime(segment.start)} - {formatTime(segment.end)}</Text>
+      </HStack>
+      <Text
+        textAlign={"left"}
+        fontWeight={"semibold"}
+      >
+        { segment.text.trim() }
+      </Text>
+    </Box>
   );
 };
 
