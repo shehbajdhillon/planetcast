@@ -14,6 +14,7 @@ import Head from 'next/head'
 
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const HeroSection: React.FC = () => {
   return (
@@ -72,19 +73,23 @@ const HeroSection: React.FC = () => {
           </Text>
         </Heading>
         <HStack w={{ md: "full" }} pt="10px">
-          <Button
-            size={"lg"}
-            backgroundColor={useColorModeValue("black", "white")}
-            textColor={useColorModeValue("white", "black")}
-            borderColor={useColorModeValue("black", "white")}
-            borderWidth={"1px"}
-            _hover={{
-              backgroundColor: useColorModeValue("white", "black"),
-              textColor: useColorModeValue("black", "white")
-            }}
+          <Link
+            href={'/dashboard'}
           >
-            Try for Free
-          </Button>
+            <Button
+              size={"lg"}
+              backgroundColor={useColorModeValue("black", "white")}
+              textColor={useColorModeValue("white", "black")}
+              borderColor={useColorModeValue("black", "white")}
+              borderWidth={"1px"}
+              _hover={{
+                backgroundColor: useColorModeValue("white", "black"),
+                textColor: useColorModeValue("black", "white")
+              }}
+            >
+              Try for Free
+            </Button>
+          </Link>
           <Button
             size={"lg"}
             variant={"outline"}
