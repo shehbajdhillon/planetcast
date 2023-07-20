@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"os/exec"
 	"planetcastdev/database"
 	"strings"
 	"time"
@@ -162,8 +163,107 @@ func CreateTranslation(
 		return database.Transformation{}, fmt.Errorf("Could not update transformation: " + err.Error())
 	}
 
+	currentTime := time.Now()
+	timeString := strings.ReplaceAll(currentTime.Format("2006-01-02 15:04:05"), " ", "-")
+	identifier := fmt.Sprintf("%d-%s-%s", sourceTransformationObject.ProjectID, sourceTransformationObject.TargetLanguage, timeString)
+
+	err = fetchDubbedClips(translatedSegments, identifier)
+
 	// return the update transformation
 	return targetTransformationObject, nil
+}
+
+type VoiceSettings struct {
+	Stability       float64 `json:"stability"`
+	SimilarityBoost float64 `json:"similarity_boost"`
+}
+
+type VoiceRequest struct {
+	Text         string        `json:"text"`
+	ModelID      string        `json:"model_id"`
+	VoiceSetting VoiceSettings `json:"voice_settings"`
+}
+
+func fetchDubbedClips(segments []Segment, identifier string) error {
+
+	headers := http.Header{}
+	headers.Set("Content-Type", "application/json")
+	headers.Set("Accept", "audio/mpeg")
+	headers.Set("xi-api-key", "")
+	url := "https://api.elevenlabs.io/v1/text-to-speech/DgzXv5iB8NJnHCwRTzL8"
+
+	for idx, s := range segments {
+
+		data := VoiceRequest{
+			Text:    s.Text,
+			ModelID: "eleven_multilingual_v1",
+			VoiceSetting: VoiceSettings{
+				Stability:       1.0,
+				SimilarityBoost: 1.0,
+			},
+		}
+
+		payload, err := json.Marshal(data)
+		if err != nil {
+			return fmt.Errorf("Error encoding JSON for ElevenLabs request: %s", err.Error())
+		}
+
+		response, err := http.Post(url, "application/json", bytes.NewBuffer(payload))
+		if err != nil {
+			return fmt.Errorf("Error sending request to ElevenLabs: %s", err.Error())
+		}
+
+		defer response.Body.Close()
+
+		if response.StatusCode == http.StatusOK {
+			audioContent, err := ioutil.ReadAll(response.Body)
+			if err != nil {
+				return fmt.Errorf("Error reading response from ElevenLabs: %s", err.Error())
+			}
+
+			err = ioutil.WriteFile(fmt.Sprintf("%s-%d-audio-file.mp3", identifier, s.Id), audioContent, 0644)
+			if err != nil {
+				return fmt.Errorf("Error writing audio file: %s", err.Error())
+			}
+
+			log.Println("Audio file saved successfully:", idx+1, "out of", len(segments))
+		} else {
+			return fmt.Errorf("Request Failed: %d", response.StatusCode)
+		}
+	}
+
+	return nil
+}
+
+func dubAudioClips(segments []Segment, identifier string) error {
+
+	for _, s := range segments {
+		id := s.Id
+
+		audioFileName := fmt.Sprintf("%s-%d-audio-file.mp3", identifier, id)
+		videoSegmentName := fmt.Sprintf("%s-%d-video-segment.mp4", identifier, id)
+		dubbedVideoSegmentName := fmt.Sprintf("%s-%d-video-segment-dubbed.mp4", identifier, id)
+
+		generateVideoClipCmd := exec.Command("ffmpeg", "-i", "iio_video_2.mp4", "-ss", fmt.Sprintf("%.2f", s.Start), "-to", fmt.Sprintf("%.2f", s.End), videoSegmentName)
+		if err := generateVideoClipCmd.Run(); err != nil {
+			return fmt.Errorf("Could not clip source video: %s", err.Error())
+		}
+
+		dubVideoClipCmd := exec.Command("ffmpeg", "-i", videoSegmentName, "-i", audioFileName, "-c:v", "copy", "-map", "0:v:0", "-map", "1:a:0", dubbedVideoSegmentName)
+		if err := dubVideoClipCmd.Run(); err != nil {
+			return fmt.Errorf("Could not dub the clip: %s", err.Error())
+		}
+
+	}
+
+	return nil
+
+}
+
+func concatSegments(segments []Segment, identifier string) {
+}
+
+func cleanUp(segments []Segment, identifier string) {
 }
 
 type ChatCompletionMessage struct {
