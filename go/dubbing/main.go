@@ -163,11 +163,13 @@ func CreateTranslation(
 		return database.Transformation{}, fmt.Errorf("Could not update transformation: " + err.Error())
 	}
 
-	currentTime := time.Now()
-	timeString := strings.ReplaceAll(currentTime.Format("2006-01-02 15:04:05"), " ", "-")
-	identifier := fmt.Sprintf("%d-%s-%s", sourceTransformationObject.ProjectID, sourceTransformationObject.TargetLanguage, timeString)
+	/**
+		currentTime := time.Now()
+		timeString := strings.ReplaceAll(currentTime.Format("2006-01-02 15:04:05"), " ", "-")
+		identifier := fmt.Sprintf("%d-%s-%s", sourceTransformationObject.ProjectID, sourceTransformationObject.TargetLanguage, timeString)
 
-	err = fetchDubbedClips(translatedSegments, identifier)
+		err = fetchDubbedClips(translatedSegments, identifier)
+	  **/
 
 	// return the update transformation
 	return targetTransformationObject, nil
@@ -311,7 +313,7 @@ func translateResponse(
 
 		for retries > 0 {
 
-			systemPrompt := fmt.Sprintf("Translate the following text from %s to %s. Just give me the output.", sourceTransformationObject.TargetLanguage, targetLanguage)
+			systemPrompt := fmt.Sprintf("Translate the following text to street spoken, informal %s. Provide the output in %s alphabet. Just give the output.", targetLanguage, targetLanguage)
 			chatGptInput := ChatRequestInput{
 				Model: "gpt-3.5-turbo",
 				Messages: []ChatCompletionMessage{
