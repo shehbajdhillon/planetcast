@@ -79,6 +79,7 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
             icon={useColorModeValue(<Moon />, <Sun />)}
             variant={"ghost"}
           />
+          {/**
           <Link
             href={'/dashboard'}
             hidden={!(marketing && isLoaded)}
@@ -95,6 +96,7 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
               { isSignedIn ? 'Dashboard' : 'Log In' }
             </Button>
           </Link>
+          **/}
         </HStack>
       </Box>
     </Box>
