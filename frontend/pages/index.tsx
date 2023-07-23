@@ -73,6 +73,7 @@ const HeroSection: React.FC = () => {
           </Text>
         </Heading>
         <HStack w={{ md: "full" }} pt="10px">
+          {/**
           <Link
             href={'/dashboard'}
           >
@@ -90,6 +91,7 @@ const HeroSection: React.FC = () => {
               Try for Free
             </Button>
           </Link>
+          **/}
           <Button
             size={"lg"}
             variant={"outline"}
@@ -99,7 +101,7 @@ const HeroSection: React.FC = () => {
               bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
             }}
           >
-            Read More
+            Coming Soon
           </Button>
         </HStack>
       </Box>
