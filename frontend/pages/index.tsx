@@ -95,13 +95,15 @@ const HeroSection: React.FC = () => {
           <Button
             size={"lg"}
             variant={"outline"}
+            backgroundColor={useColorModeValue("black", "white")}
+            textColor={useColorModeValue("white", "black")}
             _hover={{
               backgroundColor: useColorModeValue("black", "white:"),
               textColor: useColorModeValue("white", "black"),
               bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
             }}
           >
-            Coming Soon
+            Request Access
           </Button>
         </HStack>
       </Box>
