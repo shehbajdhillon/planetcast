@@ -10,6 +10,8 @@ import { PropsWithChildren, useMemo } from 'react';
 import { ApolloProvider } from '@apollo/client';
 import { GetApolloClient } from '@/apollo-client';
 
+import { Analytics } from '@vercel/analytics/react';
+
 import '../styles/nprogress.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -75,6 +77,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <ApolloProviderWrapper>
           <main className={inter.className}>
             <Component {...pageProps} />
+            <Analytics />
           </main>
         </ApolloProviderWrapper>
       </ClerkProvider>
