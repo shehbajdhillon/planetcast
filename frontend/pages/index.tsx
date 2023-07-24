@@ -15,6 +15,7 @@ import Head from 'next/head'
 import useWindowDimensions from '@/hooks/useWindowDimensions';
 import Image from 'next/image';
 import Link from 'next/link';
+import WaitlistModal from '@/components/waitlist_request_modal';
 
 const HeroSection: React.FC = () => {
   return (
@@ -92,19 +93,7 @@ const HeroSection: React.FC = () => {
             </Button>
           </Link>
           **/}
-          <Button
-            size={"lg"}
-            variant={"outline"}
-            backgroundColor={useColorModeValue("black", "white")}
-            textColor={useColorModeValue("white", "black")}
-            _hover={{
-              backgroundColor: useColorModeValue("black", "white:"),
-              textColor: useColorModeValue("white", "black"),
-              bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
-            }}
-          >
-            Request Access
-          </Button>
+          <WaitlistModal />
         </HStack>
       </Box>
       <Box maxW={{ base: "200px", md: "25%" }}>
