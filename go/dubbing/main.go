@@ -177,7 +177,7 @@ type VoiceRequest struct {
 
 func fetchDubbedClips(segments []Segment, identifier string) error {
 
-	url := "https://api.elevenlabs.io/v1/text-to-speech/DgzXv5iB8NJnHCwRTzL8"
+	url := "https://api.elevenlabs.io/v1/text-to-speech/2EiwWnXFnvU5JabPnv8n"
 	API_KEY := os.Getenv("ELEVEN_LABS_KEY")
 
 	for idx, s := range segments {
