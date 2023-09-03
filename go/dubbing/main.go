@@ -315,7 +315,7 @@ func translateResponse(
 
 			systemPrompt := fmt.Sprintf("Translate the following text to street spoken, informal %s. Provide the output in %s alphabet. Just give the output.", targetLanguage, targetLanguage)
 			chatGptInput := ChatRequestInput{
-				Model: "gpt-3.5-turbo",
+				Model: "gpt-4",
 				Messages: []ChatCompletionMessage{
 					{Role: "system", Content: systemPrompt},
 					{Role: "user", Content: segment.Text},
