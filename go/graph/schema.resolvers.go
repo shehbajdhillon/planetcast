@@ -56,11 +56,11 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 	newCtx := context.Background()
 
 	go dubbing.CreateTransformation(newCtx, r.DB, dubbing.CreateTransformationParams{
-		ProjectID:          project.ID,
-		TargetLanguage:     sourceLanguage,
-		FileNameIdentifier: identifier,
-		File:               sourceMedia.File,
-		IsSource:           true,
+		ProjectID:      project.ID,
+		TargetLanguage: sourceLanguage,
+		FileName:       fileName,
+		File:           sourceMedia.File,
+		IsSource:       true,
 	})
 
 	return project, nil

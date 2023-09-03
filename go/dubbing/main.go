@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"planetcastdev/database"
 	"planetcastdev/httpmiddleware"
+	"planetcastdev/utils"
 	"strings"
 	"time"
 
@@ -31,7 +32,7 @@ type Segment struct {
 	Text  string  `json:"text"`
 }
 
-func getTranscript(fileNameIdentifier string, file io.ReadSeeker) WhisperOutput {
+func getTranscript(fileName string, file io.ReadSeeker) WhisperOutput {
 
 	file.Seek(0, io.SeekStart)
 
@@ -42,7 +43,7 @@ func getTranscript(fileNameIdentifier string, file io.ReadSeeker) WhisperOutput 
 
 	requestBody := &bytes.Buffer{}
 	writer := multipart.NewWriter(requestBody)
-	part, err := writer.CreateFormFile("file", fileNameIdentifier+".mp4")
+	part, err := writer.CreateFormFile("file", fileName)
 
 	if err != nil {
 		log.Println("Failed to create form file:", err)
@@ -81,17 +82,17 @@ func getTranscript(fileNameIdentifier string, file io.ReadSeeker) WhisperOutput 
 	file.Seek(0, io.SeekStart)
 	var whisperOutput WhisperOutput
 	json.Unmarshal(responseBody, &whisperOutput)
-	log.Println("Whisper request processes successfully for:", fileNameIdentifier)
+	log.Println("Whisper request processes successfully for:", fileName)
 
 	return whisperOutput
 }
 
 type CreateTransformationParams struct {
-	ProjectID          int64
-	TargetLanguage     database.SupportedLanguage
-	FileNameIdentifier string
-	File               io.ReadSeeker
-	IsSource           bool
+	ProjectID      int64
+	TargetLanguage database.SupportedLanguage
+	FileName       string
+	File           io.ReadSeeker
+	IsSource       bool
 }
 
 func CreateTransformation(
@@ -100,13 +101,13 @@ func CreateTransformation(
 	args CreateTransformationParams,
 ) (database.Transformation, error) {
 
-	transcript := getTranscript(args.FileNameIdentifier, args.File)
+	transcript := getTranscript(args.FileName, args.File)
 	jsonBytes, err := json.Marshal(transcript)
 
 	transformation, err := queries.CreateTransformation(ctx, database.CreateTransformationParams{
 		ProjectID:      args.ProjectID,
 		TargetLanguage: args.TargetLanguage,
-		TargetMedia:    args.FileNameIdentifier + ".mp4",
+		TargetMedia:    args.FileName,
 		Transcript:     pqtype.NullRawMessage{RawMessage: jsonBytes, Valid: true},
 		IsSource:       args.IsSource,
 	})
@@ -155,13 +156,9 @@ func CreateTranslation(
 		return database.Transformation{}, fmt.Errorf("Could not update transformation: " + err.Error())
 	}
 
-	/**
-		currentTime := time.Now()
-		timeString := strings.ReplaceAll(currentTime.Format("2006-01-02 15:04:05"), " ", "-")
-		identifier := fmt.Sprintf("%d-%s-%s", sourceTransformationObject.ProjectID, sourceTransformationObject.TargetLanguage, timeString)
+	identifier := fmt.Sprintf("%d-%s-%s", sourceTransformationObject.ProjectID, utils.GetCurrentDateTimeString(), targetTransformationObject.TargetLanguage)
 
-		err = fetchDubbedClips(translatedSegments, identifier)
-	  **/
+	err = fetchDubbedClips(translatedSegments, identifier)
 
 	// return the update transformation
 	return targetTransformationObject, nil
@@ -178,7 +175,7 @@ type VoiceRequest struct {
 	VoiceSetting VoiceSettings `json:"voice_settings"`
 }
 
-func fetchDubbedClips(segments []Segment, identifier string, targetLang string) error {
+func fetchDubbedClips(segments []Segment, identifier string) error {
 
 	url := "https://api.elevenlabs.io/v1/text-to-speech/DgzXv5iB8NJnHCwRTzL8"
 	API_KEY := os.Getenv("ELEVEN_LABS_KEY")
@@ -188,7 +185,7 @@ func fetchDubbedClips(segments []Segment, identifier string, targetLang string) 
 		for {
 
 			id := s.Id
-			audioFileName := fmt.Sprintf("%s_%d_%s_audio_file.mp3", identifier, id, targetLang)
+			audioFileName := fmt.Sprintf("%s_%d_audio_file.mp3", identifier, id)
 
 			data := VoiceRequest{
 				Text:    s.Text,
