@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"planetcastdev/database"
+	"planetcastdev/httpmiddleware"
 	"strings"
 	"time"
 
@@ -63,26 +64,18 @@ func getTranscript(fileNameIdentifier string, file io.ReadSeeker) WhisperOutput 
 		return WhisperOutput{}
 	}
 
-	req, err := http.NewRequest("POST", URL, requestBody)
-	if err != nil {
-		log.Println("Failed to create request:", err)
-		return WhisperOutput{}
-	}
+	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
+		Method: "POST",
+		Url:    URL,
+		Body:   requestBody,
+		Headers: map[string]string{
+			"Authorization": "Bearer " + API_KEY,
+			"Content-Type":  writer.FormDataContentType(),
+		},
+	})
 
-	req.Header.Add("Authorization", "Bearer "+API_KEY)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
 	if err != nil {
 		log.Println("Request failed:", err)
-		return WhisperOutput{}
-	}
-	defer resp.Body.Close()
-
-	responseBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println("Failed to read response body:", err)
 		return WhisperOutput{}
 	}
 
@@ -327,23 +320,16 @@ func translateResponse(
 				return []Segment{}, fmt.Errorf("Could not generate request body: " + err.Error())
 			}
 
-			req, err := http.NewRequest("POST", URL, bytes.NewBuffer(jsonData))
-			if err != nil {
-				return []Segment{}, fmt.Errorf("Could not generate POST request: " + err.Error())
-			}
+			respBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
+				Method: "POST",
+				Url:    URL,
+				Body:   bytes.NewBuffer(jsonData),
+				Headers: map[string]string{
+					"Authorization": "Bearer " + API_KEY,
+					"Content-Type":  "application/json",
+				},
+			})
 
-			req.Header.Add("Authorization", "Bearer "+API_KEY)
-			req.Header.Set("Content-Type", "application/json")
-
-			client := &http.Client{}
-			resp, err := client.Do(req)
-			if err != nil {
-				return []Segment{}, fmt.Errorf("Could not process request successfully: " + err.Error())
-			}
-
-			defer resp.Body.Close()
-
-			respBody, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				return []Segment{}, fmt.Errorf("Could not parse request body successfully: " + err.Error())
 			}
