@@ -351,7 +351,7 @@ func translateResponse(
 			var chatResponse ChatCompletionResponse
 			json.Unmarshal(respBody, &chatResponse)
 
-			time.Sleep(2 * time.Second)
+			time.Sleep(500 * time.Millisecond)
 
 			if len(chatResponse.Choices) == 0 {
 				retries -= 1
