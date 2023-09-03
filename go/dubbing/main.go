@@ -20,6 +20,16 @@ import (
 	"github.com/tabbed/pqtype"
 )
 
+func getAudioFileName(identifier string, id int64) string {
+	audioFileName := fmt.Sprintf("%s_%d_audio_file.mp3", identifier, id)
+	return audioFileName
+}
+
+func getVideoSegmentName(identifier string, id int64) string {
+	videoSegmentName := fmt.Sprintf("%s_%d_video_segment.mp4", identifier, id)
+	return videoSegmentName
+}
+
 type WhisperOutput struct {
 	Language string    `json:"language"`
 	Segments []Segment `json:"segments"`
@@ -159,6 +169,12 @@ func CreateTranslation(
 	identifier := fmt.Sprintf("%d-%s-%s", sourceTransformationObject.ProjectID, utils.GetCurrentDateTimeString(), targetTransformationObject.TargetLanguage)
 
 	err = fetchDubbedClips(translatedSegments, identifier)
+	/**
+	  err = dubVideoClips()
+	  err = syncClips()
+	  **/
+	err = concatSegments(translatedSegments, identifier)
+	cleanUp(translatedSegments, identifier)
 
 	// return the update transformation
 	return targetTransformationObject, nil
@@ -185,7 +201,7 @@ func fetchDubbedClips(segments []Segment, identifier string) error {
 		for {
 
 			id := s.Id
-			audioFileName := fmt.Sprintf("%s_%d_audio_file.mp3", identifier, id)
+			audioFileName := getAudioFileName(identifier, id)
 
 			data := VoiceRequest{
 				Text:    s.Text,
@@ -264,10 +280,54 @@ func dubAudioClips(segments []Segment, identifier string) error {
 
 }
 
-func concatSegments(segments []Segment, identifier string) {
+func concatSegments(segments []Segment, identifier string) error {
+
+	inputList := []string{}
+	filterList := []string{}
+
+	for idx, s := range segments {
+		id := s.Id
+
+		videoSegmentName := getVideoSegmentName(identifier, id)
+		syncedSegmentName := "synced_" + videoSegmentName
+		inputList = append(inputList, fmt.Sprintf("-i %s", syncedSegmentName))
+		filterList = append(filterList, fmt.Sprintf("[%d:v][%d:a]", idx, idx))
+	}
+
+	filterList = append(filterList, fmt.Sprintf("concat=n=%d:v=1:a=1[v][a]", len(segments)))
+
+	inputArgs := strings.Join(inputList, " ")
+	filterComplex := strings.Join(filterList, "")
+
+	ffmpegCmd := fmt.Sprintf("ffmpeg %s -filter_complex '%s' -map '[v]' -map '[a]' %s_dubbed.mp4",
+		inputArgs, filterComplex, identifier)
+
+	err := exec.Command("sh", "-c", ffmpegCmd).Run()
+
+	return err
 }
 
 func cleanUp(segments []Segment, identifier string) {
+	for _, s := range segments {
+		id := s.Id
+
+		audioFileName := getAudioFileName(identifier, id)
+		videoSegmentName := getVideoSegmentName(identifier, id)
+		dubbedSegmentName := "dubbed_" + videoSegmentName
+		syncedSegmentName := "synced_" + videoSegmentName
+		originalSegmentName := "original_" + videoSegmentName
+
+		removeCmd :=
+			fmt.Sprintf(
+				"rm -rf %s %s %s %s %s",
+				audioFileName,
+				videoSegmentName,
+				dubbedSegmentName,
+				syncedSegmentName,
+				originalSegmentName,
+			)
+		exec.Command("sh", "-c", removeCmd).Run()
+	}
 }
 
 type ChatCompletionMessage struct {
