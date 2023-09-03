@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"log"
 	"mime/multipart"
-	"net/http"
 	"os"
 	"os/exec"
 	"planetcastdev/database"
@@ -179,51 +178,64 @@ type VoiceRequest struct {
 	VoiceSetting VoiceSettings `json:"voice_settings"`
 }
 
-func fetchDubbedClips(segments []Segment, identifier string) error {
+func fetchDubbedClips(segments []Segment, identifier string, targetLang string) error {
 
-	headers := http.Header{}
-	headers.Set("Content-Type", "application/json")
-	headers.Set("Accept", "audio/mpeg")
-	headers.Set("xi-api-key", "")
 	url := "https://api.elevenlabs.io/v1/text-to-speech/DgzXv5iB8NJnHCwRTzL8"
+	API_KEY := os.Getenv("ELEVEN_LABS_KEY")
 
 	for idx, s := range segments {
 
-		data := VoiceRequest{
-			Text:    s.Text,
-			ModelID: "eleven_multilingual_v1",
-			VoiceSetting: VoiceSettings{
-				Stability:       1.0,
-				SimilarityBoost: 1.0,
-			},
-		}
+		for {
 
-		payload, err := json.Marshal(data)
-		if err != nil {
-			return fmt.Errorf("Error encoding JSON for ElevenLabs request: %s", err.Error())
-		}
+			id := s.Id
+			audioFileName := fmt.Sprintf("%s_%d_%s_audio_file.mp3", identifier, id, targetLang)
 
-		response, err := http.Post(url, "application/json", bytes.NewBuffer(payload))
-		if err != nil {
-			return fmt.Errorf("Error sending request to ElevenLabs: %s", err.Error())
-		}
-
-		defer response.Body.Close()
-
-		if response.StatusCode == http.StatusOK {
-			audioContent, err := ioutil.ReadAll(response.Body)
-			if err != nil {
-				return fmt.Errorf("Error reading response from ElevenLabs: %s", err.Error())
+			data := VoiceRequest{
+				Text:    s.Text,
+				ModelID: "eleven_multilingual_v1",
+				VoiceSetting: VoiceSettings{
+					Stability:       1.0,
+					SimilarityBoost: 1.0,
+				},
 			}
 
-			err = ioutil.WriteFile(fmt.Sprintf("%s-%d-audio-file.mp3", identifier, s.Id), audioContent, 0644)
+			payload, err := json.Marshal(data)
 			if err != nil {
-				return fmt.Errorf("Error writing audio file: %s", err.Error())
+				return fmt.Errorf("Error encoding JSON for ElevenLabs request: %s", err.Error())
 			}
 
-			log.Println("Audio file saved successfully:", idx+1, "out of", len(segments))
-		} else {
-			return fmt.Errorf("Request Failed: %d", response.StatusCode)
+			responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
+				Method: "POST",
+				Url:    url,
+				Body:   bytes.NewBuffer(payload),
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+					"Accept":       "audio/mpeg",
+					"xi-api-key":   API_KEY,
+				},
+			})
+
+			if err == nil {
+
+				audioContent := responseBody
+				if err != nil {
+					return fmt.Errorf("Error reading response from ElevenLabs: %s", err.Error())
+				}
+
+				err = ioutil.WriteFile(audioFileName, audioContent, 0644)
+				if err != nil {
+					return fmt.Errorf("Error writing audio file: %s", err.Error())
+				}
+
+				log.Println("Audio file saved successfully:", idx+1, "out of", len(segments))
+				time.Sleep(500 * time.Millisecond)
+				break
+
+			} else {
+				log.Println("Request Failed: " + err.Error())
+				time.Sleep(5 * time.Second)
+			}
+
 		}
 	}
 
