@@ -189,8 +189,7 @@ func CreateTranslation(
 
 	newFileName := identifier + "_dubbed.mp4"
 
-	err = fetchDubbedClips(translatedSegments, identifier)
-	err = dubVideoClips(translatedSegments, identifier)
+	err = fetchAndDub(translatedSegments, identifier)
 	err = concatSegments(translatedSegments, identifier)
 
 	file, err := os.Open(newFileName)
@@ -218,26 +217,16 @@ type VoiceRequest struct {
 	VoiceSetting VoiceSettings `json:"voice_settings"`
 }
 
-func fetchDubbedClips(segments []Segment, identifier string) error {
-
-	for idx, s := range segments {
-		err := fetchDubbedClip(s, identifier)
+func fetchAndDub(segments []Segment, identifier string) error {
+	for idx, seg := range segments {
+		err := fetchDubbedClip(seg, identifier)
 		if err != nil {
 			return fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 		}
-		log.Println("Audio file saved successfully:", idx+1, "out of", len(segments))
-	}
-
-	return nil
-}
-
-func dubVideoClips(segments []Segment, identifier string) error {
-	for idx, s := range segments {
-		err := dubVideoClip(s, identifier)
+		err = dubVideoClip(seg, identifier)
 		if err != nil {
 			return fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 		}
-		log.Printf("Dubbed video clip %d/%d\n", idx+1, len(segments))
 	}
 	return nil
 }
