@@ -44,7 +44,7 @@ type Segment struct {
 	Text  string  `json:"text"`
 }
 
-func getTranscript(fileName string, file io.ReadSeeker) (WhisperOutput, error) {
+func getTranscript(fileName string, file io.ReadSeeker) (*WhisperOutput, error) {
 
 	file.Seek(0, io.SeekStart)
 
@@ -58,19 +58,19 @@ func getTranscript(fileName string, file io.ReadSeeker) (WhisperOutput, error) {
 	part, err := writer.CreateFormFile("file", fileName)
 
 	if err != nil {
-		return WhisperOutput{}, fmt.Errorf("Failed to create form file: %s", err.Error())
+		return nil, fmt.Errorf("Failed to create form file: %s", err.Error())
 	}
 
 	_, err = io.Copy(part, file)
 	if err != nil {
-		return WhisperOutput{}, fmt.Errorf("Failed to copy file data: %s", err.Error())
+		return nil, fmt.Errorf("Failed to copy file data: %s", err.Error())
 	}
 	writer.WriteField("model", MODEL)
 	writer.WriteField("response_format", RESPONSE_FORMAT)
 	err = writer.Close()
 
 	if err != nil {
-		return WhisperOutput{}, fmt.Errorf("Failed to close writer %s", err.Error())
+		return nil, fmt.Errorf("Failed to close writer %s", err.Error())
 	}
 
 	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
@@ -84,7 +84,7 @@ func getTranscript(fileName string, file io.ReadSeeker) (WhisperOutput, error) {
 	})
 
 	if err != nil {
-		return WhisperOutput{}, fmt.Errorf("Request failed:" + err.Error())
+		return nil, fmt.Errorf("Request failed:" + err.Error())
 	}
 
 	file.Seek(0, io.SeekStart)
@@ -92,7 +92,7 @@ func getTranscript(fileName string, file io.ReadSeeker) (WhisperOutput, error) {
 	json.Unmarshal(responseBody, &whisperOutput)
 	log.Println("Whisper request processes successfully for:", fileName)
 
-	return whisperOutput, nil
+	return &whisperOutput, nil
 }
 
 type CreateTransformationParams struct {
@@ -109,8 +109,9 @@ func CreateTransformation(
 	args CreateTransformationParams,
 ) (database.Transformation, error) {
 
-	transcript, _ := getTranscript(args.FileName, args.File)
-	jsonBytes, err := json.Marshal(transcript)
+	transcriptPtr, _ := getTranscript(args.FileName, args.File)
+	transcriptObj := *transcriptPtr
+	jsonBytes, err := json.Marshal(transcriptObj)
 
 	transformation, err := queries.CreateTransformation(ctx, database.CreateTransformationParams{
 		ProjectID:      args.ProjectID,
@@ -131,12 +132,12 @@ func CreateTransformation(
 func CreateTranslation(
 	ctx context.Context,
 	queries *database.Queries,
-	sourceTransformationObject database.Transformation,
-	targetTransformationObject database.Transformation,
+	sourceTransformation database.Transformation,
+	targetTransformation database.Transformation,
 	identifier string,
 ) (database.Transformation, error) {
 
-	fileUrl := storage.Connect().GetFileLink(sourceTransformationObject.TargetMedia)
+	fileUrl := storage.Connect().GetFileLink(sourceTransformation.TargetMedia)
 
 	//download original media, then save it as identifier.mp4
 	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
@@ -161,17 +162,13 @@ func CreateTranslation(
 	log.Println("Source Audio File Downloaded")
 
 	// call chatgpt, convert the source text to target text
-	translatedSegments, _ := translateResponse(
-		ctx,
-		sourceTransformationObject,
-		targetTransformationObject.TargetLanguage,
-	)
+	translatedSegments, _ := translateResponse(ctx, sourceTransformation, targetTransformation.TargetLanguage)
 
 	// get the target text, and parse it
 	var whisperOutput WhisperOutput
-	json.Unmarshal(targetTransformationObject.Transcript.RawMessage, &whisperOutput)
+	json.Unmarshal(targetTransformation.Transcript.RawMessage, &whisperOutput)
 	whisperOutput.Segments = translatedSegments
-	whisperOutput.Language = strings.ToLower(string(targetTransformationObject.TargetLanguage))
+	whisperOutput.Language = strings.ToLower(string(targetTransformation.TargetLanguage))
 
 	// store the target text in db
 	jsonBytes, err := json.Marshal(whisperOutput)
@@ -180,8 +177,8 @@ func CreateTranslation(
 		return database.Transformation{}, fmt.Errorf("Could not process translated segments " + err.Error())
 	}
 
-	targetTransformationObject, err = queries.UpdateTranscriptById(ctx, database.UpdateTranscriptByIdParams{
-		ID:         targetTransformationObject.ID,
+	targetTransformation, err = queries.UpdateTranscriptById(ctx, database.UpdateTranscriptByIdParams{
+		ID:         targetTransformation.ID,
 		Transcript: pqtype.NullRawMessage{Valid: true, RawMessage: jsonBytes},
 	})
 
@@ -206,7 +203,7 @@ func CreateTranslation(
 	cleanUp(translatedSegments, identifier)
 
 	// return the update transformation
-	return targetTransformationObject, nil
+	return targetTransformation, nil
 }
 
 type VoiceSettings struct {
