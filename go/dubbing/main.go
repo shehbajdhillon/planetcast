@@ -221,10 +221,24 @@ type VoiceRequest struct {
 func fetchDubbedClips(segments []Segment, identifier string) error {
 
 	for idx, s := range segments {
-		fetchDubbedClip(s, identifier)
+		err := fetchDubbedClip(s, identifier)
+		if err != nil {
+			return fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(segments), err.Error())
+		}
 		log.Println("Audio file saved successfully:", idx+1, "out of", len(segments))
 	}
 
+	return nil
+}
+
+func dubVideoClips(segments []Segment, identifier string) error {
+	for idx, s := range segments {
+		err := dubVideoClip(s, identifier)
+		if err != nil {
+			return fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(segments), err.Error())
+		}
+		log.Printf("Dubbed video clip %d/%d\n", idx+1, len(segments))
+	}
 	return nil
 }
 
@@ -233,7 +247,9 @@ func fetchDubbedClip(segment Segment, identifier string) error {
 	url := "https://api.elevenlabs.io/v1/text-to-speech/2EiwWnXFnvU5JabPnv8n"
 	API_KEY := os.Getenv("ELEVEN_LABS_KEY")
 
-	for {
+	retries := 5
+
+	for retries > 0 {
 
 		id := segment.Id
 		audioFileName := getAudioFileName(identifier, id)
@@ -276,27 +292,17 @@ func fetchDubbedClip(segment Segment, identifier string) error {
 			}
 
 			time.Sleep(500 * time.Millisecond)
-			break
+			return nil
 
 		} else {
-			log.Println("Request Failed: " + err.Error())
+			retries -= 1
+			log.Printf("Request Failed, retrying after 5 seconds, retries left %d: %s\n", retries, err.Error())
 			time.Sleep(5 * time.Second)
 		}
 
 	}
 
-	return nil
-}
-
-func dubVideoClips(segments []Segment, identifier string) error {
-	for idx, s := range segments {
-		err := dubVideoClip(s, identifier)
-		if err != nil {
-			return fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(segments), err.Error())
-		}
-		log.Printf("Dubbed video clip %d/%d\n", idx+1, len(segments))
-	}
-	return nil
+	return fmt.Errorf("Failed to call elevenlabs")
 }
 
 func dubVideoClip(segment Segment, identifier string) error {
@@ -441,7 +447,7 @@ func translateSegments(
 		translatedSegment, err := translateSegment(ctx, segment, targetLanguage)
 
 		if err != nil {
-			return nil, fmt.Errorf("Failed to translated segment", idx+1, "/", len(segments), ":", err.Error())
+			return nil, fmt.Errorf("Failed to translated segment %d/%d: %s", idx+1, len(segments), err.Error())
 		}
 
 		segments[idx] = *translatedSegment
