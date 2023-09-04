@@ -15,7 +15,7 @@ import (
 	"planetcastdev/database"
 	"planetcastdev/httpmiddleware"
 	"planetcastdev/storage"
-	"strconv"
+	"planetcastdev/utils"
 	"strings"
 	"time"
 
@@ -149,24 +149,26 @@ func CreateTranslation(
 		},
 	})
 
-	audioContent := responseBody
 	if err != nil {
 		return database.Transformation{}, fmt.Errorf("Error downloading original audio file from S3: %s", err.Error())
 	}
 
-	err = ioutil.WriteFile(identifier+".mp4", audioContent, 0644)
+	err = ioutil.WriteFile(identifier+".mp4", responseBody, 0644)
 	if err != nil {
 		return database.Transformation{}, fmt.Errorf("Error writing audio file: %s", err.Error())
 	}
 
 	log.Println("Source Audio File Downloaded")
 
+	var whisperOutput WhisperOutput
+	json.Unmarshal(sourceTransformation.Transcript.RawMessage, &whisperOutput)
+
 	// call chatgpt, convert the source text to target text
-	translatedSegmentsPtr, _ := translateSegments(ctx, sourceTransformation, targetTransformation.TargetLanguage)
+	sourceSegments := whisperOutput.Segments
+	translatedSegmentsPtr, err := fetchAndDub(ctx, sourceSegments, sourceTransformation.ProjectID, identifier, targetTransformation.TargetLanguage)
 	translatedSegments := *translatedSegmentsPtr
 
 	// get the target text, and parse it
-	var whisperOutput WhisperOutput
 	json.Unmarshal(targetTransformation.Transcript.RawMessage, &whisperOutput)
 	whisperOutput.Segments = translatedSegments
 	whisperOutput.Language = strings.ToLower(string(targetTransformation.TargetLanguage))
@@ -187,10 +189,7 @@ func CreateTranslation(
 		return database.Transformation{}, fmt.Errorf("Could not update transformation: " + err.Error())
 	}
 
-	newFileName := identifier + "_dubbed.mp4"
-
-	err = fetchAndDub(translatedSegments, sourceTransformation.ProjectID, identifier)
-	err = concatSegments(translatedSegments, identifier)
+	newFileName, err := concatSegments(translatedSegments, identifier)
 
 	file, err := os.Open(newFileName)
 	if err != nil {
@@ -217,21 +216,40 @@ type VoiceRequest struct {
 	VoiceSetting VoiceSettings `json:"voice_settings"`
 }
 
-func fetchAndDub(segments []Segment, projectId int64, identifier string) error {
-	for idx, seg := range segments {
-		err := fetchDubbedClip(seg, identifier)
+func fetchAndDub(
+	ctx context.Context,
+	segments []Segment,
+	projectId int64,
+	identifier string,
+	targetLanguage database.SupportedLanguage,
+) (*[]Segment, error) {
+
+	translatedSegments := []Segment{}
+
+	for idx, segment := range segments {
+
+		translatedSegment, err := translateSegment(ctx, segment, targetLanguage)
 		if err != nil {
-			return fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(segments), err.Error())
+			return nil, fmt.Errorf("Failed to translated segment %d/%d: %s", idx+1, len(segments), err.Error())
+		}
+		log.Println("Translation Progress for Project", projectId, "from", targetLanguage, "to", targetLanguage+":", idx+1, "/", len(segments))
+
+		err = fetchDubbedClip(*translatedSegment, identifier)
+		if err != nil {
+			return nil, fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 		}
 		log.Println("Fetched dubbed audio file for Project", idx+1, "/", len(segments))
 
-		err = dubVideoClip(seg, identifier)
+		err = dubVideoClip(*translatedSegment, identifier)
 		if err != nil {
-			return fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(segments), err.Error())
+			return nil, fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 		}
 		log.Println("Dubbed video clip for Project", idx+1, "/", len(segments))
+
+		translatedSegments = append(translatedSegments, *translatedSegment)
 	}
-	return nil
+
+	return &translatedSegments, nil
 }
 
 func fetchDubbedClip(segment Segment, identifier string) error {
@@ -311,7 +329,7 @@ func dubVideoClip(segment Segment, identifier string) error {
 
 	originalLength := end - start
 
-	audioFileDuarion, _ := getAudioFileDuration(audioFileName)
+	audioFileDuarion, _ := utils.GetAudioFileDuration(audioFileName)
 
 	ratio := math.Max(audioFileDuarion/originalLength, 1.0)
 
@@ -340,7 +358,7 @@ func dubVideoClip(segment Segment, identifier string) error {
 	return nil
 }
 
-func concatSegments(segments []Segment, identifier string) error {
+func concatSegments(segments []Segment, identifier string) (string, error) {
 
 	inputList := []string{}
 	filterList := []string{}
@@ -367,10 +385,10 @@ func concatSegments(segments []Segment, identifier string) error {
 	err := exec.Command("sh", "-c", ffmpegCmd).Run()
 
 	if err != nil {
-		log.Println("Could not concat segments:", ffmpegCmd)
+		return "", fmt.Errorf("Could not concat segments:", ffmpegCmd)
 	}
 
-	return err
+	return identifier + "_dubbed.mp4", nil
 }
 
 func cleanUp(segments []Segment, identifier string) {
@@ -420,35 +438,6 @@ type ChatCompletionResponse struct {
 	Created int64                  `json:"created"`
 	Model   string                 `json:"model"`
 	Choices []ChatCompletionChoice `json:"choices"`
-}
-
-func translateSegments(
-	ctx context.Context,
-	sourceTransformationObject database.Transformation,
-	targetLanguage database.SupportedLanguage,
-) (*[]Segment, error) {
-
-	var whisperOutput WhisperOutput
-	json.Unmarshal(sourceTransformationObject.Transcript.RawMessage, &whisperOutput)
-
-	segments := whisperOutput.Segments
-
-	log.Println("Translating project", sourceTransformationObject.ProjectID, "from", sourceTransformationObject.TargetLanguage, "to", targetLanguage)
-
-	for idx, segment := range segments {
-		translatedSegment, err := translateSegment(ctx, segment, targetLanguage)
-
-		if err != nil {
-			return nil, fmt.Errorf("Failed to translated segment %d/%d: %s", idx+1, len(segments), err.Error())
-		}
-
-		segments[idx] = *translatedSegment
-		log.Println("Translation Progress for Project", sourceTransformationObject.ProjectID, "from", sourceTransformationObject.TargetLanguage, "to", targetLanguage+":", idx+1, "/", len(segments))
-	}
-	log.Println(segments)
-
-	return &segments, nil
-
 }
 
 func translateSegment(ctx context.Context, segment Segment, targetLang database.SupportedLanguage) (*Segment, error) {
@@ -506,23 +495,4 @@ func translateSegment(ctx context.Context, segment Segment, targetLang database.
 	}
 
 	return nil, fmt.Errorf("Open AI Requests Failed")
-}
-
-func getAudioFileDuration(fileName string) (float64, error) {
-	cmd := exec.Command("ffprobe", "-v", "error", "-show_entries",
-		"format=duration", "-of", "default=noprint_wrappers=1:nokey=1", fileName)
-
-	output, err := cmd.Output()
-	if err != nil {
-		return 0, err
-	}
-
-	text := strings.TrimSpace(string(output))
-	duration, err := strconv.ParseFloat(text, 64)
-	if err != nil {
-		return 0, err
-	}
-
-	return duration, nil
-
 }
