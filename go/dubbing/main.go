@@ -189,7 +189,7 @@ func CreateTranslation(
 
 	newFileName := identifier + "_dubbed.mp4"
 
-	err = fetchAndDub(translatedSegments, identifier)
+	err = fetchAndDub(translatedSegments, sourceTransformation.ProjectID, identifier)
 	err = concatSegments(translatedSegments, identifier)
 
 	file, err := os.Open(newFileName)
@@ -217,16 +217,19 @@ type VoiceRequest struct {
 	VoiceSetting VoiceSettings `json:"voice_settings"`
 }
 
-func fetchAndDub(segments []Segment, identifier string) error {
+func fetchAndDub(segments []Segment, projectId int64, identifier string) error {
 	for idx, seg := range segments {
 		err := fetchDubbedClip(seg, identifier)
 		if err != nil {
 			return fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 		}
+		log.Println("Fetched dubbed audio file for Project", idx+1, "/", len(segments))
+
 		err = dubVideoClip(seg, identifier)
 		if err != nil {
 			return fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 		}
+		log.Println("Dubbed video clip for Project", idx+1, "/", len(segments))
 	}
 	return nil
 }
