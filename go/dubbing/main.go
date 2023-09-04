@@ -254,7 +254,7 @@ func fetchAndDub(
 
 func fetchDubbedClip(segment Segment, identifier string) error {
 
-	url := "https://api.elevenlabs.io/v1/text-to-speech/2EiwWnXFnvU5JabPnv8n"
+	url := "https://api.elevenlabs.io/v1/text-to-speech/XMQab44ShF40jzdHBoXu"
 	API_KEY := os.Getenv("ELEVEN_LABS_KEY")
 
 	retries := 5
