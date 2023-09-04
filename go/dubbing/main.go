@@ -395,7 +395,7 @@ func cleanUp(segments []Segment, identifier string) {
 		exec.Command("sh", "-c", removeCmd).Run()
 	}
 
-	removeCmd := fmt.Sprintf("rm -rf %s", identifier+".mp4")
+	removeCmd := fmt.Sprintf("rm -rf %s %s", identifier+".mp4", identifier+"_dubbed.mp4")
 	exec.Command("sh", "-c", removeCmd).Run()
 }
 
