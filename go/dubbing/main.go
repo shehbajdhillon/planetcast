@@ -15,7 +15,6 @@ import (
 	"planetcastdev/database"
 	"planetcastdev/httpmiddleware"
 	"planetcastdev/storage"
-	"planetcastdev/utils"
 	"strconv"
 	"strings"
 	"time"
@@ -138,6 +137,7 @@ func CreateTranslation(
 	queries *database.Queries,
 	sourceTransformationObject database.Transformation,
 	targetTransformationObject database.Transformation,
+	identifier string,
 ) (database.Transformation, error) {
 
 	// call chatgpt, convert the source text to target text
@@ -169,7 +169,7 @@ func CreateTranslation(
 		return database.Transformation{}, fmt.Errorf("Could not update transformation: " + err.Error())
 	}
 
-	identifier := fmt.Sprintf("%d-%s-%s", sourceTransformationObject.ProjectID, utils.GetCurrentDateTimeString(), targetTransformationObject.TargetLanguage)
+	newFileName := identifier + "_dubbed.mp4"
 
 	//download original media, then save it as identifier.mp4
 	fileUrl := storage.Connect().GetFileLink(sourceTransformationObject.TargetMedia)
@@ -201,7 +201,16 @@ func CreateTranslation(
 	/**
 	  err = syncClips()
 	  **/
-	//cleanUp(translatedSegments, identifier)
+
+	file, err := os.Open(newFileName)
+	if err != nil {
+		fmt.Println("Error opening the file:", err)
+	}
+	defer file.Close()
+
+	storage.Connect().Upload(newFileName, file)
+
+	cleanUp(translatedSegments, identifier)
 
 	// return the update transformation
 	return targetTransformationObject, nil

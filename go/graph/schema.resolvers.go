@@ -10,6 +10,7 @@ import (
 	"planetcastdev/auth"
 	"planetcastdev/database"
 	"planetcastdev/dubbing"
+	"planetcastdev/utils"
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -89,17 +90,20 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 		return existingTransformation, nil
 	}
 
+	identifier := fmt.Sprintf("%d-%s-%s", sourceTransformation.ProjectID, utils.GetCurrentDateTimeString(), targetLanguage)
+	newFileName := identifier + "_dubbed.mp4"
+
 	// create empty transformation in target language, if target transformation already exists, return that
 	newTransformation, _ := r.DB.CreateTransformation(ctx, database.CreateTransformationParams{
 		ProjectID:      projectID,
 		TargetLanguage: targetLanguage,
-		TargetMedia:    sourceTransformation.TargetMedia,
+		TargetMedia:    newFileName,
 		Transcript:     pqtype.NullRawMessage{Valid: false, RawMessage: nil},
 		IsSource:       false,
 	})
 
 	newCtx := context.Background()
-	go dubbing.CreateTranslation(newCtx, r.DB, sourceTransformation, newTransformation)
+	go dubbing.CreateTranslation(newCtx, r.DB, sourceTransformation, newTransformation, identifier)
 
 	return newTransformation, nil
 }
