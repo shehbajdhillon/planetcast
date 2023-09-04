@@ -44,7 +44,7 @@ type Segment struct {
 	Text  string  `json:"text"`
 }
 
-func getTranscript(fileName string, file io.ReadSeeker) WhisperOutput {
+func getTranscript(fileName string, file io.ReadSeeker) (WhisperOutput, error) {
 
 	file.Seek(0, io.SeekStart)
 
@@ -58,22 +58,19 @@ func getTranscript(fileName string, file io.ReadSeeker) WhisperOutput {
 	part, err := writer.CreateFormFile("file", fileName)
 
 	if err != nil {
-		log.Println("Failed to create form file:", err)
-		return WhisperOutput{}
+		return WhisperOutput{}, fmt.Errorf("Failed to create form file: %s", err.Error())
 	}
 
 	_, err = io.Copy(part, file)
 	if err != nil {
-		log.Println("Failed to copy file data:", err)
-		return WhisperOutput{}
+		return WhisperOutput{}, fmt.Errorf("Failed to copy file data: %s", err.Error())
 	}
 	writer.WriteField("model", MODEL)
 	writer.WriteField("response_format", RESPONSE_FORMAT)
 	err = writer.Close()
 
 	if err != nil {
-		log.Println("Failed to close writer", err)
-		return WhisperOutput{}
+		return WhisperOutput{}, fmt.Errorf("Failed to close writer %s", err.Error())
 	}
 
 	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
@@ -87,8 +84,7 @@ func getTranscript(fileName string, file io.ReadSeeker) WhisperOutput {
 	})
 
 	if err != nil {
-		log.Println("Request failed:", err)
-		return WhisperOutput{}
+		return WhisperOutput{}, fmt.Errorf("Request failed:" + err.Error())
 	}
 
 	file.Seek(0, io.SeekStart)
@@ -96,7 +92,7 @@ func getTranscript(fileName string, file io.ReadSeeker) WhisperOutput {
 	json.Unmarshal(responseBody, &whisperOutput)
 	log.Println("Whisper request processes successfully for:", fileName)
 
-	return whisperOutput
+	return whisperOutput, nil
 }
 
 type CreateTransformationParams struct {
@@ -113,7 +109,7 @@ func CreateTransformation(
 	args CreateTransformationParams,
 ) (database.Transformation, error) {
 
-	transcript := getTranscript(args.FileName, args.File)
+	transcript, _ := getTranscript(args.FileName, args.File)
 	jsonBytes, err := json.Marshal(transcript)
 
 	transformation, err := queries.CreateTransformation(ctx, database.CreateTransformationParams{
@@ -139,6 +135,30 @@ func CreateTranslation(
 	targetTransformationObject database.Transformation,
 	identifier string,
 ) (database.Transformation, error) {
+
+	fileUrl := storage.Connect().GetFileLink(sourceTransformationObject.TargetMedia)
+
+	//download original media, then save it as identifier.mp4
+	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
+		Method: "GET",
+		Url:    fileUrl,
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Accept":       "audio/mp4",
+		},
+	})
+
+	audioContent := responseBody
+	if err != nil {
+		return database.Transformation{}, fmt.Errorf("Error downloading original audio file from S3: %s", err.Error())
+	}
+
+	err = ioutil.WriteFile(identifier+".mp4", audioContent, 0644)
+	if err != nil {
+		return database.Transformation{}, fmt.Errorf("Error writing audio file: %s", err.Error())
+	}
+
+	log.Println("Source Audio File Downloaded")
 
 	// call chatgpt, convert the source text to target text
 	translatedSegments, _ := translateResponse(
@@ -171,36 +191,9 @@ func CreateTranslation(
 
 	newFileName := identifier + "_dubbed.mp4"
 
-	//download original media, then save it as identifier.mp4
-	fileUrl := storage.Connect().GetFileLink(sourceTransformationObject.TargetMedia)
-
-	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
-		Method: "GET",
-		Url:    fileUrl,
-		Headers: map[string]string{
-			"Content-Type": "application/json",
-			"Accept":       "audio/mp4",
-		},
-	})
-
-	audioContent := responseBody
-	if err != nil {
-		return database.Transformation{}, fmt.Errorf("Error downloading original audio file from S3: %s", err.Error())
-	}
-
-	err = ioutil.WriteFile(identifier+".mp4", audioContent, 0644)
-	if err != nil {
-		return database.Transformation{}, fmt.Errorf("Error writing audio file: %s", err.Error())
-	}
-
-	log.Println("Source Audio File Downloaded")
-
 	err = fetchDubbedClips(translatedSegments, identifier)
 	err = dubVideoClips(translatedSegments, identifier)
 	err = concatSegments(translatedSegments, identifier)
-	/**
-	  err = syncClips()
-	  **/
 
 	file, err := os.Open(newFileName)
 	if err != nil {
