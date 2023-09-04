@@ -162,7 +162,8 @@ func CreateTranslation(
 	log.Println("Source Audio File Downloaded")
 
 	// call chatgpt, convert the source text to target text
-	translatedSegments, _ := translateResponse(ctx, sourceTransformation, targetTransformation.TargetLanguage)
+	translatedSegmentsPtr, _ := translateSegments(ctx, sourceTransformation, targetTransformation.TargetLanguage)
+	translatedSegments := *translatedSegmentsPtr
 
 	// get the target text, and parse it
 	var whisperOutput WhisperOutput
@@ -219,115 +220,126 @@ type VoiceRequest struct {
 
 func fetchDubbedClips(segments []Segment, identifier string) error {
 
+	for idx, s := range segments {
+		fetchDubbedClip(s, identifier)
+		log.Println("Audio file saved successfully:", idx+1, "out of", len(segments))
+	}
+
+	return nil
+}
+
+func fetchDubbedClip(segment Segment, identifier string) error {
+
 	url := "https://api.elevenlabs.io/v1/text-to-speech/2EiwWnXFnvU5JabPnv8n"
 	API_KEY := os.Getenv("ELEVEN_LABS_KEY")
 
-	for idx, s := range segments {
+	for {
 
-		for {
+		id := segment.Id
+		audioFileName := getAudioFileName(identifier, id)
 
-			id := s.Id
-			audioFileName := getAudioFileName(identifier, id)
-
-			data := VoiceRequest{
-				Text:    s.Text,
-				ModelID: "eleven_multilingual_v1",
-				VoiceSetting: VoiceSettings{
-					Stability:       1.0,
-					SimilarityBoost: 1.0,
-				},
-			}
-
-			payload, err := json.Marshal(data)
-			if err != nil {
-				return fmt.Errorf("Error encoding JSON for ElevenLabs request: %s", err.Error())
-			}
-
-			responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
-				Method: "POST",
-				Url:    url,
-				Body:   bytes.NewBuffer(payload),
-				Headers: map[string]string{
-					"Content-Type": "application/json",
-					"Accept":       "audio/mpeg",
-					"xi-api-key":   API_KEY,
-				},
-			})
-
-			if err == nil {
-
-				audioContent := responseBody
-				if err != nil {
-					return fmt.Errorf("Error reading response from ElevenLabs: %s", err.Error())
-				}
-
-				err = ioutil.WriteFile(audioFileName, audioContent, 0644)
-				if err != nil {
-					return fmt.Errorf("Error writing audio file: %s", err.Error())
-				}
-
-				log.Println("Audio file saved successfully:", idx+1, "out of", len(segments))
-				time.Sleep(500 * time.Millisecond)
-				break
-
-			} else {
-				log.Println("Request Failed: " + err.Error())
-				time.Sleep(5 * time.Second)
-			}
-
+		data := VoiceRequest{
+			Text:    segment.Text,
+			ModelID: "eleven_multilingual_v1",
+			VoiceSetting: VoiceSettings{
+				Stability:       1.0,
+				SimilarityBoost: 1.0,
+			},
 		}
+
+		payload, err := json.Marshal(data)
+		if err != nil {
+			return fmt.Errorf("Error encoding JSON for ElevenLabs request: %s", err.Error())
+		}
+
+		responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
+			Method: "POST",
+			Url:    url,
+			Body:   bytes.NewBuffer(payload),
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+				"Accept":       "audio/mpeg",
+				"xi-api-key":   API_KEY,
+			},
+		})
+
+		if err == nil {
+
+			audioContent := responseBody
+			if err != nil {
+				return fmt.Errorf("Error reading response from ElevenLabs: %s", err.Error())
+			}
+
+			err = ioutil.WriteFile(audioFileName, audioContent, 0644)
+			if err != nil {
+				return fmt.Errorf("Error writing audio file: %s", err.Error())
+			}
+
+			time.Sleep(500 * time.Millisecond)
+			break
+
+		} else {
+			log.Println("Request Failed: " + err.Error())
+			time.Sleep(5 * time.Second)
+		}
+
 	}
 
 	return nil
 }
 
 func dubVideoClips(segments []Segment, identifier string) error {
-
 	for idx, s := range segments {
-		id := s.Id
-
-		audioFileName := getAudioFileName(identifier, id)
-		videoSegmentName := getVideoSegmentName(identifier, id)
-		dubbedVideoSegmentName := "dubbed_" + videoSegmentName
-		originalVideoSegmentName := "original_" + videoSegmentName
-
-		start := s.Start
-		end := s.End
-
-		originalLength := end - start
-
-		audioFileDuarion, _ := getAudioFileDuration(audioFileName)
-
-		ratio := math.Max(audioFileDuarion/originalLength, 1.0)
-
-		generateVideoClip := fmt.Sprintf("ffmpeg -i file:'%s.mp4' -ss %f -to %f file:'%s'", identifier, start, end, originalVideoSegmentName)
-		err := exec.Command("sh", "-c", generateVideoClip).Run()
-
+		err := dubVideoClip(s, identifier)
 		if err != nil {
-			log.Printf("Could not extract video clip %d/%d: %s\n%s\n", idx+1, len(segments), err.Error(), generateVideoClip)
+			return fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 		}
-
-		stretchVideoClip := fmt.Sprintf("ffmpeg -i file:'%s' -vf 'setpts=%f*PTS' -c:a copy file:'%s'", originalVideoSegmentName, ratio, videoSegmentName)
-		err = exec.Command("sh", "-c", stretchVideoClip).Run()
-
-		if err != nil {
-			log.Printf("Could not stretch video clip %d/%d: %s\n%s\n", idx+1, len(segments), err.Error(), stretchVideoClip)
-		}
-
-		dubVideoClip := fmt.Sprintf("ffmpeg -i file:'%s' -i file:'%s' -c:v copy -map 0:v:0 -map 1:a:0 file:'%s'",
-			videoSegmentName, audioFileName, dubbedVideoSegmentName)
-		err = exec.Command("sh", "-c", dubVideoClip).Run()
-
-		if err != nil {
-			log.Printf("Could not dub video clip %d/%d: %s\n%s", idx+1, len(segments), err.Error(), dubVideoClip)
-		}
-
 		log.Printf("Dubbed video clip %d/%d\n", idx+1, len(segments))
+	}
+	return nil
+}
 
+func dubVideoClip(segment Segment, identifier string) error {
+
+	id := segment.Id
+
+	audioFileName := getAudioFileName(identifier, id)
+	videoSegmentName := getVideoSegmentName(identifier, id)
+	dubbedVideoSegmentName := "dubbed_" + videoSegmentName
+	originalVideoSegmentName := "original_" + videoSegmentName
+
+	start := segment.Start
+	end := segment.End
+
+	originalLength := end - start
+
+	audioFileDuarion, _ := getAudioFileDuration(audioFileName)
+
+	ratio := math.Max(audioFileDuarion/originalLength, 1.0)
+
+	generateVideoClip := fmt.Sprintf("ffmpeg -i file:'%s.mp4' -ss %f -to %f file:'%s'", identifier, start, end, originalVideoSegmentName)
+	err := exec.Command("sh", "-c", generateVideoClip).Run()
+
+	if err != nil {
+		return fmt.Errorf("Clip extraction failed: %s\n%s\n", err.Error(), generateVideoClip)
+	}
+
+	stretchVideoClip := fmt.Sprintf("ffmpeg -i file:'%s' -vf 'setpts=%f*PTS' -c:a copy file:'%s'", originalVideoSegmentName, ratio, videoSegmentName)
+	err = exec.Command("sh", "-c", stretchVideoClip).Run()
+
+	if err != nil {
+		return fmt.Errorf("Clip stretching failed: %s\n%s\n", err.Error(), generateVideoClip)
+	}
+
+	dubVideoClip := fmt.Sprintf("ffmpeg -i file:'%s' -i file:'%s' -c:v copy -map 0:v:0 -map 1:a:0 file:'%s'",
+		videoSegmentName, audioFileName, dubbedVideoSegmentName)
+	err = exec.Command("sh", "-c", dubVideoClip).Run()
+
+	if err != nil {
+		return fmt.Errorf("Clip dubbing failed: %s\n%s\n", err.Error(), generateVideoClip)
 	}
 
 	return nil
-
 }
 
 func concatSegments(segments []Segment, identifier string) error {
@@ -412,77 +424,90 @@ type ChatCompletionResponse struct {
 	Choices []ChatCompletionChoice `json:"choices"`
 }
 
-func translateResponse(
+func translateSegments(
 	ctx context.Context,
 	sourceTransformationObject database.Transformation,
 	targetLanguage database.SupportedLanguage,
-) ([]Segment, error) {
+) (*[]Segment, error) {
 
 	var whisperOutput WhisperOutput
 	json.Unmarshal(sourceTransformationObject.Transcript.RawMessage, &whisperOutput)
 
 	segments := whisperOutput.Segments
 
-	API_KEY := os.Getenv("OPEN_AI_SECRET_KEY")
-	URL := "https://api.openai.com/v1/chat/completions"
-
 	log.Println("Translating project", sourceTransformationObject.ProjectID, "from", sourceTransformationObject.TargetLanguage, "to", targetLanguage)
 
 	for idx, segment := range segments {
+		translatedSegment, err := translateSegment(ctx, segment, targetLanguage)
 
-		retries := 5
-
-		for retries > 0 {
-
-			systemPrompt := fmt.Sprintf("Translate the following text to street spoken, informal %s. Provide the output in %s alphabet. Just give the output.", targetLanguage, targetLanguage)
-			chatGptInput := ChatRequestInput{
-				Model: "gpt-4",
-				Messages: []ChatCompletionMessage{
-					{Role: "system", Content: systemPrompt},
-					{Role: "user", Content: segment.Text},
-				},
-			}
-
-			jsonData, err := json.Marshal(chatGptInput)
-			if err != nil {
-				return []Segment{}, fmt.Errorf("Could not generate request body: " + err.Error())
-			}
-
-			respBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
-				Method: "POST",
-				Url:    URL,
-				Body:   bytes.NewBuffer(jsonData),
-				Headers: map[string]string{
-					"Authorization": "Bearer " + API_KEY,
-					"Content-Type":  "application/json",
-				},
-			})
-
-			if err != nil {
-				return []Segment{}, fmt.Errorf("Could not parse request body successfully: " + err.Error())
-			}
-
-			var chatResponse ChatCompletionResponse
-			json.Unmarshal(respBody, &chatResponse)
-
-			time.Sleep(500 * time.Millisecond)
-
-			if len(chatResponse.Choices) == 0 {
-				retries -= 1
-				log.Println("Open AI request failed, sleeping for 5s, retries left:", retries)
-				time.Sleep(5 * time.Second)
-			} else {
-				segment.Text = chatResponse.Choices[0].Message.Content
-				segments[idx] = segment
-				log.Println("Translation Progress for Project", sourceTransformationObject.ProjectID, "from", sourceTransformationObject.TargetLanguage, "to", targetLanguage+":", idx+1, "/", len(segments))
-				break
-			}
+		if err != nil {
+			return nil, fmt.Errorf("Failed to translated segment", idx+1, "/", len(segments), ":", err.Error())
 		}
+
+		segments[idx] = *translatedSegment
+		log.Println("Translation Progress for Project", sourceTransformationObject.ProjectID, "from", sourceTransformationObject.TargetLanguage, "to", targetLanguage+":", idx+1, "/", len(segments))
 	}
 	log.Println(segments)
 
-	return segments, nil
+	return &segments, nil
 
+}
+
+func translateSegment(ctx context.Context, segment Segment, targetLang database.SupportedLanguage) (*Segment, error) {
+
+	retries := 5
+
+	API_KEY := os.Getenv("OPEN_AI_SECRET_KEY")
+	URL := "https://api.openai.com/v1/chat/completions"
+
+	for retries > 0 {
+
+		systemPrompt := fmt.Sprintf("Translate the following text to street spoken, informal %s. Provide the output in %s alphabet. Just give the output.", targetLang, targetLang)
+		chatGptInput := ChatRequestInput{
+			Model: "gpt-4",
+			Messages: []ChatCompletionMessage{
+				{Role: "system", Content: systemPrompt},
+				{Role: "user", Content: segment.Text},
+			},
+		}
+
+		jsonData, err := json.Marshal(chatGptInput)
+		if err != nil {
+			return nil, fmt.Errorf("Could not generate request body: " + err.Error())
+		}
+
+		respBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
+			Method: "POST",
+			Url:    URL,
+			Body:   bytes.NewBuffer(jsonData),
+			Headers: map[string]string{
+				"Authorization": "Bearer " + API_KEY,
+				"Content-Type":  "application/json",
+			},
+		})
+
+		if err != nil {
+			return nil, fmt.Errorf("Could not parse request body successfully: " + err.Error())
+		}
+
+		var chatResponse ChatCompletionResponse
+		json.Unmarshal(respBody, &chatResponse)
+
+		time.Sleep(500 * time.Millisecond)
+
+		if len(chatResponse.Choices) == 0 {
+
+			retries -= 1
+			log.Println("Open AI request failed, sleeping for 5s, retries left:", retries)
+			time.Sleep(5 * time.Second)
+
+		} else {
+			segment.Text = chatResponse.Choices[0].Message.Content
+			return &segment, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Open AI Requests Failed")
 }
 
 func getAudioFileDuration(fileName string) (float64, error) {
