@@ -301,7 +301,6 @@ func fetchDubbedClip(segment Segment, identifier string) error {
 				return fmt.Errorf("Error writing audio file: %s", err.Error())
 			}
 
-			time.Sleep(500 * time.Millisecond)
 			return nil
 
 		} else {
@@ -480,7 +479,6 @@ func translateSegment(ctx context.Context, segment Segment, targetLang database.
 		var chatResponse ChatCompletionResponse
 		json.Unmarshal(respBody, &chatResponse)
 
-		time.Sleep(500 * time.Millisecond)
 
 		if len(chatResponse.Choices) == 0 {
 
