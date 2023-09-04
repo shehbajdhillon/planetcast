@@ -8,12 +8,15 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"mime/multipart"
 	"os"
 	"os/exec"
 	"planetcastdev/database"
 	"planetcastdev/httpmiddleware"
+	"planetcastdev/storage"
 	"planetcastdev/utils"
+	"strconv"
 	"strings"
 	"time"
 
@@ -168,13 +171,37 @@ func CreateTranslation(
 
 	identifier := fmt.Sprintf("%d-%s-%s", sourceTransformationObject.ProjectID, utils.GetCurrentDateTimeString(), targetTransformationObject.TargetLanguage)
 
+	//download original media, then save it as identifier.mp4
+	fileUrl := storage.Connect().GetFileLink(sourceTransformationObject.TargetMedia)
+
+	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
+		Method: "GET",
+		Url:    fileUrl,
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Accept":       "audio/mp4",
+		},
+	})
+
+	audioContent := responseBody
+	if err != nil {
+		return database.Transformation{}, fmt.Errorf("Error downloading original audio file from S3: %s", err.Error())
+	}
+
+	err = ioutil.WriteFile(identifier+".mp4", audioContent, 0644)
+	if err != nil {
+		return database.Transformation{}, fmt.Errorf("Error writing audio file: %s", err.Error())
+	}
+
+	log.Println("Source Audio File Downloaded")
+
 	err = fetchDubbedClips(translatedSegments, identifier)
+	err = dubVideoClips(translatedSegments, identifier)
+	err = concatSegments(translatedSegments, identifier)
 	/**
-	  err = dubVideoClips()
 	  err = syncClips()
 	  **/
-	err = concatSegments(translatedSegments, identifier)
-	cleanUp(translatedSegments, identifier)
+	//cleanUp(translatedSegments, identifier)
 
 	// return the update transformation
 	return targetTransformationObject, nil
@@ -255,24 +282,48 @@ func fetchDubbedClips(segments []Segment, identifier string) error {
 	return nil
 }
 
-func dubAudioClips(segments []Segment, identifier string) error {
+func dubVideoClips(segments []Segment, identifier string) error {
 
-	for _, s := range segments {
+	for idx, s := range segments {
 		id := s.Id
 
-		audioFileName := fmt.Sprintf("%s-%d-audio-file.mp3", identifier, id)
-		videoSegmentName := fmt.Sprintf("%s-%d-video-segment.mp4", identifier, id)
-		dubbedVideoSegmentName := fmt.Sprintf("%s-%d-video-segment-dubbed.mp4", identifier, id)
+		audioFileName := getAudioFileName(identifier, id)
+		videoSegmentName := getVideoSegmentName(identifier, id)
+		dubbedVideoSegmentName := "dubbed_" + videoSegmentName
+		originalVideoSegmentName := "original_" + videoSegmentName
 
-		generateVideoClipCmd := exec.Command("ffmpeg", "-i", "iio_video_2.mp4", "-ss", fmt.Sprintf("%.2f", s.Start), "-to", fmt.Sprintf("%.2f", s.End), videoSegmentName)
-		if err := generateVideoClipCmd.Run(); err != nil {
-			return fmt.Errorf("Could not clip source video: %s", err.Error())
+		start := s.Start
+		end := s.End
+
+		originalLength := end - start
+
+		audioFileDuarion, _ := getAudioFileDuration(audioFileName)
+
+		ratio := math.Max(audioFileDuarion/originalLength, 1.0)
+
+		generateVideoClip := fmt.Sprintf("ffmpeg -i file:'%s.mp4' -ss %f -to %f file:'%s'", identifier, start, end, originalVideoSegmentName)
+		err := exec.Command("sh", "-c", generateVideoClip).Run()
+
+		if err != nil {
+			log.Printf("Could not extract video clip %d/%d: %s\n%s\n", idx+1, len(segments), err.Error(), generateVideoClip)
 		}
 
-		dubVideoClipCmd := exec.Command("ffmpeg", "-i", videoSegmentName, "-i", audioFileName, "-c:v", "copy", "-map", "0:v:0", "-map", "1:a:0", dubbedVideoSegmentName)
-		if err := dubVideoClipCmd.Run(); err != nil {
-			return fmt.Errorf("Could not dub the clip: %s", err.Error())
+		stretchVideoClip := fmt.Sprintf("ffmpeg -i file:'%s' -vf 'setpts=%f*PTS' -c:a copy file:'%s'", originalVideoSegmentName, ratio, videoSegmentName)
+		err = exec.Command("sh", "-c", stretchVideoClip).Run()
+
+		if err != nil {
+			log.Printf("Could not stretch video clip %d/%d: %s\n%s\n", idx+1, len(segments), err.Error(), stretchVideoClip)
 		}
+
+		dubVideoClip := fmt.Sprintf("ffmpeg -i file:'%s' -i file:'%s' -c:v copy -map 0:v:0 -map 1:a:0 file:'%s'",
+			videoSegmentName, audioFileName, dubbedVideoSegmentName)
+		err = exec.Command("sh", "-c", dubVideoClip).Run()
+
+		if err != nil {
+			log.Printf("Could not dub video clip %d/%d: %s\n%s", idx+1, len(segments), err.Error(), dubVideoClip)
+		}
+
+		log.Printf("Dubbed video clip %d/%d\n", idx+1, len(segments))
 
 	}
 
@@ -289,8 +340,8 @@ func concatSegments(segments []Segment, identifier string) error {
 		id := s.Id
 
 		videoSegmentName := getVideoSegmentName(identifier, id)
-		syncedSegmentName := "synced_" + videoSegmentName
-		inputList = append(inputList, fmt.Sprintf("-i %s", syncedSegmentName))
+		syncedSegmentName := "dubbed_" + videoSegmentName
+		inputList = append(inputList, fmt.Sprintf("-i file:'%s'", syncedSegmentName))
 		filterList = append(filterList, fmt.Sprintf("[%d:v][%d:a]", idx, idx))
 	}
 
@@ -299,10 +350,16 @@ func concatSegments(segments []Segment, identifier string) error {
 	inputArgs := strings.Join(inputList, " ")
 	filterComplex := strings.Join(filterList, "")
 
-	ffmpegCmd := fmt.Sprintf("ffmpeg %s -filter_complex '%s' -map '[v]' -map '[a]' %s_dubbed.mp4",
+	ffmpegCmd := fmt.Sprintf("ffmpeg %s -filter_complex '%s' -map '[v]' -map '[a]' file:'%s_dubbed.mp4'",
 		inputArgs, filterComplex, identifier)
 
+	log.Println("Concating segments:", ffmpegCmd)
+
 	err := exec.Command("sh", "-c", ffmpegCmd).Run()
+
+	if err != nil {
+		log.Println("Could not concat segments:", ffmpegCmd)
+	}
 
 	return err
 }
@@ -328,6 +385,9 @@ func cleanUp(segments []Segment, identifier string) {
 			)
 		exec.Command("sh", "-c", removeCmd).Run()
 	}
+
+	removeCmd := fmt.Sprintf("rm -rf %s", identifier+".mp4")
+	exec.Command("sh", "-c", removeCmd).Run()
 }
 
 type ChatCompletionMessage struct {
@@ -423,5 +483,24 @@ func translateResponse(
 	log.Println(segments)
 
 	return segments, nil
+
+}
+
+func getAudioFileDuration(fileName string) (float64, error) {
+	cmd := exec.Command("ffprobe", "-v", "error", "-show_entries",
+		"format=duration", "-of", "default=noprint_wrappers=1:nokey=1", fileName)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return 0, err
+	}
+
+	text := strings.TrimSpace(string(output))
+	duration, err := strconv.ParseFloat(text, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return duration, nil
 
 }
