@@ -376,7 +376,7 @@ func concatSegments(segments []Segment, identifier string) (string, error) {
 	inputArgs := strings.Join(inputList, " ")
 	filterComplex := strings.Join(filterList, "")
 
-	ffmpegCmd := fmt.Sprintf("ffmpeg %s -filter_complex '%s' -map '[v]' -map '[a]' file:'%s_dubbed.mp4'",
+	ffmpegCmd := fmt.Sprintf("ffmpeg %s -filter_complex '%s' -map '[v]' -map '[a]' -vsync 2 file:'%s_dubbed.mp4'",
 		inputArgs, filterComplex, identifier)
 
 	log.Println("Concating segments:", ffmpegCmd)
@@ -384,7 +384,7 @@ func concatSegments(segments []Segment, identifier string) (string, error) {
 	err := exec.Command("sh", "-c", ffmpegCmd).Run()
 
 	if err != nil {
-		return "", fmt.Errorf("Could not concat segments:", ffmpegCmd)
+		return "", fmt.Errorf("Could not concat segments: %s", ffmpegCmd)
 	}
 
 	return identifier + "_dubbed.mp4", nil
