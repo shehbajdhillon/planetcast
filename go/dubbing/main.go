@@ -238,13 +238,13 @@ func fetchAndDub(
 		if err != nil {
 			return nil, fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 		}
-		log.Println("Fetched dubbed audio file for Project", idx+1, "/", len(segments))
+		log.Println("Fetched dubbed audio file for Project", projectId, ":", idx+1, "/", len(segments))
 
 		err = dubVideoClip(*translatedSegment, identifier)
 		if err != nil {
 			return nil, fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 		}
-		log.Println("Dubbed video clip for Project", idx+1, "/", len(segments))
+		log.Println("Dubbed video clip for Project", projectId, ":", idx+1, "/", len(segments))
 
 		translatedSegments = append(translatedSegments, *translatedSegment)
 	}
@@ -478,7 +478,6 @@ func translateSegment(ctx context.Context, segment Segment, targetLang database.
 
 		var chatResponse ChatCompletionResponse
 		json.Unmarshal(respBody, &chatResponse)
-
 
 		if len(chatResponse.Choices) == 0 {
 
