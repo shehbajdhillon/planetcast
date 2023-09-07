@@ -56,7 +56,6 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
   };
 
   useEffect(() => {
-    console.log("Running the use effect");
     setTargetLanguage(undubbedLanguages[0]);
   }, [isOpen]);
 
