@@ -10,20 +10,54 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import VideoPlayer from "../video_player";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { gql, useLazyQuery } from "@apollo/client";
 
 interface ProjectCardProps {
   teamSlug: string;
   project: Project
 };
 
+const GET_PROJECT_DATA = gql`
+  query GetProjectData($teamSlug: String!, $projectId: Int64!) {
+    getTeamById(teamSlug: $teamSlug) {
+      projects(projectId: $projectId) {
+        id
+        title
+        sourceMedia
+        sourceLanguage
+        transformations {
+          id
+          targetMedia
+          targetLanguage
+        }
+      }
+    }
+  }
+`;
+
+
 const ProjectCard: React.FC<ProjectCardProps> = (props) => {
 
   const { project, teamSlug } = props;
-  const transformations: Transformation[] = project?.transformations;
+  const [transformations, setTranformations] = useState<Transformation[]>(project?.transformations);
+  const isProcessing = transformations.length === 0;
+
   const [transformationIdx, setTransformationIdx] = useState(0);
+  const [getProjectData, { data } ] = useLazyQuery(GET_PROJECT_DATA, { variables: { teamSlug, projectId: project.id }, fetchPolicy: 'no-cache', pollInterval: isProcessing ? 10000 : 0 })
+
+  useEffect(() => {
+    const newTransformations = data?.getTeamById.projects[0]?.transformations;
+    if (newTransformations?.length) {
+      setTranformations(newTransformations);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (isProcessing) getProjectData();
+  }, []);
 
   const router = useRouter();
 
@@ -64,7 +98,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
             alignContent="right"
             pointerEvents={"none"}
           >
-            {transformations.length ? transformations?.[transformationIdx].targetLanguage : <Text>PROCESSING <Spinner size={"xs"} /></Text>}
+            {!isProcessing ? transformations?.[transformationIdx].targetLanguage : <Text>PROCESSING <Spinner size={"xs"} /></Text>}
           </Button>
           <Spacer />
           <IconButton
@@ -74,7 +108,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
             isDisabled={transformationIdx - 1 < 0}
             onClick={(e) => {
               e.stopPropagation();
-              setTransformationIdx(curr => curr - 1)
+              goBack();
             }}
           />
           <IconButton
@@ -84,7 +118,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
             isDisabled={transformationIdx + 1 >= transformations.length}
             onClick={(e) => {
               e.stopPropagation();
-              setTransformationIdx(curr => curr + 1)
+              goNext();
             }}
           />
         </HStack>
