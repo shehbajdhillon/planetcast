@@ -199,7 +199,7 @@ func CreateTranslation(
 
 	storage.Connect().Upload(newFileName, file)
 
-	cleanUp(translatedSegments, identifier)
+	utils.DeleteFiles([]string{identifier + ".mp4", identifier + "_dubbed.mp4"})
 
 	// return the update transformation
 	return targetTransformation, nil
@@ -320,8 +320,8 @@ func dubVideoClip(segment Segment, identifier string) error {
 
 	audioFileName := getAudioFileName(identifier, id)
 	videoSegmentName := getVideoSegmentName(identifier, id)
-	dubbedVideoSegmentName := "dubbed_" + videoSegmentName
 	originalVideoSegmentName := "original_" + videoSegmentName
+	dubbedVideoSegmentName := "dubbed_" + videoSegmentName
 
 	start := segment.Start
 	end := segment.End
@@ -354,6 +354,8 @@ func dubVideoClip(segment Segment, identifier string) error {
 		return fmt.Errorf("Clip dubbing failed: %s\n%s\n", err.Error(), generateVideoClip)
 	}
 
+	utils.DeleteFiles([]string{videoSegmentName, originalVideoSegmentName, audioFileName})
+
 	return nil
 }
 
@@ -383,37 +385,18 @@ func concatSegments(segments []Segment, identifier string) (string, error) {
 
 	err := exec.Command("sh", "-c", ffmpegCmd).Run()
 
+	fileList := []string{}
+	for _, s := range segments {
+		fileName := "dubbed_" + getVideoSegmentName(identifier, s.Id)
+		fileList = append(fileList, fileName)
+	}
+	utils.DeleteFiles(fileList)
+
 	if err != nil {
 		return "", fmt.Errorf("Could not concat segments: %s", ffmpegCmd)
 	}
 
 	return identifier + "_dubbed.mp4", nil
-}
-
-func cleanUp(segments []Segment, identifier string) {
-	for _, s := range segments {
-		id := s.Id
-
-		audioFileName := getAudioFileName(identifier, id)
-		videoSegmentName := getVideoSegmentName(identifier, id)
-		dubbedSegmentName := "dubbed_" + videoSegmentName
-		syncedSegmentName := "synced_" + videoSegmentName
-		originalSegmentName := "original_" + videoSegmentName
-
-		removeCmd :=
-			fmt.Sprintf(
-				"rm -rf %s %s %s %s %s",
-				audioFileName,
-				videoSegmentName,
-				dubbedSegmentName,
-				syncedSegmentName,
-				originalSegmentName,
-			)
-		exec.Command("sh", "-c", removeCmd).Run()
-	}
-
-	removeCmd := fmt.Sprintf("rm -rf %s %s", identifier+".mp4", identifier+"_dubbed.mp4")
-	exec.Command("sh", "-c", removeCmd).Run()
 }
 
 type ChatCompletionMessage struct {

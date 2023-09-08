@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -30,4 +31,11 @@ func GetAudioFileDuration(fileName string) (float64, error) {
 
 	return duration, nil
 
+}
+
+func DeleteFiles(fileNames []string) error {
+	fileNameString := strings.Join(fileNames, " ")
+	removeCmd := fmt.Sprintf("rm -rf %s", fileNameString)
+	err := exec.Command("sh", "-c", removeCmd).Run()
+	return err
 }
