@@ -100,7 +100,7 @@ export interface DashboardPageProps {
 
 const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug }) => {
 
-  const { data, refetch } = useQuery(GET_TEAMS);
+  const { data, refetch } = useQuery(GET_TEAMS, { fetchPolicy: 'cache-and-network' });
 
   const teams = data?.getTeams;
   const projects = data?.getTeams.find((team: Team) => team.slug === teamSlug)?.projects;
