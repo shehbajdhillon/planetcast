@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"planetcastdev/database"
 	"planetcastdev/httpmiddleware"
+	"planetcastdev/replicatemiddleware"
 	"planetcastdev/storage"
 	"planetcastdev/utils"
 	"strings"
@@ -246,6 +247,12 @@ func fetchAndDub(
 		}
 		log.Println("Dubbed video clip for Project", projectId, ":", idx+1, "/", len(segments))
 
+		err = lipSyncClip(*translatedSegment, identifier)
+		if err != nil {
+			return nil, fmt.Errorf("Could not lip sync clip %d/%d: %s\n", idx+1, len(segments), err.Error())
+		}
+		log.Println("Synced video clip for Project", projectId, ":", idx+1, "/", len(segments))
+
 		translatedSegments = append(translatedSegments, *translatedSegment)
 	}
 
@@ -359,6 +366,68 @@ func dubVideoClip(segment Segment, identifier string) error {
 	return nil
 }
 
+func lipSyncClip(segment Segment, identifier string) error {
+
+	storageClient := storage.Connect()
+
+	videoSegmentName := getVideoSegmentName(identifier, segment.Id)
+	dubbedVideoSegmentName := "dubbed_" + videoSegmentName
+	syncedVideoSegmentName := "synced_" + videoSegmentName
+
+	file, err := os.Open(dubbedVideoSegmentName)
+	if err != nil {
+		fmt.Println("Error opening the file:", err)
+	}
+	defer file.Close()
+
+	storageClient.Upload(dubbedVideoSegmentName, file)
+	fileLink := storageClient.GetFileLink(dubbedVideoSegmentName)
+
+	replicateRequestBody := map[string]interface{}{
+		"version": "8d65e3f4f4298520e079198b493c25adfc43c058ffec924f2aefc8010ed25eef",
+		"input": map[string]string{
+			"face":  fileLink,
+			"audio": fileLink,
+		},
+	}
+
+	jsonBody, err := json.Marshal(replicateRequestBody)
+	outputUrl, err := replicatemiddleware.MakeRequest(bytes.NewBuffer(jsonBody))
+	storageClient.DeleteFile(dubbedVideoSegmentName)
+
+	if err != nil {
+		copyFileCmd := fmt.Sprintf("cp %s %s", dubbedVideoSegmentName, syncedVideoSegmentName)
+		exec.Command("sh", "-c", copyFileCmd).Run()
+		utils.DeleteFiles([]string{dubbedVideoSegmentName})
+		return nil
+	}
+
+	//download original media, then save it as identifier.mp4
+	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
+		Method: "GET",
+		Url:    outputUrl,
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Accept":       "audio/mp4",
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(syncedVideoSegmentName, responseBody, 0644)
+
+	if err != nil {
+		return err
+	}
+
+	utils.DeleteFiles([]string{dubbedVideoSegmentName})
+
+	return nil
+
+}
+
 func concatSegments(segments []Segment, identifier string) (string, error) {
 
 	inputList := []string{}
@@ -368,7 +437,7 @@ func concatSegments(segments []Segment, identifier string) (string, error) {
 		id := s.Id
 
 		videoSegmentName := getVideoSegmentName(identifier, id)
-		syncedSegmentName := "dubbed_" + videoSegmentName
+		syncedSegmentName := "synced_" + videoSegmentName
 		inputList = append(inputList, fmt.Sprintf("-i file:'%s'", syncedSegmentName))
 		filterList = append(filterList, fmt.Sprintf("[%d:v][%d:a]", idx, idx))
 	}
@@ -387,7 +456,7 @@ func concatSegments(segments []Segment, identifier string) (string, error) {
 
 	fileList := []string{}
 	for _, s := range segments {
-		fileName := "dubbed_" + getVideoSegmentName(identifier, s.Id)
+		fileName := "synced_" + getVideoSegmentName(identifier, s.Id)
 		fileList = append(fileList, fileName)
 	}
 	utils.DeleteFiles(fileList)

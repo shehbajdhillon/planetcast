@@ -82,7 +82,7 @@ func (s *Storage) GetFileLink(fileName string) string {
 		Key:    aws.String("inputvideos/" + fileName),
 	})
 
-	urlStr, err := request.Presign(30 * time.Minute)
+	urlStr, err := request.Presign(60 * time.Minute)
 
 	if err != nil {
 		log.Println("Failed to sign request", err)

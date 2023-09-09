@@ -38,7 +38,7 @@ func HttpRequest(args HttpRequestStruct) ([]byte, error) {
 
 	// Error out if response code is not 200 or 202.
 	// But what if the response code is okay but not equal to 200 or 202?
-	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusAccepted {
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusAccepted && res.StatusCode != http.StatusCreated {
 		return nil, fmt.Errorf("Request failed: %d", res.StatusCode)
 	}
 
