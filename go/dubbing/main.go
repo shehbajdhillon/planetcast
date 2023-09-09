@@ -273,7 +273,7 @@ func fetchDubbedClip(segment Segment, identifier string) error {
 
 		data := VoiceRequest{
 			Text:    segment.Text,
-			ModelID: "eleven_multilingual_v1",
+			ModelID: "eleven_multilingual_v2",
 			VoiceSetting: VoiceSettings{
 				Stability:       1.0,
 				SimilarityBoost: 1.0,

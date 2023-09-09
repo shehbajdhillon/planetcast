@@ -5,7 +5,42 @@ DROP TYPE IF EXISTS membership_type CASCADE;
 CREATE TYPE membership_type AS ENUM ('OWNER', 'ADMIN', 'MEMBER');
 
 DROP TYPE IF EXISTS supported_language CASCADE;
-CREATE TYPE supported_language AS ENUM ('ENGLISH', 'HINDI', 'SPANISH', 'GERMAN', 'POLISH', 'ITALIAN', 'FRENCH', 'PORTUGUESE');
+CREATE TYPE supported_language AS ENUM (
+  'ENGLISH',
+  'JAPANESE',
+  'CHINESE',
+  'GERMAN',
+
+  'HINDI',
+  'FRENCH',
+  'KOREAN',
+  'PORTUGUESE',
+
+  'ITALIAN',
+  'SPANISH',
+  'INDONESIAN',
+  'DUTCH',
+
+  'TURKISH',
+  'FILIPINO',
+  'POLISH',
+  'SWEDISH',
+
+  'BULGARIAN',
+  'ROMANIAN',
+  'ARABIC',
+  'CZECH',
+
+  'GREEK',
+  'FINNISH',
+  'CROATIAN',
+  'MALAY',
+
+  'SLOVAK',
+  'DANISH',
+  'TAMIL',
+  'UKRAINIAN'
+);
 
 DROP TABLE IF EXISTS userinfo CASCADE;
 CREATE TABLE userinfo (

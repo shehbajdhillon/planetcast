@@ -69,7 +69,6 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 
 // DeleteProject is the resolver for the deleteProject field.
 func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (database.Project, error) {
-
 	transformations, _ := r.DB.GetTransformationsByProjectId(ctx, projectID)
 	project, _ := r.DB.DeleteProjectById(ctx, projectID)
 
