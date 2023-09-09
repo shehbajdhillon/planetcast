@@ -66,10 +66,11 @@ func (s *Storage) Upload(fileName string, file io.ReadSeeker) {
 
 	if err != nil {
 		log.Println(err.Error())
-		exitErrorf("Unable to upload: ", fileName, " to bucket: ", AWS_VIDEO_UPLOAD_BUCKET)
+		log.Println("Unable to upload: ", fileName, " to bucket: ", AWS_VIDEO_UPLOAD_BUCKET)
+	} else {
+		log.Println("Successfully uploaded: ", fileName, " to bucket: ", AWS_VIDEO_UPLOAD_BUCKET)
 	}
 
-	log.Println("Successfully uploaded: ", fileName, " to bucket: ", AWS_VIDEO_UPLOAD_BUCKET)
 }
 
 func (s *Storage) GetFileLink(fileName string) string {
@@ -88,4 +89,21 @@ func (s *Storage) GetFileLink(fileName string) string {
 	}
 
 	return urlStr
+}
+
+func (s *Storage) DeleteFile(fileName string) {
+
+	AWS_VIDEO_UPLOAD_BUCKET := os.Getenv("AWS_VIDEO_UPLOAD_BUCKET")
+
+	_, err := s.s3.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(AWS_VIDEO_UPLOAD_BUCKET),
+		Key:    aws.String("inputvideos/" + fileName),
+	})
+
+	if err != nil {
+		log.Println("Failed to delete file", err)
+	} else {
+		log.Println("Delete", fileName, "from S3")
+	}
+
 }
