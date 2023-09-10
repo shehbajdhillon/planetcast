@@ -128,6 +128,8 @@ type Transformation struct {
 	TargetMedia    string
 	Transcript     pqtype.NullRawMessage
 	IsSource       bool
+	Status         string
+	Progress       float64
 }
 
 type Userinfo struct {

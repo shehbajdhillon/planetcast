@@ -46,5 +46,7 @@ CREATE TABLE transformation (
   target_language TEXT NOT NULL,
   target_media TEXT NOT NULL,
   transcript jsonb,
-  is_source BOOLEAN NOT NULL
+  is_source BOOLEAN NOT NULL,
+  status TEXT NOT NULL,
+  progress DOUBLE PRECISION NOT NULL
 );

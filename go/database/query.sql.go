@@ -108,7 +108,7 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 }
 
 const createTransformation = `-- name: CreateTransformation :one
-INSERT INTO transformation (project_id, target_language, target_media, transcript, is_source) VALUES ($1, $2, $3, $4, $5) RETURNING id, project_id, target_language, target_media, transcript, is_source
+INSERT INTO transformation (project_id, target_language, target_media, transcript, is_source, status, progress) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress
 `
 
 type CreateTransformationParams struct {
@@ -117,6 +117,8 @@ type CreateTransformationParams struct {
 	TargetMedia    string
 	Transcript     pqtype.NullRawMessage
 	IsSource       bool
+	Status         string
+	Progress       float64
 }
 
 func (q *Queries) CreateTransformation(ctx context.Context, arg CreateTransformationParams) (Transformation, error) {
@@ -126,6 +128,8 @@ func (q *Queries) CreateTransformation(ctx context.Context, arg CreateTransforma
 		arg.TargetMedia,
 		arg.Transcript,
 		arg.IsSource,
+		arg.Status,
+		arg.Progress,
 	)
 	var i Transformation
 	err := row.Scan(
@@ -135,6 +139,8 @@ func (q *Queries) CreateTransformation(ctx context.Context, arg CreateTransforma
 		&i.TargetMedia,
 		&i.Transcript,
 		&i.IsSource,
+		&i.Status,
+		&i.Progress,
 	)
 	return i, err
 }
@@ -229,7 +235,7 @@ func (q *Queries) GetProjectsByTeamId(ctx context.Context, teamID int64) ([]Proj
 }
 
 const getSourceTransformationByProjectId = `-- name: GetSourceTransformationByProjectId :one
-SELECT id, project_id, target_language, target_media, transcript, is_source FROM transformation WHERE project_id = $1 AND is_source = true LIMIT 1
+SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress FROM transformation WHERE project_id = $1 AND is_source = true LIMIT 1
 `
 
 func (q *Queries) GetSourceTransformationByProjectId(ctx context.Context, projectID int64) (Transformation, error) {
@@ -242,6 +248,8 @@ func (q *Queries) GetSourceTransformationByProjectId(ctx context.Context, projec
 		&i.TargetMedia,
 		&i.Transcript,
 		&i.IsSource,
+		&i.Status,
+		&i.Progress,
 	)
 	return i, err
 }
@@ -336,7 +344,7 @@ func (q *Queries) GetTeamMemebershipsByUserId(ctx context.Context, userID int64)
 }
 
 const getTransformationById = `-- name: GetTransformationById :one
-SELECT id, project_id, target_language, target_media, transcript, is_source FROM transformation WHERE id = $1 LIMIT 1
+SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress FROM transformation WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetTransformationById(ctx context.Context, id int64) (Transformation, error) {
@@ -349,12 +357,14 @@ func (q *Queries) GetTransformationById(ctx context.Context, id int64) (Transfor
 		&i.TargetMedia,
 		&i.Transcript,
 		&i.IsSource,
+		&i.Status,
+		&i.Progress,
 	)
 	return i, err
 }
 
 const getTransformationByProjectIdTargetLanguage = `-- name: GetTransformationByProjectIdTargetLanguage :one
-SELECT id, project_id, target_language, target_media, transcript, is_source FROM transformation WHERE project_id = $1 AND target_language = $2 LIMIT 1
+SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress FROM transformation WHERE project_id = $1 AND target_language = $2 LIMIT 1
 `
 
 type GetTransformationByProjectIdTargetLanguageParams struct {
@@ -372,12 +382,14 @@ func (q *Queries) GetTransformationByProjectIdTargetLanguage(ctx context.Context
 		&i.TargetMedia,
 		&i.Transcript,
 		&i.IsSource,
+		&i.Status,
+		&i.Progress,
 	)
 	return i, err
 }
 
 const getTransformationByTransformationIdProjectId = `-- name: GetTransformationByTransformationIdProjectId :one
-SELECT id, project_id, target_language, target_media, transcript, is_source FROM transformation WHERE id = $1 AND project_id = $2 LIMIT 1
+SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress FROM transformation WHERE id = $1 AND project_id = $2 LIMIT 1
 `
 
 type GetTransformationByTransformationIdProjectIdParams struct {
@@ -395,12 +407,14 @@ func (q *Queries) GetTransformationByTransformationIdProjectId(ctx context.Conte
 		&i.TargetMedia,
 		&i.Transcript,
 		&i.IsSource,
+		&i.Status,
+		&i.Progress,
 	)
 	return i, err
 }
 
 const getTransformationsByProjectId = `-- name: GetTransformationsByProjectId :many
-SELECT id, project_id, target_language, target_media, transcript, is_source FROM transformation WHERE project_id = $1
+SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress FROM transformation WHERE project_id = $1
 `
 
 func (q *Queries) GetTransformationsByProjectId(ctx context.Context, projectID int64) ([]Transformation, error) {
@@ -419,6 +433,8 @@ func (q *Queries) GetTransformationsByProjectId(ctx context.Context, projectID i
 			&i.TargetMedia,
 			&i.Transcript,
 			&i.IsSource,
+			&i.Status,
+			&i.Progress,
 		); err != nil {
 			return nil, err
 		}
@@ -466,7 +482,7 @@ func (q *Queries) GetUserById(ctx context.Context, id int64) (Userinfo, error) {
 }
 
 const updateTargetMediaById = `-- name: UpdateTargetMediaById :one
-UPDATE transformation SET target_media = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source
+UPDATE transformation SET target_media = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress
 `
 
 type UpdateTargetMediaByIdParams struct {
@@ -484,12 +500,14 @@ func (q *Queries) UpdateTargetMediaById(ctx context.Context, arg UpdateTargetMed
 		&i.TargetMedia,
 		&i.Transcript,
 		&i.IsSource,
+		&i.Status,
+		&i.Progress,
 	)
 	return i, err
 }
 
 const updateTranscriptById = `-- name: UpdateTranscriptById :one
-UPDATE transformation SET transcript = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source
+UPDATE transformation SET transcript = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress
 `
 
 type UpdateTranscriptByIdParams struct {
@@ -507,6 +525,8 @@ func (q *Queries) UpdateTranscriptById(ctx context.Context, arg UpdateTranscript
 		&i.TargetMedia,
 		&i.Transcript,
 		&i.IsSource,
+		&i.Status,
+		&i.Progress,
 	)
 	return i, err
 }
