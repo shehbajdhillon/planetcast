@@ -121,8 +121,8 @@ func CreateTransformation(
 		TargetMedia:    args.FileName,
 		Transcript:     pqtype.NullRawMessage{RawMessage: jsonBytes, Valid: true},
 		IsSource:       args.IsSource,
-		Status:         "starting",
-		Progress:       0,
+		Status:         "complete",
+		Progress:       100,
 	})
 
 	if err != nil {
@@ -142,7 +142,6 @@ func CreateTranslation(
 ) (database.Transformation, error) {
 
 	fileUrl := storage.Connect().GetFileLink(sourceTransformation.TargetMedia)
-
 	//download original media, then save it as identifier.mp4
 	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
 		Method: "GET",
@@ -152,25 +151,34 @@ func CreateTranslation(
 			"Accept":       "audio/mp4",
 		},
 	})
-
 	if err != nil {
 		return database.Transformation{}, fmt.Errorf("Error downloading original audio file from S3: %s", err.Error())
 	}
-
 	err = ioutil.WriteFile(identifier+".mp4", responseBody, 0644)
 	if err != nil {
 		return database.Transformation{}, fmt.Errorf("Error writing audio file: %s", err.Error())
 	}
-
-	log.Println("Source Audio File Downloaded")
 
 	var whisperOutput WhisperOutput
 	json.Unmarshal(sourceTransformation.Transcript.RawMessage, &whisperOutput)
 
 	// call chatgpt, convert the source text to target text
 	sourceSegments := whisperOutput.Segments
-	translatedSegmentsPtr, err := fetchAndDub(ctx, sourceSegments, sourceTransformation.ProjectID, identifier, model.SupportedLanguage(targetTransformation.TargetLanguage))
+	translatedSegmentsPtr, err := fetchAndDub(ctx, sourceSegments, sourceTransformation.ProjectID, identifier, model.SupportedLanguage(targetTransformation.TargetLanguage), targetTransformation.ID, queries)
 	translatedSegments := *translatedSegmentsPtr
+
+	if err != nil {
+		return database.Transformation{}, fmt.Errorf("Could not process translated segments " + err.Error())
+	}
+
+	newFileName, err := concatSegments(translatedSegments, identifier)
+	file, err := os.Open(newFileName)
+	if err != nil {
+		fmt.Println("Error opening the file:", err)
+	}
+	defer file.Close()
+	storage.Connect().Upload(newFileName, file)
+	utils.DeleteFiles([]string{identifier + ".mp4", identifier + "_dubbed.mp4"})
 
 	// get the target text, and parse it
 	json.Unmarshal(targetTransformation.Transcript.RawMessage, &whisperOutput)
@@ -179,10 +187,6 @@ func CreateTranslation(
 
 	// store the target text in db
 	jsonBytes, err := json.Marshal(whisperOutput)
-
-	if err != nil {
-		return database.Transformation{}, fmt.Errorf("Could not process translated segments " + err.Error())
-	}
 
 	targetTransformation, err = queries.UpdateTranscriptById(ctx, database.UpdateTranscriptByIdParams{
 		ID:         targetTransformation.ID,
@@ -193,17 +197,15 @@ func CreateTranslation(
 		return database.Transformation{}, fmt.Errorf("Could not update transformation: " + err.Error())
 	}
 
-	newFileName, err := concatSegments(translatedSegments, identifier)
+	targetTransformation, err = queries.UpdateTransformationStatusById(ctx, database.UpdateTransformationStatusByIdParams{
+		ID:     targetTransformation.ID,
+		Status: "complete",
+	})
 
-	file, err := os.Open(newFileName)
-	if err != nil {
-		fmt.Println("Error opening the file:", err)
-	}
-	defer file.Close()
-
-	storage.Connect().Upload(newFileName, file)
-
-	utils.DeleteFiles([]string{identifier + ".mp4", identifier + "_dubbed.mp4"})
+	targetTransformation, err = queries.UpdateTransformationProgressById(ctx, database.UpdateTransformationProgressByIdParams{
+		ID:       targetTransformation.ID,
+		Progress: 100,
+	})
 
 	// return the update transformation
 	return targetTransformation, nil
@@ -226,9 +228,16 @@ func fetchAndDub(
 	projectId int64,
 	identifier string,
 	targetLanguage model.SupportedLanguage,
+	targetTransformationId int64,
+	queries *database.Queries,
 ) (*[]Segment, error) {
 
 	translatedSegments := []Segment{}
+
+	queries.UpdateTransformationStatusById(ctx, database.UpdateTransformationStatusByIdParams{
+		ID:     targetTransformationId,
+		Status: "processing",
+	})
 
 	for idx, segment := range segments {
 
@@ -257,6 +266,15 @@ func fetchAndDub(
 		log.Println("Synced video clip for Project", projectId, ":", idx+1, "/", len(segments))
 
 		translatedSegments = append(translatedSegments, *translatedSegment)
+
+		percentage := 100 * (float64(len(translatedSegments)) / float64(len(segments)))
+		percentage = math.Round(percentage*100) / 100
+
+		queries.UpdateTransformationProgressById(ctx, database.UpdateTransformationProgressByIdParams{
+			ID:       targetTransformationId,
+			Progress: percentage,
+		})
+
 	}
 
 	return &translatedSegments, nil
