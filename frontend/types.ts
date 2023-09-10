@@ -23,6 +23,8 @@ export interface Transformation {
   targetLanguage: SupportedLanguage;
   transcript: string;
   isSource: boolean;
+  status: string;
+  progress: number;
 };
 
 export interface Segment {
