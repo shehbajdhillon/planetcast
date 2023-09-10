@@ -87,6 +87,8 @@ const GET_TEAMS = gql`
           id
           targetMedia
           targetLanguage
+          status
+          progress
         }
       }
     }
