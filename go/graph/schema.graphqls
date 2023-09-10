@@ -35,6 +35,8 @@ type Transformation {
   targetMedia: String!
   transcript: String!
   isSource: Boolean!
+  status: String!
+  progress: Float!
 }
 
 type Userinfo {

@@ -85,7 +85,9 @@ type ComplexityRoot struct {
 	Transformation struct {
 		ID             func(childComplexity int) int
 		IsSource       func(childComplexity int) int
+		Progress       func(childComplexity int) int
 		ProjectID      func(childComplexity int) int
+		Status         func(childComplexity int) int
 		TargetLanguage func(childComplexity int) int
 		TargetMedia    func(childComplexity int) int
 		Transcript     func(childComplexity int) int
@@ -313,12 +315,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Transformation.IsSource(childComplexity), true
 
+	case "Transformation.progress":
+		if e.complexity.Transformation.Progress == nil {
+			break
+		}
+
+		return e.complexity.Transformation.Progress(childComplexity), true
+
 	case "Transformation.projectId":
 		if e.complexity.Transformation.ProjectID == nil {
 			break
 		}
 
 		return e.complexity.Transformation.ProjectID(childComplexity), true
+
+	case "Transformation.status":
+		if e.complexity.Transformation.Status == nil {
+			break
+		}
+
+		return e.complexity.Transformation.Status(childComplexity), true
 
 	case "Transformation.targetLanguage":
 		if e.complexity.Transformation.TargetLanguage == nil {
@@ -1087,6 +1103,10 @@ func (ec *executionContext) fieldContext_Mutation_createTranslation(ctx context.
 				return ec.fieldContext_Transformation_transcript(ctx, field)
 			case "isSource":
 				return ec.fieldContext_Transformation_isSource(ctx, field)
+			case "status":
+				return ec.fieldContext_Transformation_status(ctx, field)
+			case "progress":
+				return ec.fieldContext_Transformation_progress(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Transformation", field.Name)
 		},
@@ -1376,6 +1396,10 @@ func (ec *executionContext) fieldContext_Project_transformations(ctx context.Con
 				return ec.fieldContext_Transformation_transcript(ctx, field)
 			case "isSource":
 				return ec.fieldContext_Transformation_isSource(ctx, field)
+			case "status":
+				return ec.fieldContext_Transformation_status(ctx, field)
+			case "progress":
+				return ec.fieldContext_Transformation_progress(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Transformation", field.Name)
 		},
@@ -2238,6 +2262,94 @@ func (ec *executionContext) fieldContext_Transformation_isSource(ctx context.Con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Transformation_status(ctx context.Context, field graphql.CollectedField, obj *database.Transformation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Transformation_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Transformation_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Transformation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Transformation_progress(ctx context.Context, field graphql.CollectedField, obj *database.Transformation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Transformation_progress(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Progress, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Transformation_progress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Transformation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4675,6 +4787,16 @@ func (ec *executionContext) _Transformation(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "status":
+			out.Values[i] = ec._Transformation_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "progress":
+			out.Values[i] = ec._Transformation_progress(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5101,6 +5223,21 @@ func (ec *executionContext) marshalNDateTime2string(ctx context.Context, sel ast
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func (ec *executionContext) unmarshalNInt642int64(ctx context.Context, v interface{}) (int64, error) {

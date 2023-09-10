@@ -110,6 +110,8 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 		TargetMedia:    newFileName,
 		Transcript:     pqtype.NullRawMessage{Valid: false, RawMessage: nil},
 		IsSource:       false,
+		Status:         "starting",
+		Progress:       0,
 	})
 
 	newCtx := context.Background()

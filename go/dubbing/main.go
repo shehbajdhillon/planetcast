@@ -121,6 +121,8 @@ func CreateTransformation(
 		TargetMedia:    args.FileName,
 		Transcript:     pqtype.NullRawMessage{RawMessage: jsonBytes, Valid: true},
 		IsSource:       args.IsSource,
+		Status:         "starting",
+		Progress:       0,
 	})
 
 	if err != nil {
