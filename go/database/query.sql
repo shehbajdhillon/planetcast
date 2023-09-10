@@ -52,6 +52,12 @@ UPDATE transformation SET transcript = $2 WHERE id = $1 RETURNING *;
 -- name: UpdateTargetMediaById :one
 UPDATE transformation SET target_media = $2 WHERE id = $1 RETURNING *;
 
+-- name: UpdateTransformationStatusById :one
+UPDATE transformation SET status = $2 WHERE id = $1 RETURNING *;
+
+-- name: UpdateTransformationProgressById :one
+UPDATE transformation SET progress = $2 WHERE id = $1 RETURNING *;
+
 -- name: GetTransformationById :one
 SELECT * FROM transformation WHERE id = $1 LIMIT 1;
 
@@ -66,3 +72,4 @@ SELECT * FROM transformation WHERE project_id = $1 AND is_source = true LIMIT 1;
 
 -- name: GetTransformationByProjectIdTargetLanguage :one
 SELECT * FROM transformation WHERE project_id = $1 AND target_language = $2 LIMIT 1;
+

@@ -530,3 +530,53 @@ func (q *Queries) UpdateTranscriptById(ctx context.Context, arg UpdateTranscript
 	)
 	return i, err
 }
+
+const updateTransformationProgressById = `-- name: UpdateTransformationProgressById :one
+UPDATE transformation SET progress = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress
+`
+
+type UpdateTransformationProgressByIdParams struct {
+	ID       int64
+	Progress float64
+}
+
+func (q *Queries) UpdateTransformationProgressById(ctx context.Context, arg UpdateTransformationProgressByIdParams) (Transformation, error) {
+	row := q.db.QueryRowContext(ctx, updateTransformationProgressById, arg.ID, arg.Progress)
+	var i Transformation
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.TargetLanguage,
+		&i.TargetMedia,
+		&i.Transcript,
+		&i.IsSource,
+		&i.Status,
+		&i.Progress,
+	)
+	return i, err
+}
+
+const updateTransformationStatusById = `-- name: UpdateTransformationStatusById :one
+UPDATE transformation SET status = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress
+`
+
+type UpdateTransformationStatusByIdParams struct {
+	ID     int64
+	Status string
+}
+
+func (q *Queries) UpdateTransformationStatusById(ctx context.Context, arg UpdateTransformationStatusByIdParams) (Transformation, error) {
+	row := q.db.QueryRowContext(ctx, updateTransformationStatusById, arg.ID, arg.Status)
+	var i Transformation
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.TargetLanguage,
+		&i.TargetMedia,
+		&i.Transcript,
+		&i.IsSource,
+		&i.Status,
+		&i.Progress,
+	)
+	return i, err
+}
