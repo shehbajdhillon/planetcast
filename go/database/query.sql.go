@@ -62,7 +62,7 @@ INSERT INTO project (team_id, title, source_language, source_media) VALUES ($1, 
 type CreateProjectParams struct {
 	TeamID         int64
 	Title          string
-	SourceLanguage SupportedLanguage
+	SourceLanguage string
 	SourceMedia    string
 }
 
@@ -113,7 +113,7 @@ INSERT INTO transformation (project_id, target_language, target_media, transcrip
 
 type CreateTransformationParams struct {
 	ProjectID      int64
-	TargetLanguage SupportedLanguage
+	TargetLanguage string
 	TargetMedia    string
 	Transcript     pqtype.NullRawMessage
 	IsSource       bool
@@ -359,7 +359,7 @@ SELECT id, project_id, target_language, target_media, transcript, is_source FROM
 
 type GetTransformationByProjectIdTargetLanguageParams struct {
 	ProjectID      int64
-	TargetLanguage SupportedLanguage
+	TargetLanguage string
 }
 
 func (q *Queries) GetTransformationByProjectIdTargetLanguage(ctx context.Context, arg GetTransformationByProjectIdTargetLanguageParams) (Transformation, error) {

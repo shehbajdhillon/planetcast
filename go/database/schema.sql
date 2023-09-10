@@ -4,44 +4,6 @@ CREATE TYPE team_type AS ENUM ('PERSONAL', 'TEAM');
 DROP TYPE IF EXISTS membership_type CASCADE;
 CREATE TYPE membership_type AS ENUM ('OWNER', 'ADMIN', 'MEMBER');
 
-DROP TYPE IF EXISTS supported_language CASCADE;
-CREATE TYPE supported_language AS ENUM (
-  'ENGLISH',
-  'JAPANESE',
-  'CHINESE',
-  'GERMAN',
-
-  'HINDI',
-  'FRENCH',
-  'KOREAN',
-  'PORTUGUESE',
-
-  'ITALIAN',
-  'SPANISH',
-  'INDONESIAN',
-  'DUTCH',
-
-  'TURKISH',
-  'FILIPINO',
-  'POLISH',
-  'SWEDISH',
-
-  'BULGARIAN',
-  'ROMANIAN',
-  'ARABIC',
-  'CZECH',
-
-  'GREEK',
-  'FINNISH',
-  'CROATIAN',
-  'MALAY',
-
-  'SLOVAK',
-  'DANISH',
-  'TAMIL',
-  'UKRAINIAN'
-);
-
 DROP TABLE IF EXISTS userinfo CASCADE;
 CREATE TABLE userinfo (
   id BIGSERIAL PRIMARY KEY NOT NULL,
@@ -73,7 +35,7 @@ CREATE TABLE project (
   id BIGSERIAL PRIMARY KEY NOT NULL,
   team_id BIGINT REFERENCES team (id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL,
-  source_language SUPPORTED_LANGUAGE NOT NULL,
+  source_language TEXT NOT NULL,
   source_media TEXT NOT NULL
 );
 
@@ -81,7 +43,7 @@ DROP TABLE IF EXISTS transformation CASCADE;
 CREATE TABLE transformation (
   id BIGSERIAL PRIMARY KEY NOT NULL,
   project_id BIGINT REFERENCES project (id) ON DELETE CASCADE NOT NULL,
-  target_language SUPPORTED_LANGUAGE NOT NULL,
+  target_language TEXT NOT NULL,
   target_media TEXT NOT NULL,
   transcript jsonb,
   is_source BOOLEAN NOT NULL

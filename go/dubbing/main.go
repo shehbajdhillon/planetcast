@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"planetcastdev/database"
+	"planetcastdev/graph/model"
 	"planetcastdev/httpmiddleware"
 	"planetcastdev/replicatemiddleware"
 	"planetcastdev/storage"
@@ -98,7 +99,7 @@ func getTranscript(fileName string, file io.ReadSeeker) (*WhisperOutput, error) 
 
 type CreateTransformationParams struct {
 	ProjectID      int64
-	TargetLanguage database.SupportedLanguage
+	TargetLanguage model.SupportedLanguage
 	FileName       string
 	File           io.ReadSeeker
 	IsSource       bool
@@ -116,7 +117,7 @@ func CreateTransformation(
 
 	transformation, err := queries.CreateTransformation(ctx, database.CreateTransformationParams{
 		ProjectID:      args.ProjectID,
-		TargetLanguage: args.TargetLanguage,
+		TargetLanguage: args.TargetLanguage.String(),
 		TargetMedia:    args.FileName,
 		Transcript:     pqtype.NullRawMessage{RawMessage: jsonBytes, Valid: true},
 		IsSource:       args.IsSource,
@@ -166,7 +167,7 @@ func CreateTranslation(
 
 	// call chatgpt, convert the source text to target text
 	sourceSegments := whisperOutput.Segments
-	translatedSegmentsPtr, err := fetchAndDub(ctx, sourceSegments, sourceTransformation.ProjectID, identifier, targetTransformation.TargetLanguage)
+	translatedSegmentsPtr, err := fetchAndDub(ctx, sourceSegments, sourceTransformation.ProjectID, identifier, model.SupportedLanguage(targetTransformation.TargetLanguage))
 	translatedSegments := *translatedSegmentsPtr
 
 	// get the target text, and parse it
@@ -222,7 +223,7 @@ func fetchAndDub(
 	segments []Segment,
 	projectId int64,
 	identifier string,
-	targetLanguage database.SupportedLanguage,
+	targetLanguage model.SupportedLanguage,
 ) (*[]Segment, error) {
 
 	translatedSegments := []Segment{}
@@ -491,7 +492,7 @@ type ChatCompletionResponse struct {
 	Choices []ChatCompletionChoice `json:"choices"`
 }
 
-func translateSegment(ctx context.Context, segment Segment, targetLang database.SupportedLanguage) (*Segment, error) {
+func translateSegment(ctx context.Context, segment Segment, targetLang model.SupportedLanguage) (*Segment, error) {
 
 	retries := 5
 

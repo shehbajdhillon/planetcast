@@ -55,54 +55,6 @@ func (ns NullMembershipType) Value() (driver.Value, error) {
 	return string(ns.MembershipType), nil
 }
 
-type SupportedLanguage string
-
-const (
-	SupportedLanguageENGLISH    SupportedLanguage = "ENGLISH"
-	SupportedLanguageHINDI      SupportedLanguage = "HINDI"
-	SupportedLanguageSPANISH    SupportedLanguage = "SPANISH"
-	SupportedLanguageGERMAN     SupportedLanguage = "GERMAN"
-	SupportedLanguagePOLISH     SupportedLanguage = "POLISH"
-	SupportedLanguageITALIAN    SupportedLanguage = "ITALIAN"
-	SupportedLanguageFRENCH     SupportedLanguage = "FRENCH"
-	SupportedLanguagePORTUGUESE SupportedLanguage = "PORTUGUESE"
-)
-
-func (e *SupportedLanguage) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = SupportedLanguage(s)
-	case string:
-		*e = SupportedLanguage(s)
-	default:
-		return fmt.Errorf("unsupported scan type for SupportedLanguage: %T", src)
-	}
-	return nil
-}
-
-type NullSupportedLanguage struct {
-	SupportedLanguage SupportedLanguage
-	Valid             bool // Valid is true if SupportedLanguage is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullSupportedLanguage) Scan(value interface{}) error {
-	if value == nil {
-		ns.SupportedLanguage, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.SupportedLanguage.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullSupportedLanguage) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.SupportedLanguage), nil
-}
-
 type TeamType string
 
 const (
@@ -149,7 +101,7 @@ type Project struct {
 	ID             int64
 	TeamID         int64
 	Title          string
-	SourceLanguage SupportedLanguage
+	SourceLanguage string
 	SourceMedia    string
 }
 
@@ -172,7 +124,7 @@ type TeamMembership struct {
 type Transformation struct {
 	ID             int64
 	ProjectID      int64
-	TargetLanguage SupportedLanguage
+	TargetLanguage string
 	TargetMedia    string
 	Transcript     pqtype.NullRawMessage
 	IsSource       bool

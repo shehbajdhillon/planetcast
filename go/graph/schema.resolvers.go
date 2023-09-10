@@ -10,6 +10,7 @@ import (
 	"planetcastdev/auth"
 	"planetcastdev/database"
 	"planetcastdev/dubbing"
+	"planetcastdev/graph/model"
 	"planetcastdev/utils"
 	"strings"
 
@@ -39,7 +40,7 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 }
 
 // CreateProject is the resolver for the createProject field.
-func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceLanguage database.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error) {
+func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceLanguage model.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 
 	identifier := strings.Split(sourceMedia.Filename, ".mp4")[0] + uuid.NewString()
@@ -48,7 +49,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 	project, _ := r.DB.CreateProject(ctx, database.CreateProjectParams{
 		TeamID:         team.ID,
 		Title:          title,
-		SourceLanguage: sourceLanguage,
+		SourceLanguage: sourceLanguage.String(),
 		SourceMedia:    fileName,
 	})
 
@@ -83,7 +84,7 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (
 }
 
 // CreateTranslation is the resolver for the createTranslation field.
-func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int64, targetLanguage database.SupportedLanguage) (database.Transformation, error) {
+func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int64, targetLanguage model.SupportedLanguage) (database.Transformation, error) {
 	// fetch source transcript for the project
 	sourceTransformation, err := r.DB.GetSourceTransformationByProjectId(ctx, projectID)
 	if err != nil {
@@ -93,7 +94,7 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 	// if target transformation already exists, return that
 	existingTransformation, err := r.DB.GetTransformationByProjectIdTargetLanguage(ctx, database.GetTransformationByProjectIdTargetLanguageParams{
 		ProjectID:      projectID,
-		TargetLanguage: targetLanguage,
+		TargetLanguage: targetLanguage.String(),
 	})
 	if err == nil {
 		return existingTransformation, nil
@@ -105,7 +106,7 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 	// create empty transformation in target language, if target transformation already exists, return that
 	newTransformation, _ := r.DB.CreateTransformation(ctx, database.CreateTransformationParams{
 		ProjectID:      projectID,
-		TargetLanguage: targetLanguage,
+		TargetLanguage: targetLanguage.String(),
 		TargetMedia:    newFileName,
 		Transcript:     pqtype.NullRawMessage{Valid: false, RawMessage: nil},
 		IsSource:       false,
@@ -115,6 +116,11 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 	go dubbing.CreateTranslation(newCtx, r.DB, sourceTransformation, newTransformation, identifier)
 
 	return newTransformation, nil
+}
+
+// SourceLanguage is the resolver for the sourceLanguage field.
+func (r *projectResolver) SourceLanguage(ctx context.Context, obj *database.Project) (model.SupportedLanguage, error) {
+	return model.SupportedLanguage(obj.SourceLanguage), nil
 }
 
 // Transformations is the resolver for the transformations field.
@@ -189,6 +195,11 @@ func (r *teamResolver) Projects(ctx context.Context, obj *database.Team, project
 	}
 
 	return filteredProject, nil
+}
+
+// TargetLanguage is the resolver for the targetLanguage field.
+func (r *transformationResolver) TargetLanguage(ctx context.Context, obj *database.Transformation) (model.SupportedLanguage, error) {
+	return model.SupportedLanguage(obj.TargetLanguage), nil
 }
 
 // Transcript is the resolver for the transcript field.
