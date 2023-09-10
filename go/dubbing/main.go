@@ -275,6 +275,8 @@ func fetchAndDub(
 			Progress: percentage,
 		})
 
+		time.Sleep(500 * time.Millisecond)
+
 	}
 
 	return &translatedSegments, nil
