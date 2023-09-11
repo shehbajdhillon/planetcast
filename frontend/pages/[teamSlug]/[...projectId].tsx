@@ -1,7 +1,8 @@
 import Navbar from "@/components/dashboard/navbar";
 import { Project, Segment, Team } from "@/types";
-import { gql, useMutation, useQuery } from "@apollo/client";
+import { gql, useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import {
+    AspectRatio,
   Box,
   Button,
   Center,
@@ -11,6 +12,7 @@ import {
   HStack,
   Heading,
   IconButton,
+  Progress,
   Spinner,
   Text,
   VStack,
@@ -84,35 +86,78 @@ interface ProjectTabProps {
   teamSlug: string;
 };
 
-const GET_TRANSCRIPT = gql`
-  query GetTranscript($teamSlug: String!, $projectId: Int64!) {
+const GET_CURRENT_PROJECT = gql`
+  query GetCurrentProject($teamSlug: String!, $projectId: Int64!) {
     getTeamById(teamSlug: $teamSlug) {
       projects(projectId: $projectId) {
         id
+        title
+        sourceMedia
+        sourceLanguage
         transformations {
           id
           targetMedia
           targetLanguage
           transcript
           isSource
+          status
+          progress
         }
       }
     }
   }
 `;
 
-const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
+interface LoadingBoxProps {
+  progress: number;
+}
 
-  const [currentTransformation, setCurrentTransformation] = useState(0);
-  const [transformationPresent, setTranformationPresent] = useState(false);
+const LoadingBox: React.FC<LoadingBoxProps> = ({ progress }) => {
+  return (
+    <AspectRatio ratio={16/9}>
+      <Box
+        w={"full"}
+        maxW={"1280px"}
+      >
+          <Box mt={"0px"} mx="5px" w="full">
+            <Progress value={progress} hasStripe size="md" isAnimated={true} colorScheme="green" rounded={"lg"} />
+            <Center pt="10px">{progress + "%"}</Center>
+          </Box>
+      </Box>
+    </AspectRatio>
+  );
+}
 
-  const { data, loading, refetch }
-    = useQuery(GET_TRANSCRIPT, { variables: { teamSlug, projectId: project?.id }, pollInterval: transformationPresent ? 0 : 10000 });
+const ProjectTab: React.FC<ProjectTabProps> = (props) => {
 
-  const currentProject: Project = data?.getTeamById?.projects?.[0];
-  const transformationsArray = currentProject && currentProject.transformations;
-  const transformation = transformationsArray && transformationsArray[currentTransformation];
+  const { project: currentProject, teamSlug } = props;
+
+  const [project, setProject] = useState<Project>(currentProject);
+  const [transformationIdx, setTransformationIdx] = useState(0);
+
+  const transformations = project && project?.transformations;
+  const transformation = transformations && transformations[transformationIdx];
   const parseTranscript = transformation && transformation.transcript && JSON.parse(transformation.transcript)
+
+  const isProcessing = transformations?.length === 0 || (transformations[transformationIdx].status && transformations[transformationIdx].status !== "complete")
+
+  const [getProjectData, { data, refetch }]
+    = useLazyQuery(GET_CURRENT_PROJECT, { variables: { teamSlug, projectId: project?.id }, pollInterval: !isProcessing ? 0 : 10000, fetchPolicy: 'no-cache' });
+
+  useEffect(() => {
+    const newProjectData = data?.getTeamById.projects[0];
+    const newTransformations = newProjectData?.transformations;
+    if (newTransformations?.length) {
+      setProject(newProjectData);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (isProcessing) {
+      getProjectData();
+    }
+  }, [isProcessing]);
+
 
   const setCurrentSeek = useVideoSeekStore((state) => state.setCurrentSeek);
   const onTimeUpdate = (time: number) => setCurrentSeek(time);
@@ -121,21 +166,8 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
     setCurrentSeek(0);
   }, [setCurrentSeek]);
 
-  useEffect(() => {
-    if (transformationsArray?.length) {
-      setTranformationPresent(true);
-    }
-  }, [transformationsArray]);
-
-  if (loading) {
-    return (
-      <Center h="full" w="full">
-        <Spinner size={"lg"} />
-      </Center>
-    )
-  }
-
   return (
+    project &&
     <Box
       display={"flex"}
       alignItems={"center"}
@@ -159,19 +191,19 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
         >
 
           <GridItem area={'video'} h="full" w="full" rounded={"lg"} maxW={"1280px"}>
-            <VideoPlayer src={transformation ? transformation?.targetMedia : project.sourceMedia } onTimeUpdate={onTimeUpdate} />
-            <HStack display="flex" flexWrap={"wrap"} overflow={"auto"} spacing={"10px"} pt="10px" hidden={!transformationsArray?.length}>
-              { transformationsArray?.map((t: any, idx: number) => (
+            { (isProcessing && transformation) ? <LoadingBox progress={transformation.progress} /> : <VideoPlayer src={transformation ? transformation?.targetMedia : project.sourceMedia } onTimeUpdate={onTimeUpdate} /> }
+            <HStack display="flex" flexWrap={"wrap"} overflow={"auto"} spacing={"10px"} pt="10px" hidden={!transformations?.length}>
+              { transformations?.map((t: any, idx: number) => (
                 <Button
                   key={idx}
-                  onClick={() => setCurrentTransformation(idx)}
-                  variant={idx === currentTransformation ? "solid" : "outline"}
-                  pointerEvents={idx === currentTransformation ? "none" : "auto"}
+                  onClick={() => setTransformationIdx(idx)}
+                  variant={idx === transformationIdx ? "solid" : "outline"}
+                  pointerEvents={idx === transformationIdx ? "none" : "auto"}
                 >
                   {t?.targetLanguage}
                 </Button>
               ))}
-              <NewTransformationModel project={currentProject} refetch={refetch} />
+              <NewTransformationModel project={project} refetch={refetch} />
             </HStack>
           </GridItem>
 
@@ -179,10 +211,10 @@ const ProjectTab: React.FC<ProjectTabProps> = ({ project, teamSlug }) => {
 
           { !parseTranscript ?
             <Center h="full">
-              <VStack>
-                <Heading size={"md"}>Generating Transcript</Heading>
-              <Spinner />
-              </VStack>
+              <HStack spacing={4}>
+                <Heading size={"md"}>Processing </Heading>
+                <Spinner />
+              </HStack>
             </Center>
             :
             <TranscriptView segments={parseTranscript?.segments} />
@@ -305,12 +337,11 @@ const GET_TEAMS = gql`
       projects {
         id
         title
-        sourceMedia
-        sourceLanguage
       }
     }
   }
 `;
+
 
 interface ProjectDashboardProps {
   teamSlug: string;
@@ -319,14 +350,18 @@ interface ProjectDashboardProps {
 
 const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId }) => {
 
-  const { data, loading } = useQuery(GET_TEAMS);
+  const { data: currentTeamsData, loading } = useQuery(GET_TEAMS);
+
+  const { data: currentProjectData }
+  = useQuery(GET_CURRENT_PROJECT, { variables: { teamSlug, projectId }, fetchPolicy: 'cache-and-network' });
+
+  const currentProject: Project = currentProjectData?.getTeamById?.projects?.[0];
 
   const textColor = useColorModeValue("black", "white");
   const bgColor = useColorModeValue("white", "black");
 
-  const teams = data?.getTeams;
-  const projects = data?.getTeams.find((team: Team) => team.slug === teamSlug)?.projects;
-  const currentProject = projects?.find((project: Project) => project.id === projectId);
+  const teams = currentTeamsData?.getTeams;
+  const projects = currentTeamsData?.getTeams.find((team: Team) => team.slug === teamSlug)?.projects;
 
   return (
     <Box>
@@ -343,7 +378,7 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
         <Navbar projects={projects} teams={teams} teamSlug={teamSlug} projectId={projectId} />
       </Box>
 
-      { !loading && data ?
+      { !loading && currentTeamsData ?
 
         <Box pt={"70px"}>
           <Tabs
