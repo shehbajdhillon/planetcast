@@ -172,10 +172,15 @@ func CreateTranslation(
 	}
 
 	newFileName, err := concatSegments(translatedSegments, identifier)
+	if err != nil {
+		fmt.Println("Error concating segments:", err)
+	}
+
 	file, err := os.Open(newFileName)
 	if err != nil {
 		fmt.Println("Error opening the file:", err)
 	}
+
 	defer file.Close()
 	storage.Connect().Upload(newFileName, file)
 	utils.DeleteFiles([]string{identifier + ".mp4", identifier + "_dubbed.mp4"})
@@ -485,8 +490,10 @@ func concatSegments(segments []Segment, identifier string) (string, error) {
 	utils.DeleteFiles(fileList)
 
 	if err != nil {
-		return "", fmt.Errorf("Could not concat segments: %s", ffmpegCmd)
+		return "", fmt.Errorf("Could not concat segments: %s\n%s", err.Error(), ffmpegCmd)
 	}
+
+	log.Println("Segments concatonated successfully")
 
 	return identifier + "_dubbed.mp4", nil
 }
