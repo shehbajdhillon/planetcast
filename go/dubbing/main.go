@@ -458,10 +458,41 @@ func lipSyncClip(segment Segment, identifier string) error {
 
 func concatSegments(segments []Segment, identifier string) (string, error) {
 
+	batchSize := 20
+	batchFiles := []string{}
+
+	for i := 0; i < len(segments); i += batchSize {
+		end := i + batchSize
+		if end > len(segments) {
+			end = len(segments)
+		}
+
+		batch := segments[i:end]
+		batchIdentifier := fmt.Sprintf("%s_batch%d", identifier, i/batchSize)
+
+		err := concatBatchSegments(batch, batchIdentifier, identifier)
+		if err != nil {
+			return "", err
+		}
+
+		log.Println("Segments concatonated successfully")
+		batchFiles = append(batchFiles, batchIdentifier+"_dubbed.mp4")
+	}
+
+	// Now we need to concatenate the batch files
+	finalOutput, err := concatBatchFiles(batchFiles, identifier, batchSize)
+	if err != nil {
+		return "", err
+	}
+
+	return finalOutput, nil
+}
+
+func concatBatchSegments(batch []Segment, batchIdentifier string, identifier string) error {
 	inputList := []string{}
 	filterList := []string{}
 
-	for idx, s := range segments {
+	for idx, s := range batch {
 		id := s.Id
 
 		videoSegmentName := getVideoSegmentName(identifier, id)
@@ -470,32 +501,94 @@ func concatSegments(segments []Segment, identifier string) (string, error) {
 		filterList = append(filterList, fmt.Sprintf("[%d:v][%d:a]", idx, idx))
 	}
 
-	filterList = append(filterList, fmt.Sprintf("concat=n=%d:v=1:a=1[v][a]", len(segments)))
+	filterList = append(filterList, fmt.Sprintf("concat=n=%d:v=1:a=1[v][a]", len(batch)))
 
 	inputArgs := strings.Join(inputList, " ")
 	filterComplex := strings.Join(filterList, "")
 
 	ffmpegCmd := fmt.Sprintf("ffmpeg %s -filter_complex '%s' -map '[v]' -map '[a]' -vsync 2 file:'%s_dubbed.mp4'",
-		inputArgs, filterComplex, identifier)
+		inputArgs, filterComplex, batchIdentifier)
 
 	log.Println("Concating segments:", ffmpegCmd)
 
 	err := exec.Command("sh", "-c", ffmpegCmd).Run()
 
 	fileList := []string{}
-	for _, s := range segments {
+	for _, s := range batch {
 		fileName := "synced_" + getVideoSegmentName(identifier, s.Id)
 		fileList = append(fileList, fileName)
 	}
 	utils.DeleteFiles(fileList)
 
 	if err != nil {
-		return "", fmt.Errorf("Could not concat segments: %s\n%s", err.Error(), ffmpegCmd)
+		return fmt.Errorf("Could not concat segments: %s\n%s", err.Error(), ffmpegCmd)
 	}
 
-	log.Println("Segments concatonated successfully")
+	return nil
+}
 
-	return identifier + "_dubbed.mp4", nil
+func concatBatchFiles(batchFiles []string, identifier string, batchSize int) (string, error) {
+	for len(batchFiles) > 1 {
+		newBatchFiles := []string{}
+
+		for i := 0; i < len(batchFiles); i += batchSize {
+			end := i + batchSize
+			if end > len(batchFiles) {
+				end = len(batchFiles)
+			}
+
+			batch := batchFiles[i:end]
+			batchIdentifier := fmt.Sprintf("%s_finalbatch%d", identifier, i/batchSize)
+
+			err := concatBatch(batch, batchIdentifier)
+			if err != nil {
+				return "", err
+			}
+
+			log.Println("Batch files concatonated successfully")
+			utils.DeleteFiles(batch)
+			newBatchFiles = append(newBatchFiles, batchIdentifier+"_dubbed.mp4")
+		}
+
+		batchFiles = newBatchFiles
+	}
+
+	// Rename the final batch file to the final output file
+	finalOutput := identifier + "_dubbed.mp4"
+	err := os.Rename(batchFiles[0], finalOutput)
+	if err != nil {
+		return "", fmt.Errorf("Could not rename final output file: %s", err.Error())
+	}
+
+	return finalOutput, nil
+}
+
+func concatBatch(batch []string, batchIdentifier string) error {
+	inputList := []string{}
+	filterList := []string{}
+
+	for idx, fileName := range batch {
+		inputList = append(inputList, fmt.Sprintf("-i file:'%s'", fileName))
+		filterList = append(filterList, fmt.Sprintf("[%d:v][%d:a]", idx, idx))
+	}
+
+	filterList = append(filterList, fmt.Sprintf("concat=n=%d:v=1:a=1[v][a]", len(batch)))
+
+	inputArgs := strings.Join(inputList, " ")
+	filterComplex := strings.Join(filterList, "")
+
+	ffmpegCmd := fmt.Sprintf("ffmpeg %s -filter_complex '%s' -map '[v]' -map '[a]' -vsync 2 file:'%s_dubbed.mp4'",
+		inputArgs, filterComplex, batchIdentifier)
+
+	log.Println("Concating batch files:", ffmpegCmd)
+
+	err := exec.Command("sh", "-c", ffmpegCmd).Run()
+
+	if err != nil {
+		return fmt.Errorf("Could not concat batch files: %s\n%s", err.Error(), ffmpegCmd)
+	}
+
+	return nil
 }
 
 type ChatCompletionMessage struct {
