@@ -166,6 +166,9 @@ func CreateTranslation(
 	// call chatgpt, convert the source text to target text
 	sourceSegments := whisperOutput.Segments
 	translatedSegmentsPtr, err := fetchAndDub(ctx, sourceSegments, sourceTransformation.ProjectID, identifier, model.SupportedLanguage(targetTransformation.TargetLanguage), targetTransformation.ID, queries)
+	if err != nil {
+		return database.Transformation{}, fmt.Errorf("Error translating and fetching: %s", err.Error())
+	}
 	translatedSegments := *translatedSegmentsPtr
 
 	if err != nil {
@@ -648,22 +651,20 @@ func translateSegment(ctx context.Context, segment Segment, targetLang model.Sup
 			},
 		})
 
-		if err != nil {
-			return nil, fmt.Errorf("Could not parse request body successfully: " + err.Error())
-		}
-
 		var chatResponse ChatCompletionResponse
-		json.Unmarshal(respBody, &chatResponse)
+		err2 := json.Unmarshal(respBody, &chatResponse)
 
-		if len(chatResponse.Choices) == 0 {
+		if err != nil || err2 != nil || len(chatResponse.Choices) == 0 {
 
 			retries -= 1
 			log.Println("Open AI request failed, sleeping for 5s, retries left:", retries)
 			time.Sleep(5 * time.Second)
 
 		} else {
+
 			segment.Text = chatResponse.Choices[0].Message.Content
 			return &segment, nil
+
 		}
 	}
 
