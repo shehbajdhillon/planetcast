@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/tabbed/pqtype"
 )
 
@@ -468,7 +469,7 @@ func concatSegments(segments []Segment, identifier string) (string, error) {
 		}
 
 		batch := segments[i:end]
-		batchIdentifier := fmt.Sprintf("%s_batch%d", identifier, i/batchSize)
+		batchIdentifier := fmt.Sprintf("%s_batch%d_%s", identifier, i/batchSize, uuid.NewString())
 
 		err := concatBatchSegments(batch, batchIdentifier, identifier)
 		if err != nil {
@@ -538,7 +539,7 @@ func concatBatchFiles(batchFiles []string, identifier string, batchSize int) (st
 			}
 
 			batch := batchFiles[i:end]
-			batchIdentifier := fmt.Sprintf("%s_finalbatch%d", identifier, i/batchSize)
+			batchIdentifier := fmt.Sprintf("%s_finalbatch%d_%s", identifier, i/batchSize, uuid.NewString())
 
 			err := concatBatch(batch, batchIdentifier)
 			if err != nil {
