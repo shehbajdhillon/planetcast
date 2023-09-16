@@ -3,19 +3,26 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
 	_ "github.com/lib/pq"
+
+	"go.uber.org/zap"
 )
 
-func Connect() *Queries {
+type DatabaseConnectProps struct {
+	Logger *zap.Logger
+}
+
+func Connect(args DatabaseConnectProps) *Queries {
 
 	host := os.Getenv("DB_HOST")
 	port := os.Getenv("DB_PORT")
 	user := os.Getenv("DB_USER")
 	password := os.Getenv("DB_PASS")
 	dbname := os.Getenv("DB_NAME")
+
+	logger := args.Logger
 
 	postgresqlDbInfo := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -25,16 +32,16 @@ func Connect() *Queries {
 	db, err := sql.Open("postgres", postgresqlDbInfo)
 
 	if err != nil {
-		log.Fatalln("Could not connect to database:", err.Error())
+		logger.Fatal("Could not connect to database", zap.Error(err))
 	}
 
 	err = db.Ping()
 
 	if err != nil {
-		log.Fatalln("Could not connect to database:", err.Error())
+		logger.Fatal("Could not connect to database", zap.Error(err))
 	}
 
-	log.Println("Database client started")
+	logger.Info("Database client started")
 
 	return New(db)
 }

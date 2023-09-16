@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"planetcastdev/auth"
 	"planetcastdev/database"
 	"planetcastdev/dubbing"
@@ -16,17 +15,21 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"go.uber.org/zap"
 )
 
 type GraphConnectProps struct {
 	Queries *database.Queries
 	Storage *storage.Storage
 	Dubbing *dubbing.Dubbing
+	Logger  *zap.Logger
 }
 
 func Connect(args GraphConnectProps) *handler.Server {
 
-	gqlConfig := Config{Resolvers: &Resolver{DB: args.Queries, Storage: args.Storage, Dubbing: args.Dubbing}}
+	gqlConfig := Config{Resolvers: &Resolver{DB: args.Queries, Storage: args.Storage, Dubbing: args.Dubbing, Logger: args.Logger}}
+
+	logger := args.Logger
 
 	gqlConfig.Directives.LoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 		if isLoggedIn(ctx) == false {
@@ -81,7 +84,7 @@ func Connect(args GraphConnectProps) *handler.Server {
 		user := auth.FromContext(ctx)
 		oc := graphql.GetOperationContext(ctx)
 		if user == nil {
-			log.Println("Incoming Request:", oc.OperationName, "User: nil")
+			logger.Info("Incoming Request", zap.String("operation_name", oc.OperationName), zap.String("user", "nil"))
 		} else {
 			emailAddr, _ := auth.EmailFromContext(ctx)
 			fullName, _ := auth.FullnameFromContext(ctx)
@@ -90,7 +93,7 @@ func Connect(args GraphConnectProps) *handler.Server {
 			if err != nil {
 				user, _ = args.Queries.AddUser(ctx, database.AddUserParams{Email: emailAddr, FullName: fullName})
 			}
-			log.Println("Incoming Request:", oc.OperationName, "User:", user.Email)
+			logger.Info("Incoming Request", zap.String("operation_name", oc.OperationName), zap.String("user", user.Email))
 		}
 		return next(ctx)
 	})

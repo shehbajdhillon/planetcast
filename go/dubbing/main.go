@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"math"
 	"mime/multipart"
 	"os"
@@ -23,6 +22,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tabbed/pqtype"
+	"go.uber.org/zap"
 )
 
 func getAudioFileName(identifier string, id int64) string {
@@ -50,18 +50,20 @@ type Segment struct {
 type Dubbing struct {
 	storage  *storage.Storage
 	database *database.Queries
+	logger   *zap.Logger
 }
 
 type DubbingConnectProps struct {
 	Storage  *storage.Storage
 	Database *database.Queries
+	Logger   *zap.Logger
 }
 
 func Connect(args DubbingConnectProps) *Dubbing {
-	return &Dubbing{storage: args.Storage, database: args.Database}
+	return &Dubbing{storage: args.Storage, database: args.Database, logger: args.Logger}
 }
 
-func getTranscript(fileName string, file io.ReadSeeker) (*WhisperOutput, error) {
+func (d *Dubbing) getTranscript(fileName string, file io.ReadSeeker) (*WhisperOutput, error) {
 
 	file.Seek(0, io.SeekStart)
 
@@ -107,7 +109,7 @@ func getTranscript(fileName string, file io.ReadSeeker) (*WhisperOutput, error) 
 	file.Seek(0, io.SeekStart)
 	var whisperOutput WhisperOutput
 	json.Unmarshal(responseBody, &whisperOutput)
-	log.Println("Whisper request processes successfully for:", fileName)
+	d.logger.Info("Whisper request processes successfully for:", zap.String("fileName", fileName))
 
 	return &whisperOutput, nil
 }
@@ -125,9 +127,20 @@ func (d *Dubbing) CreateTransformation(
 	args CreateTransformationParams,
 ) (database.Transformation, error) {
 
-	transcriptPtr, _ := getTranscript(args.FileName, args.File)
+	transcriptPtr, err := d.getTranscript(args.FileName, args.File)
+
+	if err != nil {
+		d.logger.Error("Failed to generate transcript", zap.Error(err))
+		return database.Transformation{}, err
+	}
+
 	transcriptObj := *transcriptPtr
 	jsonBytes, err := json.Marshal(transcriptObj)
+
+	if err != nil {
+		d.logger.Error("Failed to parse json ", zap.Error(err))
+		return database.Transformation{}, err
+	}
 
 	transformation, err := d.database.CreateTransformation(ctx, database.CreateTransformationParams{
 		ProjectID:      args.ProjectID,
@@ -140,7 +153,7 @@ func (d *Dubbing) CreateTransformation(
 	})
 
 	if err != nil {
-		log.Println("Error occured:", err.Error())
+		d.logger.Error("Error occured", zap.Error(err))
 		return database.Transformation{}, err
 	}
 
@@ -187,14 +200,15 @@ func (d *Dubbing) CreateTranslation(
 		return database.Transformation{}, fmt.Errorf("Could not process translated segments " + err.Error())
 	}
 
-	newFileName, err := concatSegments(translatedSegments, identifier)
+	newFileName, err := d.concatSegments(translatedSegments, identifier)
 	if err != nil {
 		fmt.Println("Error concating segments:", err)
+		d.logger.Error("Error concatenating segments", zap.Error(err))
 	}
 
 	file, err := os.Open(newFileName)
 	if err != nil {
-		fmt.Println("Error opening the file:", err)
+		d.logger.Error("Error opening the file", zap.Error(err))
 	}
 
 	defer file.Close()
@@ -261,29 +275,40 @@ func (d *Dubbing) fetchAndDub(
 
 	for idx, segment := range segments {
 
-		translatedSegment, err := translateSegment(ctx, segment, targetLanguage)
+		logProgress := func(stage string) {
+			d.logger.Info(
+				stage,
+				zap.Int("project_id", int(projectId)),
+				zap.Int("transformation_id", int(targetTransformationId)),
+				zap.String("target_language", string(targetLanguage)),
+				zap.Int("segments_processed", idx+1),
+				zap.Int("total_segments", len(segments)),
+			)
+		}
+
+		translatedSegment, err := d.translateSegment(ctx, segment, targetLanguage)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to translated segment %d/%d: %s", idx+1, len(segments), err.Error())
 		}
-		log.Println("Translation Progress for Project", projectId, "from", targetLanguage, "to", targetLanguage+":", idx+1, "/", len(segments))
+		logProgress("Translation Progress")
 
-		err = fetchDubbedClip(*translatedSegment, identifier)
+		err = d.fetchDubbedClip(*translatedSegment, identifier)
 		if err != nil {
 			return nil, fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 		}
-		log.Println("Fetched dubbed audio file for Project", projectId, ":", idx+1, "/", len(segments))
+		logProgress("Audio Generation Progress")
 
 		err = dubVideoClip(*translatedSegment, identifier)
 		if err != nil {
 			return nil, fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 		}
-		log.Println("Dubbed video clip for Project", projectId, ":", idx+1, "/", len(segments))
+		logProgress("Dubbing Progress")
 
 		err = d.lipSyncClip(*translatedSegment, identifier)
 		if err != nil {
 			return nil, fmt.Errorf("Could not lip sync clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 		}
-		log.Println("Synced video clip for Project", projectId, ":", idx+1, "/", len(segments))
+		logProgress("Lip Syncing Progress")
 
 		translatedSegments = append(translatedSegments, *translatedSegment)
 
@@ -302,7 +327,7 @@ func (d *Dubbing) fetchAndDub(
 	return &translatedSegments, nil
 }
 
-func fetchDubbedClip(segment Segment, identifier string) error {
+func (d *Dubbing) fetchDubbedClip(segment Segment, identifier string) error {
 
 	url := "https://api.elevenlabs.io/v1/text-to-speech/XMQab44ShF40jzdHBoXu"
 	API_KEY := os.Getenv("ELEVEN_LABS_KEY")
@@ -355,7 +380,7 @@ func fetchDubbedClip(segment Segment, identifier string) error {
 
 		} else {
 			retries -= 1
-			log.Printf("Request Failed, retrying after 5 seconds, retries left %d: %s\n", retries, err.Error())
+			d.logger.Error("Request to Eleven Labs failed, retrying after 5 seconds", zap.Int("retries_left", retries), zap.Error(err))
 			time.Sleep(5 * time.Second)
 		}
 
@@ -417,7 +442,7 @@ func (d *Dubbing) lipSyncClip(segment Segment, identifier string) error {
 
 	file, err := os.Open(dubbedVideoSegmentName)
 	if err != nil {
-		fmt.Println("Error opening the file:", err)
+		d.logger.Error("Error opening file", zap.Error(err))
 	}
 	defer file.Close()
 
@@ -469,7 +494,7 @@ func (d *Dubbing) lipSyncClip(segment Segment, identifier string) error {
 
 }
 
-func concatSegments(segments []Segment, identifier string) (string, error) {
+func (d *Dubbing) concatSegments(segments []Segment, identifier string) (string, error) {
 
 	batchSize := 20
 	batchFiles := []string{}
@@ -483,17 +508,17 @@ func concatSegments(segments []Segment, identifier string) (string, error) {
 		batch := segments[i:end]
 		batchIdentifier := fmt.Sprintf("%s_batch%d_%s", identifier, i/batchSize, uuid.NewString())
 
-		err := concatBatchSegments(batch, batchIdentifier, identifier)
+		err := d.concatBatchSegments(batch, batchIdentifier, identifier)
 		if err != nil {
 			return "", err
 		}
 
-		log.Println("Segments concatonated successfully")
+		d.logger.Info("Segments concatonated successfully")
 		batchFiles = append(batchFiles, batchIdentifier+"_dubbed.mp4")
 	}
 
 	// Now we need to concatenate the batch files
-	finalOutput, err := concatBatchFiles(batchFiles, identifier, batchSize)
+	finalOutput, err := d.concatBatchFiles(batchFiles, identifier, batchSize)
 	if err != nil {
 		return "", err
 	}
@@ -501,7 +526,7 @@ func concatSegments(segments []Segment, identifier string) (string, error) {
 	return finalOutput, nil
 }
 
-func concatBatchSegments(batch []Segment, batchIdentifier string, identifier string) error {
+func (d *Dubbing) concatBatchSegments(batch []Segment, batchIdentifier string, identifier string) error {
 	inputList := []string{}
 	filterList := []string{}
 
@@ -522,7 +547,7 @@ func concatBatchSegments(batch []Segment, batchIdentifier string, identifier str
 	ffmpegCmd := fmt.Sprintf("ffmpeg %s -filter_complex '%s' -map '[v]' -map '[a]' -vsync 2 file:'%s_dubbed.mp4'",
 		inputArgs, filterComplex, batchIdentifier)
 
-	log.Println("Concating segments:", ffmpegCmd)
+	d.logger.Info("Concatenating segments", zap.String("ffmpeg_command", ffmpegCmd))
 
 	err := exec.Command("sh", "-c", ffmpegCmd).Run()
 
@@ -540,7 +565,7 @@ func concatBatchSegments(batch []Segment, batchIdentifier string, identifier str
 	return nil
 }
 
-func concatBatchFiles(batchFiles []string, identifier string, batchSize int) (string, error) {
+func (d *Dubbing) concatBatchFiles(batchFiles []string, identifier string, batchSize int) (string, error) {
 	for len(batchFiles) > 1 {
 		newBatchFiles := []string{}
 
@@ -553,12 +578,12 @@ func concatBatchFiles(batchFiles []string, identifier string, batchSize int) (st
 			batch := batchFiles[i:end]
 			batchIdentifier := fmt.Sprintf("%s_finalbatch%d_%s", identifier, i/batchSize, uuid.NewString())
 
-			err := concatBatch(batch, batchIdentifier)
+			err := d.concatBatch(batch, batchIdentifier)
 			if err != nil {
 				return "", err
 			}
 
-			log.Println("Batch files concatonated successfully")
+			d.logger.Info("Batch files concatenated successfully")
 			utils.DeleteFiles(batch)
 			newBatchFiles = append(newBatchFiles, batchIdentifier+"_dubbed.mp4")
 		}
@@ -576,7 +601,7 @@ func concatBatchFiles(batchFiles []string, identifier string, batchSize int) (st
 	return finalOutput, nil
 }
 
-func concatBatch(batch []string, batchIdentifier string) error {
+func (d *Dubbing) concatBatch(batch []string, batchIdentifier string) error {
 	inputList := []string{}
 	filterList := []string{}
 
@@ -593,7 +618,7 @@ func concatBatch(batch []string, batchIdentifier string) error {
 	ffmpegCmd := fmt.Sprintf("ffmpeg %s -filter_complex '%s' -map '[v]' -map '[a]' -vsync 2 file:'%s_dubbed.mp4'",
 		inputArgs, filterComplex, batchIdentifier)
 
-	log.Println("Concating batch files:", ffmpegCmd)
+	d.logger.Info("Concatenating batch", zap.String("batch_identifier", batchIdentifier), zap.String("ffmpeg_command", ffmpegCmd))
 
 	err := exec.Command("sh", "-c", ffmpegCmd).Run()
 
@@ -627,7 +652,7 @@ type ChatCompletionResponse struct {
 	Choices []ChatCompletionChoice `json:"choices"`
 }
 
-func translateSegment(ctx context.Context, segment Segment, targetLang model.SupportedLanguage) (*Segment, error) {
+func (d *Dubbing) translateSegment(ctx context.Context, segment Segment, targetLang model.SupportedLanguage) (*Segment, error) {
 
 	retries := 5
 
@@ -666,7 +691,7 @@ func translateSegment(ctx context.Context, segment Segment, targetLang model.Sup
 		if err != nil || err2 != nil || len(chatResponse.Choices) == 0 {
 
 			retries -= 1
-			log.Println("Open AI request failed, sleeping for 5s, retries left:", retries)
+			d.logger.Error("Open AI request failed, sleeping for 5s.", zap.Int("retries_left", retries))
 			time.Sleep(5 * time.Second)
 
 		} else {

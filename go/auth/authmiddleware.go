@@ -24,7 +24,7 @@ func Middleware() func(http.Handler) http.Handler {
 			clientKey := os.Getenv("CLERK_SECRET_KEY")
 
 			if clientKey == "" {
-				log.Println("ERROR: CANNOT FIND CLERK CLIENT KEY")
+				log.Fatalln("ERROR: CANNOT FIND CLERK CLIENT KEY")
 			}
 
 			client, _ := clerk.NewClient(clientKey)

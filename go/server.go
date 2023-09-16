@@ -8,12 +8,14 @@ import (
 	"planetcastdev/database"
 	"planetcastdev/dubbing"
 	"planetcastdev/graph"
+	"planetcastdev/logmiddleware"
 	"planetcastdev/storage"
 
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
 )
 
 const defaultPort = "8080"
@@ -24,20 +26,21 @@ func main() {
 		port = defaultPort
 	}
 
+	production := os.Getenv("PRODUCTION") != ""
+	Logger := logmiddleware.Connect(production)
+
 	err := godotenv.Load()
 	if err != nil {
-		log.Println(".env: Could not find .env file", err.Error())
+		Logger.Warn(".env: Could not find .env file", zap.Error(err))
 	} else {
-		log.Println(".env: Loaded environment variables")
+		Logger.Info(".env: Loaded environment variables")
 	}
 
-	production := os.Getenv("PRODUCTION")
+	Storage := storage.Connect(storage.StorageConnectProps{Logger: Logger})
+	Database := database.Connect(database.DatabaseConnectProps{Logger: Logger})
 
-	Storage := storage.Connect()
-	Database := database.Connect()
-
-	Dubbing := dubbing.Connect(dubbing.DubbingConnectProps{Storage: Storage, Database: Database})
-	GqlServer := graph.Connect(graph.GraphConnectProps{Dubbing: Dubbing, Storage: Storage, Queries: Database})
+	Dubbing := dubbing.Connect(dubbing.DubbingConnectProps{Storage: Storage, Database: Database, Logger: Logger})
+	GqlServer := graph.Connect(graph.GraphConnectProps{Dubbing: Dubbing, Storage: Storage, Queries: Database, Logger: Logger})
 
 	router := chi.NewRouter()
 	router.Use(auth.Middleware())
@@ -50,12 +53,12 @@ func main() {
 
 	router.Handle("/", GqlServer)
 
-	if production == "" {
-		log.Println("Connect to http://localhost:" + port + " for GraphQL server")
+	if production == false {
+		Logger.Info("Connect to http://localhost:" + port + " for GraphQL server")
+		Logger.Info("connect to http://localhost:" + port + "/playground for GraphQL playground")
 		router.Handle("/playground", playground.Handler("GraphQL playground", "/"))
-		log.Println("connect to http://localhost:" + port + "/playground for GraphQL playground")
 	} else {
-		log.Println("Connect to https://api.planetcast.ai for GraphQL server")
+		Logger.Info("Connect to https://api.planetcast.ai for GraphQL server")
 	}
 
 	log.Fatal(http.ListenAndServe(":"+port, router))

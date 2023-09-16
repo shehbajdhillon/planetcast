@@ -3,7 +3,6 @@ package storage
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"time"
 
@@ -12,15 +11,17 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"go.uber.org/zap"
 )
 
 type Storage struct {
 	uploader *s3manager.Uploader
 	s3       *s3.S3
+	logger   *zap.Logger
 }
 
-func new(uploader *s3manager.Uploader, s3 *s3.S3) *Storage {
-	return &Storage{uploader: uploader, s3: s3}
+func new(uploader *s3manager.Uploader, s3 *s3.S3, logger *zap.Logger) *Storage {
+	return &Storage{uploader: uploader, s3: s3, logger: logger}
 }
 
 func exitErrorf(msg string, args ...interface{}) {
@@ -28,7 +29,11 @@ func exitErrorf(msg string, args ...interface{}) {
 	os.Exit(1)
 }
 
-func Connect() *Storage {
+type StorageConnectProps struct {
+	Logger *zap.Logger
+}
+
+func Connect(args StorageConnectProps) *Storage {
 
 	AWS_ACCESS_KEY_ID := os.Getenv("AWS_ACCESS_KEY_ID")
 	AWS_SECRET_ACCESS_KEY := os.Getenv("AWS_SECRET_ACCESS_KEY")
@@ -46,10 +51,10 @@ func Connect() *Storage {
 	}
 
 	//credentials, _ := session.Config.Credentials.Get()
-	log.Println("AWS Session Started")
-	log.Println("S3 client started")
+	args.Logger.Info("AWS Session Started")
+	args.Logger.Info("S3 client started")
 
-	return new(uploader, s3)
+	return new(uploader, s3, args.Logger)
 }
 
 func (s *Storage) Upload(fileName string, file io.ReadSeeker) {
@@ -65,10 +70,9 @@ func (s *Storage) Upload(fileName string, file io.ReadSeeker) {
 	})
 
 	if err != nil {
-		log.Println(err.Error())
-		log.Println("Unable to upload: ", fileName, " to bucket: ", AWS_VIDEO_UPLOAD_BUCKET)
+		s.logger.Error("Unable to upload: "+fileName+" to bucket: "+AWS_VIDEO_UPLOAD_BUCKET, zap.Error(err))
 	} else {
-		log.Println("Successfully uploaded: ", fileName, " to bucket: ", AWS_VIDEO_UPLOAD_BUCKET)
+		s.logger.Info("Successfully uploaded: " + fileName + " to bucket: " + AWS_VIDEO_UPLOAD_BUCKET)
 	}
 
 }
@@ -85,7 +89,7 @@ func (s *Storage) GetFileLink(fileName string) string {
 	urlStr, err := request.Presign(60 * time.Minute)
 
 	if err != nil {
-		log.Println("Failed to sign request", err)
+		s.logger.Error("Failed to sign request", zap.Error(err))
 	}
 
 	return urlStr
@@ -101,9 +105,9 @@ func (s *Storage) DeleteFile(fileName string) {
 	})
 
 	if err != nil {
-		log.Println("Failed to delete file", err)
+		s.logger.Error("Failed to delete file", zap.Error(err))
 	} else {
-		log.Println("Delete", fileName, "from S3")
+		s.logger.Info("Deleted " + fileName + " from S3")
 	}
 
 }

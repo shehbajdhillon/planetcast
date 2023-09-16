@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"planetcastdev/httpmiddleware"
 	"time"
@@ -92,8 +91,6 @@ func TriggerRequest(body *bytes.Buffer) (string, error) {
 	if replicateOutput.Error != nil {
 		return "", fmt.Errorf("Replicate request failed: %s", *replicateOutput.Error)
 	}
-
-	log.Println("Initated call to replicate:", replicateOutput)
 
 	return replicateOutput.ID, nil
 }

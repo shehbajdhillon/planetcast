@@ -4,6 +4,8 @@ import (
 	"planetcastdev/database"
 	"planetcastdev/dubbing"
 	"planetcastdev/storage"
+
+	"go.uber.org/zap"
 )
 
 //go:generate go run github.com/99designs/gqlgen generate
@@ -16,4 +18,5 @@ type Resolver struct {
 	DB      *database.Queries
 	Storage *storage.Storage
 	Dubbing *dubbing.Dubbing
+	Logger  *zap.Logger
 }
