@@ -10,7 +10,6 @@ import (
 	"math"
 	"mime/multipart"
 	"os"
-	"os/exec"
 	"planetcastdev/database"
 	"planetcastdev/graph/model"
 	"planetcastdev/httpmiddleware"
@@ -202,7 +201,6 @@ func (d *Dubbing) CreateTranslation(
 
 	newFileName, err := d.concatSegments(translatedSegments, identifier)
 	if err != nil {
-		fmt.Println("Error concating segments:", err)
 		d.logger.Error("Error concatenating segments", zap.Error(err))
 	}
 
@@ -408,14 +406,14 @@ func dubVideoClip(segment Segment, identifier string) error {
 	ratio := math.Max(audioFileDuarion/originalLength, 1.0)
 
 	generateVideoClip := fmt.Sprintf("ffmpeg -i file:'%s.mp4' -ss %f -to %f file:'%s'", identifier, start, end, originalVideoSegmentName)
-	err := exec.Command("sh", "-c", generateVideoClip).Run()
+	_, err := utils.ExecCommand(generateVideoClip)
 
 	if err != nil {
 		return fmt.Errorf("Clip extraction failed: %s\n%s\n", err.Error(), generateVideoClip)
 	}
 
 	stretchVideoClip := fmt.Sprintf("ffmpeg -i file:'%s' -vf 'setpts=%f*PTS' -c:a copy file:'%s'", originalVideoSegmentName, ratio, videoSegmentName)
-	err = exec.Command("sh", "-c", stretchVideoClip).Run()
+	_, err = utils.ExecCommand(stretchVideoClip)
 
 	if err != nil {
 		return fmt.Errorf("Clip stretching failed: %s\n%s\n", err.Error(), generateVideoClip)
@@ -423,7 +421,7 @@ func dubVideoClip(segment Segment, identifier string) error {
 
 	dubVideoClip := fmt.Sprintf("ffmpeg -i file:'%s' -i file:'%s' -c:v copy -map 0:v:0 -map 1:a:0 file:'%s'",
 		videoSegmentName, audioFileName, dubbedVideoSegmentName)
-	err = exec.Command("sh", "-c", dubVideoClip).Run()
+	_, err = utils.ExecCommand(dubVideoClip)
 
 	if err != nil {
 		return fmt.Errorf("Clip dubbing failed: %s\n%s\n", err.Error(), generateVideoClip)
@@ -463,7 +461,7 @@ func (d *Dubbing) lipSyncClip(segment Segment, identifier string) error {
 
 	if err != nil {
 		copyFileCmd := fmt.Sprintf("cp %s %s", dubbedVideoSegmentName, syncedVideoSegmentName)
-		exec.Command("sh", "-c", copyFileCmd).Run()
+		utils.ExecCommand(copyFileCmd)
 		utils.DeleteFiles([]string{dubbedVideoSegmentName})
 		return nil
 	}
@@ -549,7 +547,7 @@ func (d *Dubbing) concatBatchSegments(batch []Segment, batchIdentifier string, i
 
 	d.logger.Info("Concatenating segments", zap.String("ffmpeg_command", ffmpegCmd))
 
-	err := exec.Command("sh", "-c", ffmpegCmd).Run()
+	_, err := utils.ExecCommand(ffmpegCmd)
 
 	fileList := []string{}
 	for _, s := range batch {
@@ -620,7 +618,7 @@ func (d *Dubbing) concatBatch(batch []string, batchIdentifier string) error {
 
 	d.logger.Info("Concatenating batch", zap.String("batch_identifier", batchIdentifier), zap.String("ffmpeg_command", ffmpegCmd))
 
-	err := exec.Command("sh", "-c", ffmpegCmd).Run()
+	_, err := utils.ExecCommand(ffmpegCmd)
 
 	if err != nil {
 		return fmt.Errorf("Could not concat batch files: %s\n%s", err.Error(), ffmpegCmd)
