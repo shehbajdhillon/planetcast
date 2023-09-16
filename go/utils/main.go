@@ -42,13 +42,14 @@ func DeleteFiles(fileNames []string) (string, error) {
 
 func ExecCommand(command string) (string, error) {
 	cmd := exec.Command("sh", "-c", command)
-	var out bytes.Buffer
+
 	var stderr bytes.Buffer
-	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 	err := cmd.Run()
+	errMsg := stderr.String()
+
 	if err != nil {
-		return "", fmt.Errorf("Command failed: %s, %s, %s", err.Error(), stderr.String(), out.String())
+		return "", fmt.Errorf("Command failed: %s, %s", err.Error(), errMsg)
 	}
-	return out.String(), nil
+	return errMsg, nil
 }
