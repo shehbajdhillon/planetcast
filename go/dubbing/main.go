@@ -405,21 +405,21 @@ func dubVideoClip(segment Segment, identifier string) error {
 
 	ratio := math.Max(audioFileDuarion/originalLength, 1.0)
 
-	generateVideoClip := fmt.Sprintf("ffmpeg -i file:'%s.mp4' -ss %f -to %f file:'%s'", identifier, start, end, originalVideoSegmentName)
+	generateVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s.mp4' -ss %f -to %f file:'%s'", identifier, start, end, originalVideoSegmentName)
 	_, err := utils.ExecCommand(generateVideoClip)
 
 	if err != nil {
 		return fmt.Errorf("Clip extraction failed: %s\n%s\n", err.Error(), generateVideoClip)
 	}
 
-	stretchVideoClip := fmt.Sprintf("ffmpeg -i file:'%s' -vf 'setpts=%f*PTS' -c:a copy file:'%s'", originalVideoSegmentName, ratio, videoSegmentName)
+	stretchVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -vf 'setpts=%f*PTS' -c:a copy file:'%s'", originalVideoSegmentName, ratio, videoSegmentName)
 	_, err = utils.ExecCommand(stretchVideoClip)
 
 	if err != nil {
 		return fmt.Errorf("Clip stretching failed: %s\n%s\n", err.Error(), generateVideoClip)
 	}
 
-	dubVideoClip := fmt.Sprintf("ffmpeg -i file:'%s' -i file:'%s' -c:v copy -map 0:v:0 -map 1:a:0 file:'%s'",
+	dubVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -i file:'%s' -c:v copy -map 0:v:0 -map 1:a:0 file:'%s'",
 		videoSegmentName, audioFileName, dubbedVideoSegmentName)
 	_, err = utils.ExecCommand(dubVideoClip)
 
@@ -542,7 +542,7 @@ func (d *Dubbing) concatBatchSegments(batch []Segment, batchIdentifier string, i
 	inputArgs := strings.Join(inputList, " ")
 	filterComplex := strings.Join(filterList, "")
 
-	ffmpegCmd := fmt.Sprintf("ffmpeg %s -filter_complex '%s' -map '[v]' -map '[a]' -vsync 2 file:'%s_dubbed.mp4'",
+	ffmpegCmd := fmt.Sprintf("ffmpeg -threads 1 %s -filter_complex '%s' -map '[v]' -map '[a]' -vsync 2 file:'%s_dubbed.mp4'",
 		inputArgs, filterComplex, batchIdentifier)
 
 	d.logger.Info("Concatenating segments", zap.String("ffmpeg_command", ffmpegCmd))
@@ -613,7 +613,7 @@ func (d *Dubbing) concatBatch(batch []string, batchIdentifier string) error {
 	inputArgs := strings.Join(inputList, " ")
 	filterComplex := strings.Join(filterList, "")
 
-	ffmpegCmd := fmt.Sprintf("ffmpeg %s -filter_complex '%s' -map '[v]' -map '[a]' -vsync 2 file:'%s_dubbed.mp4'",
+	ffmpegCmd := fmt.Sprintf("ffmpeg -threads 1 %s -filter_complex '%s' -map '[v]' -map '[a]' -vsync 2 file:'%s_dubbed.mp4'",
 		inputArgs, filterComplex, batchIdentifier)
 
 	d.logger.Info("Concatenating batch", zap.String("batch_identifier", batchIdentifier), zap.String("ffmpeg_command", ffmpegCmd))
