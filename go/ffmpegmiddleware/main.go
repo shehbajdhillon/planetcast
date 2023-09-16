@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"planetcastdev/utils"
-	"runtime"
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/semaphore"
@@ -19,7 +18,7 @@ type FfmpegConnectProps struct {
 }
 
 func Connect(args FfmpegConnectProps) *Ffmpeg {
-	maxWorkers := runtime.GOMAXPROCS(0)
+	maxWorkers := 4
 	sem := semaphore.NewWeighted(int64(maxWorkers))
 	args.Logger.Info("Setting Up Ffmpeg Middleware", zap.Int("max_semaphore_workers", maxWorkers), zap.Any("semaphore", sem))
 	return &Ffmpeg{semaphore: sem}

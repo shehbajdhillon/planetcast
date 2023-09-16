@@ -497,7 +497,7 @@ func (d *Dubbing) lipSyncClip(segment Segment, identifier string) error {
 
 func (d *Dubbing) concatSegments(ctx context.Context, segments []Segment, identifier string) (string, error) {
 
-	batchSize := 20
+	batchSize := 5
 	batchFiles := []string{}
 
 	for i := 0; i < len(segments); i += batchSize {
