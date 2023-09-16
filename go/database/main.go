@@ -34,7 +34,7 @@ func Connect() *Queries {
 		log.Fatalln("Could not connect to database:", err.Error())
 	}
 
-	log.Println("Database client started: ", db)
+	log.Println("Database client started")
 
 	return New(db)
 }

@@ -57,7 +57,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 
 	newCtx := context.Background()
 
-	go dubbing.CreateTransformation(newCtx, r.DB, dubbing.CreateTransformationParams{
+	go r.Dubbing.CreateTransformation(newCtx, dubbing.CreateTransformationParams{
 		ProjectID:      project.ID,
 		TargetLanguage: sourceLanguage,
 		FileName:       fileName,
@@ -115,7 +115,7 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 	})
 
 	newCtx := context.Background()
-	go dubbing.CreateTranslation(newCtx, r.DB, sourceTransformation, newTransformation, identifier)
+	go r.Dubbing.CreateTranslation(newCtx, sourceTransformation, newTransformation, identifier)
 
 	return newTransformation, nil
 }

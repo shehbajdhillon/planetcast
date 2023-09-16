@@ -47,6 +47,20 @@ type Segment struct {
 	Text  string  `json:"text"`
 }
 
+type Dubbing struct {
+	storage  *storage.Storage
+	database *database.Queries
+}
+
+type DubbingConnectProps struct {
+	Storage  *storage.Storage
+	Database *database.Queries
+}
+
+func Connect(args DubbingConnectProps) *Dubbing {
+	return &Dubbing{storage: args.Storage, database: args.Database}
+}
+
 func getTranscript(fileName string, file io.ReadSeeker) (*WhisperOutput, error) {
 
 	file.Seek(0, io.SeekStart)
@@ -106,9 +120,8 @@ type CreateTransformationParams struct {
 	IsSource       bool
 }
 
-func CreateTransformation(
+func (d *Dubbing) CreateTransformation(
 	ctx context.Context,
-	queries *database.Queries,
 	args CreateTransformationParams,
 ) (database.Transformation, error) {
 
@@ -116,7 +129,7 @@ func CreateTransformation(
 	transcriptObj := *transcriptPtr
 	jsonBytes, err := json.Marshal(transcriptObj)
 
-	transformation, err := queries.CreateTransformation(ctx, database.CreateTransformationParams{
+	transformation, err := d.database.CreateTransformation(ctx, database.CreateTransformationParams{
 		ProjectID:      args.ProjectID,
 		TargetLanguage: args.TargetLanguage.String(),
 		TargetMedia:    args.FileName,
@@ -134,15 +147,14 @@ func CreateTransformation(
 	return transformation, nil
 }
 
-func CreateTranslation(
+func (d *Dubbing) CreateTranslation(
 	ctx context.Context,
-	queries *database.Queries,
 	sourceTransformation database.Transformation,
 	targetTransformation database.Transformation,
 	identifier string,
 ) (database.Transformation, error) {
 
-	fileUrl := storage.Connect().GetFileLink(sourceTransformation.TargetMedia)
+	fileUrl := d.storage.GetFileLink(sourceTransformation.TargetMedia)
 	//download original media, then save it as identifier.mp4
 	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
 		Method: "GET",
@@ -165,7 +177,7 @@ func CreateTranslation(
 
 	// call chatgpt, convert the source text to target text
 	sourceSegments := whisperOutput.Segments
-	translatedSegmentsPtr, err := fetchAndDub(ctx, sourceSegments, sourceTransformation.ProjectID, identifier, model.SupportedLanguage(targetTransformation.TargetLanguage), targetTransformation.ID, queries)
+	translatedSegmentsPtr, err := d.fetchAndDub(ctx, sourceSegments, sourceTransformation.ProjectID, identifier, model.SupportedLanguage(targetTransformation.TargetLanguage), targetTransformation.ID)
 	if err != nil {
 		return database.Transformation{}, fmt.Errorf("Error translating and fetching: %s", err.Error())
 	}
@@ -186,7 +198,7 @@ func CreateTranslation(
 	}
 
 	defer file.Close()
-	storage.Connect().Upload(newFileName, file)
+	d.storage.Upload(newFileName, file)
 	utils.DeleteFiles([]string{identifier + ".mp4", identifier + "_dubbed.mp4"})
 
 	// get the target text, and parse it
@@ -197,7 +209,7 @@ func CreateTranslation(
 	// store the target text in db
 	jsonBytes, err := json.Marshal(whisperOutput)
 
-	targetTransformation, err = queries.UpdateTranscriptById(ctx, database.UpdateTranscriptByIdParams{
+	targetTransformation, err = d.database.UpdateTranscriptById(ctx, database.UpdateTranscriptByIdParams{
 		ID:         targetTransformation.ID,
 		Transcript: pqtype.NullRawMessage{Valid: true, RawMessage: jsonBytes},
 	})
@@ -206,12 +218,12 @@ func CreateTranslation(
 		return database.Transformation{}, fmt.Errorf("Could not update transformation: " + err.Error())
 	}
 
-	targetTransformation, err = queries.UpdateTransformationStatusById(ctx, database.UpdateTransformationStatusByIdParams{
+	targetTransformation, err = d.database.UpdateTransformationStatusById(ctx, database.UpdateTransformationStatusByIdParams{
 		ID:     targetTransformation.ID,
 		Status: "complete",
 	})
 
-	targetTransformation, err = queries.UpdateTransformationProgressById(ctx, database.UpdateTransformationProgressByIdParams{
+	targetTransformation, err = d.database.UpdateTransformationProgressById(ctx, database.UpdateTransformationProgressByIdParams{
 		ID:       targetTransformation.ID,
 		Progress: 100,
 	})
@@ -231,19 +243,18 @@ type VoiceRequest struct {
 	VoiceSetting VoiceSettings `json:"voice_settings"`
 }
 
-func fetchAndDub(
+func (d *Dubbing) fetchAndDub(
 	ctx context.Context,
 	segments []Segment,
 	projectId int64,
 	identifier string,
 	targetLanguage model.SupportedLanguage,
 	targetTransformationId int64,
-	queries *database.Queries,
 ) (*[]Segment, error) {
 
 	translatedSegments := []Segment{}
 
-	queries.UpdateTransformationStatusById(ctx, database.UpdateTransformationStatusByIdParams{
+	d.database.UpdateTransformationStatusById(ctx, database.UpdateTransformationStatusByIdParams{
 		ID:     targetTransformationId,
 		Status: "processing",
 	})
@@ -268,7 +279,7 @@ func fetchAndDub(
 		}
 		log.Println("Dubbed video clip for Project", projectId, ":", idx+1, "/", len(segments))
 
-		err = lipSyncClip(*translatedSegment, identifier)
+		err = d.lipSyncClip(*translatedSegment, identifier)
 		if err != nil {
 			return nil, fmt.Errorf("Could not lip sync clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 		}
@@ -279,7 +290,7 @@ func fetchAndDub(
 		percentage := 100 * (float64(len(translatedSegments)) / float64(len(segments)))
 		percentage = math.Round(percentage*100) / 100
 
-		queries.UpdateTransformationProgressById(ctx, database.UpdateTransformationProgressByIdParams{
+		d.database.UpdateTransformationProgressById(ctx, database.UpdateTransformationProgressByIdParams{
 			ID:       targetTransformationId,
 			Progress: percentage,
 		})
@@ -398,9 +409,7 @@ func dubVideoClip(segment Segment, identifier string) error {
 	return nil
 }
 
-func lipSyncClip(segment Segment, identifier string) error {
-
-	storageClient := storage.Connect()
+func (d *Dubbing) lipSyncClip(segment Segment, identifier string) error {
 
 	videoSegmentName := getVideoSegmentName(identifier, segment.Id)
 	dubbedVideoSegmentName := "dubbed_" + videoSegmentName
@@ -412,8 +421,8 @@ func lipSyncClip(segment Segment, identifier string) error {
 	}
 	defer file.Close()
 
-	storageClient.Upload(dubbedVideoSegmentName, file)
-	fileLink := storageClient.GetFileLink(dubbedVideoSegmentName)
+	d.storage.Upload(dubbedVideoSegmentName, file)
+	fileLink := d.storage.GetFileLink(dubbedVideoSegmentName)
 
 	replicateRequestBody := map[string]interface{}{
 		"version": "8d65e3f4f4298520e079198b493c25adfc43c058ffec924f2aefc8010ed25eef",
@@ -425,7 +434,7 @@ func lipSyncClip(segment Segment, identifier string) error {
 
 	jsonBody, err := json.Marshal(replicateRequestBody)
 	outputUrl, err := replicatemiddleware.MakeRequest(bytes.NewBuffer(jsonBody))
-	storageClient.DeleteFile(dubbedVideoSegmentName)
+	d.storage.DeleteFile(dubbedVideoSegmentName)
 
 	if err != nil {
 		copyFileCmd := fmt.Sprintf("cp %s %s", dubbedVideoSegmentName, syncedVideoSegmentName)

@@ -6,6 +6,7 @@ import (
 	"os"
 	"planetcastdev/auth"
 	"planetcastdev/database"
+	"planetcastdev/dubbing"
 	"planetcastdev/graph"
 	"planetcastdev/storage"
 
@@ -33,6 +34,10 @@ func main() {
 	production := os.Getenv("PRODUCTION")
 
 	Storage := storage.Connect()
+	Database := database.Connect()
+
+	Dubbing := dubbing.Connect(dubbing.DubbingConnectProps{Storage: Storage, Database: Database})
+	GqlServer := graph.Connect(graph.GraphConnectProps{Dubbing: Dubbing, Storage: Storage, Queries: Database})
 
 	router := chi.NewRouter()
 	router.Use(auth.Middleware())
@@ -43,10 +48,7 @@ func main() {
 		Debug:            false,
 	}).Handler)
 
-	Database := database.Connect()
-
-	srv := graph.GenerateServer(Database, Storage)
-	router.Handle("/", srv)
+	router.Handle("/", GqlServer)
 
 	if production == "" {
 		log.Println("Connect to http://localhost:" + port + " for GraphQL server")

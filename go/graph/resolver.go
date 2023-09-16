@@ -2,6 +2,7 @@ package graph
 
 import (
 	"planetcastdev/database"
+	"planetcastdev/dubbing"
 	"planetcastdev/storage"
 )
 
@@ -14,4 +15,5 @@ import (
 type Resolver struct {
 	DB      *database.Queries
 	Storage *storage.Storage
+	Dubbing *dubbing.Dubbing
 }

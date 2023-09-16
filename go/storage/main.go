@@ -45,9 +45,9 @@ func Connect() *Storage {
 		panic(err)
 	}
 
-	credentials, _ := session.Config.Credentials.Get()
-	log.Println("AWS Session Started: ", credentials)
-	log.Println("S3 client started: ", uploader)
+	//credentials, _ := session.Config.Credentials.Get()
+	log.Println("AWS Session Started")
+	log.Println("S3 client started")
 
 	return new(uploader, s3)
 }

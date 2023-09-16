@@ -7,6 +7,7 @@ import (
 	"log"
 	"planetcastdev/auth"
 	"planetcastdev/database"
+	"planetcastdev/dubbing"
 	"planetcastdev/storage"
 	"time"
 
@@ -17,9 +18,15 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 )
 
-func GenerateServer(queries *database.Queries, storage *storage.Storage) *handler.Server {
+type GraphConnectProps struct {
+	Queries *database.Queries
+	Storage *storage.Storage
+	Dubbing *dubbing.Dubbing
+}
 
-	gqlConfig := Config{Resolvers: &Resolver{DB: queries, Storage: storage}}
+func Connect(args GraphConnectProps) *handler.Server {
+
+	gqlConfig := Config{Resolvers: &Resolver{DB: args.Queries, Storage: args.Storage, Dubbing: args.Dubbing}}
 
 	gqlConfig.Directives.LoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 		if isLoggedIn(ctx) == false {
@@ -34,7 +41,7 @@ func GenerateServer(queries *database.Queries, storage *storage.Storage) *handle
 			return nil, fmt.Errorf("Access Denied")
 		}
 		teamSlug := teamSlugField.(string)
-		if memberTeam(ctx, teamSlug, queries) == false {
+		if memberTeam(ctx, teamSlug, args.Queries) == false {
 			return nil, fmt.Errorf("Access Denied")
 		}
 		return next(ctx)
@@ -46,7 +53,7 @@ func GenerateServer(queries *database.Queries, storage *storage.Storage) *handle
 			return nil, fmt.Errorf("Access Denied")
 		}
 		projectId, err := projectIdField.(json.Number).Int64()
-		if err != nil || ownsProject(ctx, projectId, queries) == false {
+		if err != nil || ownsProject(ctx, projectId, args.Queries) == false {
 			return nil, fmt.Errorf("Access Denied")
 		}
 		return next(ctx)
@@ -79,9 +86,9 @@ func GenerateServer(queries *database.Queries, storage *storage.Storage) *handle
 			emailAddr, _ := auth.EmailFromContext(ctx)
 			fullName, _ := auth.FullnameFromContext(ctx)
 
-			user, err := queries.GetUserByEmail(ctx, emailAddr)
+			user, err := args.Queries.GetUserByEmail(ctx, emailAddr)
 			if err != nil {
-				user, _ = queries.AddUser(ctx, database.AddUserParams{Email: emailAddr, FullName: fullName})
+				user, _ = args.Queries.AddUser(ctx, database.AddUserParams{Email: emailAddr, FullName: fullName})
 			}
 			log.Println("Incoming Request:", oc.OperationName, "User:", user.Email)
 		}
