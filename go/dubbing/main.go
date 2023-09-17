@@ -662,7 +662,7 @@ func (d *Dubbing) translateSegment(ctx context.Context, segment Segment, targetL
 
 	for retries > 0 {
 
-		systemPrompt := fmt.Sprintf("Translate the following text to street spoken, informal %s. Provide the output in %s alphabet. Just give the output.", targetLang, targetLang)
+		systemPrompt := fmt.Sprintf("Translate the following text to colloquial, everyday spoken %s. Provide the output in %s alphabet. Just give the output.", targetLang, targetLang)
 		chatGptInput := ChatRequestInput{
 			Model: "gpt-4",
 			Messages: []ChatCompletionMessage{
