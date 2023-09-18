@@ -77,16 +77,36 @@ func (d *Dubbing) getTranscript(fileName string, file io.ReadSeeker) (*WhisperOu
 	base64Content := base64.StdEncoding.EncodeToString(content)
 	dataURL := "data:video/mp4;base64," + base64Content
 
-	replicateRequestBody := map[string]interface{}{
-		"version": "4a60104c44dd709fc08a03dfeca6c6906257633dd03fd58663ec896a4eeba30e",
-		"input": map[string]interface{}{
-			"audio":           dataURL,
-			"model":           "large-v2",
-			"word_timestamps": true,
-		},
+	retries := 5
+
+	var output any
+
+	for retries > 0 {
+
+		replicateRequestBody := map[string]interface{}{
+			"version": "4a60104c44dd709fc08a03dfeca6c6906257633dd03fd58663ec896a4eeba30e",
+			"input": map[string]interface{}{
+				"audio":           dataURL,
+				"model":           "large-v2",
+				"word_timestamps": true,
+			},
+		}
+		jsonBody, err := json.Marshal(replicateRequestBody)
+		output, err = replicatemiddleware.MakeRequest(bytes.NewBuffer(jsonBody))
+
+		if err == nil {
+			break
+		} else {
+			retries -= 1
+			d.logger.Error("Whisper request failed, retrying after 5s", zap.Error(err))
+			time.Sleep(5 * time.Second)
+		}
 	}
-	jsonBody, err := json.Marshal(replicateRequestBody)
-	output, err := replicatemiddleware.MakeRequest(bytes.NewBuffer(jsonBody))
+
+	if retries <= 0 {
+		d.logger.Error("Failed to transcribe whisper request")
+		return nil, nil
+	}
 
 	outputJson, ok := output.(map[string]interface{})
 
