@@ -480,7 +480,7 @@ func (d *Dubbing) lipSyncClip(segment Segment, identifier string) error {
 	//download original media, then save it as identifier.mp4
 	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
 		Method: "GET",
-		Url:    outputUrl,
+		Url:    outputUrl.(string),
 		Headers: map[string]string{
 			"Content-Type": "application/json",
 			"Accept":       "audio/mp4",

@@ -10,9 +10,9 @@ import (
 )
 
 type ReplicateGetRequestOutput struct {
-	ID     string  `json:"id"`
-	Output *string `json:"output"`
-	Status string  `json:"status"`
+	ID     string `json:"id"`
+	Output *any   `json:"output"`
+	Status string `json:"status"`
 }
 
 type ReplicateTriggerRequestOutput struct {
@@ -21,7 +21,7 @@ type ReplicateTriggerRequestOutput struct {
 	Status string  `json:"status"`
 }
 
-func MakeRequest(body *bytes.Buffer) (string, error) {
+func MakeRequest(body *bytes.Buffer) (any, error) {
 
 	requestId, err := TriggerRequest(body)
 
