@@ -136,7 +136,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
             pointerEvents={"none"}
           >
             <HStack spacing={"4px"}>
-              <Text>{transformations?.[transformationIdx]?.targetLanguage}</Text>
+              <Text>{!transformations.length ? "PROCESSING" : transformations?.[transformationIdx]?.targetLanguage}</Text>
               { isProcessing && <Spinner size={"xs"} /> }
             </HStack>
           </Button>
