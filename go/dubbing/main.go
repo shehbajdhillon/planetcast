@@ -9,7 +9,6 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
-	"mime/multipart"
 	"os"
 	"planetcastdev/database"
 	"planetcastdev/ffmpegmiddleware"
@@ -69,49 +68,46 @@ func Connect(args DubbingConnectProps) *Dubbing {
 func (d *Dubbing) getTranscript(fileName string, file io.ReadSeeker) (*WhisperOutput, error) {
 
 	file.Seek(0, io.SeekStart)
-
-	API_KEY := os.Getenv("OPEN_AI_SECRET_KEY")
-	MODEL := "whisper-1"
-	RESPONSE_FORMAT := "verbose_json"
-	URL := "https://api.openai.com/v1/audio/transcriptions"
-
-	requestBody := &bytes.Buffer{}
-	writer := multipart.NewWriter(requestBody)
-	part, err := writer.CreateFormFile("file", fileName)
-
+	content, err := ioutil.ReadAll(file)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create form file: %s", err.Error())
+		d.logger.Error("Error reading file", zap.Error(err))
 	}
+	file.Seek(0, io.SeekStart)
 
-	_, err = io.Copy(part, file)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to copy file data: %s", err.Error())
-	}
-	writer.WriteField("model", MODEL)
-	writer.WriteField("response_format", RESPONSE_FORMAT)
-	err = writer.Close()
+	base64Content := base64.StdEncoding.EncodeToString(content)
+	dataURL := "data:video/mp4;base64," + base64Content
 
-	if err != nil {
-		return nil, fmt.Errorf("Failed to close writer %s", err.Error())
-	}
-
-	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
-		Method: "POST",
-		Url:    URL,
-		Body:   requestBody,
-		Headers: map[string]string{
-			"Authorization": "Bearer " + API_KEY,
-			"Content-Type":  writer.FormDataContentType(),
+	replicateRequestBody := map[string]interface{}{
+		"version": "4a60104c44dd709fc08a03dfeca6c6906257633dd03fd58663ec896a4eeba30e",
+		"input": map[string]interface{}{
+			"audio":           dataURL,
+			"model":           "large-v2",
+			"word_timestamps": true,
 		},
-	})
+	}
+	jsonBody, err := json.Marshal(replicateRequestBody)
+	output, err := replicatemiddleware.MakeRequest(bytes.NewBuffer(jsonBody))
 
+	outputJson, ok := output.(map[string]interface{})
+
+	if !ok {
+		d.logger.Error("Could not parse whisper json output")
+		return nil, fmt.Errorf("Could not parse whisper json output")
+	}
+
+	responseBody, err := json.Marshal(outputJson)
 	if err != nil {
-		return nil, fmt.Errorf("Request failed:" + err.Error())
+		d.logger.Error("Could not parse whisper output to bytes")
+		return nil, fmt.Errorf("Could not parse whisper json body to bytes")
 	}
 
 	file.Seek(0, io.SeekStart)
 	var whisperOutput WhisperOutput
-	json.Unmarshal(responseBody, &whisperOutput)
+	err = json.Unmarshal(responseBody, &whisperOutput)
+	if err != nil {
+		d.logger.Error("Could not parse whisper bytes to struct")
+		return nil, fmt.Errorf("Could not parse whisper bytes to struct")
+	}
 	d.logger.Info("Whisper request processes successfully for:", zap.String("fileName", fileName))
 
 	return &whisperOutput, nil
