@@ -3,6 +3,7 @@ package dubbing
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -447,22 +448,29 @@ func (d *Dubbing) lipSyncClip(segment Segment, identifier string) error {
 	}
 	defer file.Close()
 
-	d.storage.Upload(dubbedVideoSegmentName, file)
-	fileLink := d.storage.GetFileLink(dubbedVideoSegmentName)
+	content, err := ioutil.ReadAll(file)
+	if err != nil {
+		d.logger.Error("Error reading file", zap.Error(err))
+	}
+
+	file.Seek(0, io.SeekStart)
+
+	base64Content := base64.StdEncoding.EncodeToString(content)
+	dataURL := "data:video/mp4;base64," + base64Content
 
 	replicateRequestBody := map[string]interface{}{
 		"version": "8d65e3f4f4298520e079198b493c25adfc43c058ffec924f2aefc8010ed25eef",
 		"input": map[string]string{
-			"face":  fileLink,
-			"audio": fileLink,
+			"face":  dataURL,
+			"audio": dataURL,
 		},
 	}
 
 	jsonBody, err := json.Marshal(replicateRequestBody)
 	outputUrl, err := replicatemiddleware.MakeRequest(bytes.NewBuffer(jsonBody))
-	d.storage.DeleteFile(dubbedVideoSegmentName)
 
 	if err != nil {
+		d.logger.Error("Replicate Request Failed", zap.Error(err))
 		copyFileCmd := fmt.Sprintf("cp %s %s", dubbedVideoSegmentName, syncedVideoSegmentName)
 		utils.ExecCommand(copyFileCmd)
 		utils.DeleteFiles([]string{dubbedVideoSegmentName})
