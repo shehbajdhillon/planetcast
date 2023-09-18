@@ -61,7 +61,6 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 		ProjectID:      project.ID,
 		TargetLanguage: sourceLanguage,
 		FileName:       fileName,
-		File:           sourceMedia.File,
 		IsSource:       true,
 	})
 

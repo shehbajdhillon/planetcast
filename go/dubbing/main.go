@@ -65,17 +65,9 @@ func Connect(args DubbingConnectProps) *Dubbing {
 	return &Dubbing{storage: args.Storage, database: args.Database, logger: args.Logger, ffmpeg: args.Ffmpeg}
 }
 
-func (d *Dubbing) getTranscript(fileName string, file io.ReadSeeker) (*WhisperOutput, error) {
+func (d *Dubbing) getTranscript(fileName string) (*WhisperOutput, error) {
 
-	file.Seek(0, io.SeekStart)
-	content, err := ioutil.ReadAll(file)
-	if err != nil {
-		d.logger.Error("Error reading file", zap.Error(err))
-	}
-	file.Seek(0, io.SeekStart)
-
-	base64Content := base64.StdEncoding.EncodeToString(content)
-	dataURL := "data:video/mp4;base64," + base64Content
+	fileUrl := d.storage.GetFileLink(fileName)
 
 	retries := 5
 
@@ -86,7 +78,7 @@ func (d *Dubbing) getTranscript(fileName string, file io.ReadSeeker) (*WhisperOu
 		replicateRequestBody := map[string]interface{}{
 			"version": "4a60104c44dd709fc08a03dfeca6c6906257633dd03fd58663ec896a4eeba30e",
 			"input": map[string]interface{}{
-				"audio":           dataURL,
+				"audio":           fileUrl,
 				"model":           "large-v2",
 				"word_timestamps": true,
 			},
@@ -121,7 +113,6 @@ func (d *Dubbing) getTranscript(fileName string, file io.ReadSeeker) (*WhisperOu
 		return nil, fmt.Errorf("Could not parse whisper json body to bytes")
 	}
 
-	file.Seek(0, io.SeekStart)
 	var whisperOutput WhisperOutput
 	err = json.Unmarshal(responseBody, &whisperOutput)
 	if err != nil {
@@ -137,7 +128,6 @@ type CreateTransformationParams struct {
 	ProjectID      int64
 	TargetLanguage model.SupportedLanguage
 	FileName       string
-	File           io.ReadSeeker
 	IsSource       bool
 }
 
@@ -146,7 +136,7 @@ func (d *Dubbing) CreateTransformation(
 	args CreateTransformationParams,
 ) (database.Transformation, error) {
 
-	transcriptPtr, err := d.getTranscript(args.FileName, args.File)
+	transcriptPtr, err := d.getTranscript(args.FileName)
 
 	if err != nil {
 		d.logger.Error("Failed to generate transcript", zap.Error(err))
