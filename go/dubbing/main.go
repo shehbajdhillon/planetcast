@@ -128,7 +128,79 @@ func (d *Dubbing) getTranscript(fileName string) (*WhisperOutput, error) {
 	}
 	d.logger.Info("Whisper request processes successfully for:", zap.String("fileName", fileName))
 
+	cleanedSegments := combineWordTimeStamps(&whisperOutput)
+	whisperOutput.Segments = cleanedSegments
+
 	return &whisperOutput, nil
+}
+
+func combineWordTimeStamps(whisperOutput *WhisperOutput) []Segment {
+
+	var punctuationEndsSentence = map[string]bool{
+		".":   true,
+		"!":   true,
+		"?":   true,
+		"...": true,
+		"।":   true,
+		"|":   true,
+	}
+
+	segments := whisperOutput.Segments
+
+	var newSegmentsArray []Segment
+	var currNewSegment []Word
+	var idx int64 = 0
+
+	for _, seg := range segments {
+		for _, wordInfo := range seg.Words {
+
+			currWord := strings.TrimSpace(wordInfo.Word)
+			lastChar := string(currWord[len(currWord)-1])
+			currNewSegment = append(currNewSegment, wordInfo)
+
+			// FUTURE OPTIMIZATION: USE strings.Join(..., " ")
+			// TRY REDUCING CALLS TO TRIM SPACE FUNC
+			if punctuationEndsSentence[lastChar] {
+				var text string
+				for _, w := range currNewSegment {
+					text = text + " " + strings.TrimSpace(w.Word)
+				}
+
+				newSegment := Segment{
+					Text:  strings.TrimSpace(text),
+					Start: currNewSegment[0].Start,
+					End:   currNewSegment[len(currNewSegment)-1].End,
+					Id:    idx,
+				}
+
+				newSegmentsArray = append(newSegmentsArray, newSegment)
+				currNewSegment = []Word{}
+				idx += 1
+			}
+		}
+	}
+
+	//THIS CODE IS REPEATED, PUT IT IN A FUNCTION
+
+	if len(currNewSegment) > 0 {
+		var text string
+		for _, w := range currNewSegment {
+			text = text + " " + strings.TrimSpace(w.Word)
+		}
+
+		newSegment := Segment{
+			Text:  strings.TrimSpace(text),
+			Start: currNewSegment[0].Start,
+			End:   currNewSegment[len(currNewSegment)-1].End,
+			Id:    idx,
+		}
+
+		newSegmentsArray = append(newSegmentsArray, newSegment)
+		currNewSegment = []Word{}
+		idx += 1
+	}
+
+	return newSegmentsArray
 }
 
 type CreateTransformationParams struct {
