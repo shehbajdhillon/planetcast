@@ -373,7 +373,20 @@ func (d *Dubbing) fetchAndDub(
 			)
 		}
 
-		translatedSegment, err := d.translateSegment(ctx, segment, targetLanguage)
+		beforeTranslatedSegments := translatedSegments[utils.MaxOf(0, idx-2):idx]
+		afterOriginalSegments := segments[idx+1 : utils.MinOf(idx+3, len(segments))]
+
+		beforeTranslatedSentences := []string{}
+		for _, seg := range beforeTranslatedSegments {
+			beforeTranslatedSentences = append(beforeTranslatedSentences, seg.Text)
+		}
+
+		afterOriginalSentences := []string{}
+		for _, seg := range afterOriginalSegments {
+			afterOriginalSentences = append(afterOriginalSentences, seg.Text)
+		}
+
+		translatedSegment, err := d.translateSegment(ctx, segment, targetLanguage, beforeTranslatedSentences, afterOriginalSentences)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to translated segment %d/%d: %s", idx+1, len(segments), err.Error())
 		}
@@ -746,7 +759,13 @@ type ChatCompletionResponse struct {
 	Choices []ChatCompletionChoice `json:"choices"`
 }
 
-func (d *Dubbing) translateSegment(ctx context.Context, segment Segment, targetLang model.SupportedLanguage) (*Segment, error) {
+func (d *Dubbing) translateSegment(
+	ctx context.Context,
+	segment Segment,
+	targetLang model.SupportedLanguage,
+	beforeTranslatedSentences []string,
+	afterOriginalSentences []string,
+) (*Segment, error) {
 
 	retries := 5
 
@@ -755,12 +774,11 @@ func (d *Dubbing) translateSegment(ctx context.Context, segment Segment, targetL
 
 	for retries > 0 {
 
-		systemPrompt := fmt.Sprintf("Translate the following text to colloquial, everyday spoken %s. Provide the output in %s alphabet. Just give the output.", targetLang, targetLang)
+		prompt := generateTranslationPrompt(string(targetLang), segment.Text, beforeTranslatedSentences, afterOriginalSentences)
 		chatGptInput := ChatRequestInput{
 			Model: "gpt-4",
 			Messages: []ChatCompletionMessage{
-				{Role: "system", Content: systemPrompt},
-				{Role: "user", Content: segment.Text},
+				{Role: "user", Content: prompt},
 			},
 		}
 
@@ -797,4 +815,30 @@ func (d *Dubbing) translateSegment(ctx context.Context, segment Segment, targetL
 	}
 
 	return nil, fmt.Errorf("Open AI Requests Failed")
+}
+
+func generateTranslationPrompt(targetLanguage string, targetSentence string, beforeTranslatedSentences []string, afterOriginalSentences []string) string {
+
+	beforeSentence := ""
+	afterSentence := ""
+
+	if len(beforeTranslatedSentences) > 0 {
+		beforeSentence = fmt.Sprintf(
+			"This sentence will come after the following translated sentences:\n'%s'\nPlease make sure that the translation flows naturally after these sentences and maintains the original meaning and conversational tone.",
+			strings.Join(beforeTranslatedSentences, "\n"),
+		)
+	}
+
+	if len(afterOriginalSentences) > 0 {
+		afterSentence = fmt.Sprintf(
+			"For additional context, these are the sentences that will come after the sentence that you will be translating:\n'%s'\n",
+			strings.Join(afterOriginalSentences, "\n"),
+		)
+	}
+
+	prompt := fmt.Sprintf(
+		"Please translate the following sentence to everyday, informal, conversational %s, and provide the output in %s Alphabet:\n'%s'\n%s\n%s\nAgain the sentence that you are supposed to translate is this:\n'%s'\nProvide the output in %s Alphabet. Do not surround the output with any quotation marks.",
+		targetLanguage, targetLanguage, targetSentence, beforeSentence, afterSentence, targetSentence, targetLanguage,
+	)
+	return prompt
 }
