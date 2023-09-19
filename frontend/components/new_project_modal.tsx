@@ -152,12 +152,12 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
                   fontWeight={'600'}
                   fontSize={'lg'}
                 >
-                  Media File (Max Size: 100 MB)
+                  Media File (Max Size: 500 MB)
                 </FormLabel>
                 <Dropzone
                   accept={{ 'video/mp4': ['.mp4', '.MP4'] }}
                   minSize={0}
-                  maxSize={100 * MB}
+                  maxSize={500 * MB}
                   onDrop={(acceptedFiles) => setSourceMedia(acceptedFiles[0])}
                 >
                   {({ getRootProps, getInputProps }) => (
