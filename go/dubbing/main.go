@@ -828,9 +828,11 @@ func generateTranslationPrompt(targetLanguage string, targetSentence string, bef
 		)
 	}
 
+	disclaimer := fmt.Sprintf("Please use vocabulary that is simple, common and even a learner new to %s language would know, please do not use any advanced words, or formal vocabulary. Focus on clarity and simplicity over complex vocabulary", targetLanguage)
+
 	prompt := fmt.Sprintf(
-		"Please translate the following sentence to everyday, informal, conversational %s, and provide the output in %s Alphabet:\n'%s'\n%s\n%s\nAgain the sentence that you are supposed to translate is this:\n'%s'\nProvide the output in %s Alphabet. Do not surround the output with any quotation marks.",
-		targetLanguage, targetLanguage, targetSentence, beforeSentence, afterSentence, targetSentence, targetLanguage,
+		"Please translate the following sentence to everyday, informal, conversational %s, and provide the output in %s Alphabet:\n'%s'\n%s\n%s\n%s\nAgain the sentence that you are supposed to translate is this:\n'%s'\nProvide the output in %s Alphabet. Do not surround the output with any quotation marks.",
+		targetLanguage, targetLanguage, targetSentence, disclaimer, beforeSentence, afterSentence, targetSentence, targetLanguage,
 	)
 	return prompt
 }
