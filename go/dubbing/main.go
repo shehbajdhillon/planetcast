@@ -501,11 +501,23 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 	start := segment.Start
 	end := segment.End
 
-	originalLength := end - start
+	videoFileDuration := end - start
 	audioFileDuarion, err := utils.GetAudioFileDuration(audioFileName)
 
-	videoStretchRatio := math.Max(audioFileDuarion/originalLength, 1.0)
-	audioStretchRatio := math.Max(originalLength/audioFileDuarion, 1.0)
+	videoStretchRatio := audioFileDuarion / videoFileDuration
+	audioStretchRatio := videoFileDuration / audioFileDuarion
+
+	if videoStretchRatio > 1 {
+
+		averageDuration := (videoFileDuration + audioFileDuarion) / 2
+		videoStretchRatio = averageDuration / videoFileDuration
+		audioStretchRatio = averageDuration / audioFileDuarion
+
+	} else {
+		videoStretchRatio = math.Max(videoStretchRatio, 1.0)
+		audioStretchRatio = math.Max(audioStretchRatio, 1.0)
+	}
+
 	audioStretchRatio = math.Max(1/audioStretchRatio, 0.5)
 
 	if err != nil {
