@@ -492,6 +492,8 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 	id := segment.Id
 
 	audioFileName := getAudioFileName(identifier, id)
+	stretchAudioFileName := "stretched_" + audioFileName
+
 	videoSegmentName := getVideoSegmentName(identifier, id)
 	originalVideoSegmentName := "original_" + videoSegmentName
 	dubbedVideoSegmentName := "dubbed_" + videoSegmentName
@@ -500,34 +502,44 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 	end := segment.End
 
 	originalLength := end - start
+	audioFileDuarion, err := utils.GetAudioFileDuration(audioFileName)
 
-	audioFileDuarion, _ := utils.GetAudioFileDuration(audioFileName)
+	videoStretchRatio := math.Max(audioFileDuarion/originalLength, 1.0)
+	audioStretchRatio := math.Max(originalLength/audioFileDuarion, 1.0)
+	audioStretchRatio = math.Max(1/audioStretchRatio, 0.5)
 
-	ratio := math.Max(audioFileDuarion/originalLength, 1.0)
+	if err != nil {
+		d.logger.Error("Could not get audio file duration", zap.Error(err))
+		videoStretchRatio = 1
+		audioStretchRatio = 1
+	}
 
 	generateVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s.mp4' -ss %f -to %f file:'%s'", identifier, start, end, originalVideoSegmentName)
-	_, err := d.ffmpeg.Run(ctx, generateVideoClip)
+	_, err = d.ffmpeg.Run(ctx, generateVideoClip)
 
 	if err != nil {
 		return fmt.Errorf("Clip extraction failed: %s\n%s\n", err.Error(), generateVideoClip)
 	}
 
-	stretchVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -vf 'setpts=%f*PTS' -c:a copy file:'%s'", originalVideoSegmentName, ratio, videoSegmentName)
+	stretchVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -vf 'setpts=%f*PTS' file:'%s'", originalVideoSegmentName, videoStretchRatio, videoSegmentName)
 	_, err = d.ffmpeg.Run(ctx, stretchVideoClip)
 
 	if err != nil {
 		return fmt.Errorf("Clip stretching failed: %s\n%s\n", err.Error(), generateVideoClip)
 	}
 
+	stretchAudioClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -filter:a 'atempo=%f' file:'%s'", audioFileName, audioStretchRatio, stretchAudioFileName)
+	_, err = d.ffmpeg.Run(ctx, stretchAudioClip)
+
 	dubVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -i file:'%s' -c:v copy -map 0:v:0 -map 1:a:0 file:'%s'",
-		videoSegmentName, audioFileName, dubbedVideoSegmentName)
+		videoSegmentName, stretchAudioFileName, dubbedVideoSegmentName)
 	_, err = d.ffmpeg.Run(ctx, dubVideoClip)
 
 	if err != nil {
 		return fmt.Errorf("Clip dubbing failed: %s\n%s\n", err.Error(), generateVideoClip)
 	}
 
-	utils.DeleteFiles([]string{videoSegmentName, originalVideoSegmentName, audioFileName})
+	utils.DeleteFiles([]string{videoSegmentName, originalVideoSegmentName, audioFileName, stretchAudioFileName})
 
 	return nil
 }
