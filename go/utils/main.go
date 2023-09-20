@@ -16,18 +16,18 @@ func GetCurrentDateTimeString() string {
 }
 
 func GetAudioFileDuration(fileName string) (float64, error) {
-	cmd := exec.Command("ffprobe", "-v", "error", "-show_entries",
-		"format=duration", "-of", "default=noprint_wrappers=1:nokey=1", fileName)
 
-	output, err := cmd.Output()
+	cmdString := fmt.Sprintf("ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 file:'%s'", fileName)
+
+	output, err := ExecCommand(cmdString)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("Could not run ffprobe to get duration: %s", err.Error())
 	}
 
 	text := strings.TrimSpace(string(output))
 	duration, err := strconv.ParseFloat(text, 64)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("Could not trim space to get duration: %s", err.Error())
 	}
 
 	return duration, nil
@@ -45,13 +45,13 @@ func ExecCommand(command string) (string, error) {
 
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
-	err := cmd.Run()
+	output, err := cmd.Output()
 	errMsg := stderr.String()
 
 	if err != nil {
 		return "", fmt.Errorf("Command failed: %s, %s", err.Error(), errMsg)
 	}
-	return errMsg, nil
+	return string(output), nil
 }
 
 func MinOf(vars ...int) int {
