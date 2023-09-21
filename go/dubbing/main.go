@@ -421,10 +421,10 @@ func (d *Dubbing) fetchAndDub(
 		}
 		logProgress("Added Missing Info")
 
-		if idx == len(segments)-1 {
-			videoDuration, err := utils.GetAudioFileDuration(identifier + ".mp4")
+		videoDuration, err := utils.GetAudioFileDuration(identifier + ".mp4")
+		if err == nil && idx == len(segments)-1 && videoDuration-translatedSegment.End <= 0.5 {
 			flip := true
-			err = d.addMissingInfo(ctx, addMissingInfoProps{identifier: identifier, currentSegment: Segment{Id: translatedSegment.Id, Start: videoDuration - 0.001}, beforeSegment: translatedSegment, flip: &flip})
+			err = d.addMissingInfo(ctx, addMissingInfoProps{identifier: identifier, currentSegment: Segment{Id: translatedSegment.Id, Start: videoDuration - 0.1}, beforeSegment: translatedSegment, flip: &flip})
 			if err != nil {
 				return nil, fmt.Errorf("Could not add missing info %d/%d: %s\n", idx+1, len(segments), err.Error())
 			}
@@ -464,7 +464,7 @@ func (d *Dubbing) addMissingInfo(ctx context.Context, args addMissingInfoProps) 
 	start := args.beforeSegment.End
 	end := args.currentSegment.Start
 
-	if end-start <= 0.05 {
+	if end-start <= 0.001 {
 		return nil
 	}
 
@@ -931,7 +931,7 @@ func generateTranslationPrompt(targetLanguage string, targetSentence string, bef
 	disclaimer := fmt.Sprintf("Please use vocabulary that is simple, common and even a learner new to %s language would know, please do not use any advanced words, or formal vocabulary. Focus on clarity and simplicity over complex vocabulary", targetLanguage)
 
 	prompt := fmt.Sprintf(
-		"Please translate the following sentence to everyday, informal, conversational %s, and provide the output in %s Alphabet:\n'%s'\n%s\n%s\n%s\nAgain the sentence that you are supposed to translate is this:\n'%s'\nProvide the output in %s Alphabet. Do not surround the output with any quotation marks.",
+		"Please simplify the following sentence and then translate it to everyday, informal, conversational %s, and provide the output in %s Alphabet:\n'%s'\n%s\n%s\n%s\nAgain the sentence that you are supposed to translate is this:\n'%s'\nProvide the output in %s Alphabet. Do not surround the output with any quotation marks.",
 		targetLanguage, targetLanguage, targetSentence, disclaimer, beforeSentence, afterSentence, targetSentence, targetLanguage,
 	)
 	return prompt
