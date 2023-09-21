@@ -464,7 +464,7 @@ func (d *Dubbing) addMissingInfo(ctx context.Context, args addMissingInfoProps) 
 	start := args.beforeSegment.End
 	end := args.currentSegment.Start
 
-	if end-start <= 0.001 {
+	if end-start <= 0.05 {
 		return nil
 	}
 
