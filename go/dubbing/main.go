@@ -408,6 +408,29 @@ func (d *Dubbing) fetchAndDub(
 		}
 		logProgress("Lip Syncing Progress")
 
+		var beforeSegment *Segment = nil
+		if idx > 0 {
+			beforeSegment = &segments[idx-1]
+		} else if idx == 0 {
+			beforeSegment = &Segment{End: 0}
+		}
+
+		err = d.addMissingInfo(ctx, addMissingInfoProps{identifier: identifier, currentSegment: *translatedSegment, beforeSegment: beforeSegment})
+		if err != nil {
+			return nil, fmt.Errorf("Could not add missing info %d/%d: %s\n", idx+1, len(segments), err.Error())
+		}
+		logProgress("Added Missing Info")
+
+		if idx == len(segments)-1 {
+			videoDuration, err := utils.GetAudioFileDuration(identifier + ".mp4")
+			flip := true
+			err = d.addMissingInfo(ctx, addMissingInfoProps{identifier: identifier, currentSegment: Segment{Id: translatedSegment.Id, Start: videoDuration - 0.001}, beforeSegment: translatedSegment, flip: &flip})
+			if err != nil {
+				return nil, fmt.Errorf("Could not add missing info %d/%d: %s\n", idx+1, len(segments), err.Error())
+			}
+			logProgress("Added Missing Info")
+		}
+
 		translatedSegments = append(translatedSegments, *translatedSegment)
 
 		percentage := 100 * (float64(len(translatedSegments)) / float64(len(segments)))
@@ -423,6 +446,59 @@ func (d *Dubbing) fetchAndDub(
 	}
 
 	return &translatedSegments, nil
+}
+
+type addMissingInfoProps struct {
+	currentSegment Segment
+	identifier     string
+	beforeSegment  *Segment
+	flip           *bool
+}
+
+func (d *Dubbing) addMissingInfo(ctx context.Context, args addMissingInfoProps) error {
+
+	if args.beforeSegment == nil {
+		return nil
+	}
+
+	start := args.beforeSegment.End
+	end := args.currentSegment.Start
+
+	if end-start <= 0.001 {
+		return nil
+	}
+
+	videoSegmentName := getVideoSegmentName(args.identifier, args.currentSegment.Id)
+	beforeSegmentName := "before_" + videoSegmentName
+	syncedVideoSegmentName := "synced_" + videoSegmentName
+
+	//extract the middle part with disabled audio
+	generateVideoClipCmd := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s.mp4' -ss %f -to %f -af 'volume=0' file:'%s'", args.identifier, start, end, beforeSegmentName)
+	d.logger.Info("INTERIM FFMPEG CMD", zap.String("ffmpeg_cmd", generateVideoClipCmd))
+	_, err := d.ffmpeg.Run(ctx, generateVideoClipCmd)
+	if err != nil {
+		return fmt.Errorf("Could not extract interim segment: %s", err.Error())
+	}
+
+	batch := []string{beforeSegmentName, syncedVideoSegmentName}
+
+	if args.flip != nil && *args.flip == true {
+		batch = []string{syncedVideoSegmentName, beforeSegmentName}
+	}
+
+	outputFileName, err := d.concatBatchFiles(ctx, batch, args.identifier, 2)
+
+	if err != nil {
+		return fmt.Errorf("Could not concat missing info: %s", err.Error())
+	}
+
+	err = os.Rename(outputFileName, syncedVideoSegmentName)
+
+	if err != nil {
+		return fmt.Errorf("Could not rename concated missing info output: %s", err.Error())
+	}
+
+	return nil
 }
 
 func (d *Dubbing) fetchDubbedClip(segment Segment, identifier string) error {
