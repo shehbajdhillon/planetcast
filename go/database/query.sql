@@ -28,7 +28,7 @@ SELECT * FROM team_membership WHERE team_id = $1 AND user_id = $2 LIMIT 1;
 
 
 -- name: CreateProject :one
-INSERT INTO project (team_id, title, source_media) VALUES ($1, $2, $3) RETURNING *;
+INSERT INTO project (team_id, title, source_media, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING *;
 
 -- name: GetProjectById :one
 SELECT * FROM project WHERE id = $1 LIMIT 1;
@@ -37,14 +37,14 @@ SELECT * FROM project WHERE id = $1 LIMIT 1;
 SELECT * FROM project WHERE id = $1 AND team_id = $2 LIMIT 1;
 
 -- name: GetProjectsByTeamId :many
-SELECT * FROM project WHERE team_id = $1;
+SELECT * FROM project WHERE team_id = $1 ORDER BY created;
 
 -- name: DeleteProjectById :one
 DELETE FROM project WHERE id = $1 RETURNING *;
 
 
 -- name: CreateTransformation :one
-INSERT INTO transformation (project_id, target_language, target_media, transcript, is_source, status, progress) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+INSERT INTO transformation (project_id, target_language, target_media, transcript, is_source, status, progress, created) VALUES ($1, $2, $3, $4, $5, $6, $7, clock_timestamp()) RETURNING *;
 
 -- name: UpdateTranscriptById :one
 UPDATE transformation SET transcript = $2 WHERE id = $1 RETURNING *;
@@ -62,7 +62,7 @@ UPDATE transformation SET progress = $2 WHERE id = $1 RETURNING *;
 SELECT * FROM transformation WHERE id = $1 LIMIT 1;
 
 -- name: GetTransformationsByProjectId :many
-SELECT * FROM transformation WHERE project_id = $1;
+SELECT * FROM transformation WHERE project_id = $1 ORDER BY created;
 
 -- name: GetTransformationByTransformationIdProjectId :one
 SELECT * FROM transformation WHERE id = $1 AND project_id = $2 LIMIT 1;

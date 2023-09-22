@@ -102,6 +102,7 @@ type Project struct {
 	TeamID      int64
 	Title       string
 	SourceMedia string
+	Created     time.Time
 }
 
 type Team struct {
@@ -129,6 +130,7 @@ type Transformation struct {
 	IsSource       bool
 	Status         string
 	Progress       float64
+	Created        time.Time
 }
 
 type Userinfo struct {

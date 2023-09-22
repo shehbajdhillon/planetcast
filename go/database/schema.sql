@@ -35,7 +35,8 @@ CREATE TABLE project (
   id BIGSERIAL PRIMARY KEY NOT NULL,
   team_id BIGINT REFERENCES team (id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL,
-  source_media TEXT NOT NULL
+  source_media TEXT NOT NULL,
+  created TIMESTAMP NOT NULL
 );
 
 DROP TABLE IF EXISTS transformation CASCADE;
@@ -47,5 +48,6 @@ CREATE TABLE transformation (
   transcript jsonb,
   is_source BOOLEAN NOT NULL,
   status TEXT NOT NULL,
-  progress DOUBLE PRECISION NOT NULL
+  progress DOUBLE PRECISION NOT NULL,
+  created TIMESTAMP NOT NULL
 );

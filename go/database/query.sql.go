@@ -56,7 +56,7 @@ func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) (Userinfo, err
 }
 
 const createProject = `-- name: CreateProject :one
-INSERT INTO project (team_id, title, source_media) VALUES ($1, $2, $3) RETURNING id, team_id, title, source_media
+INSERT INTO project (team_id, title, source_media, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, team_id, title, source_media, created
 `
 
 type CreateProjectParams struct {
@@ -73,6 +73,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		&i.TeamID,
 		&i.Title,
 		&i.SourceMedia,
+		&i.Created,
 	)
 	return i, err
 }
@@ -101,7 +102,7 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 }
 
 const createTransformation = `-- name: CreateTransformation :one
-INSERT INTO transformation (project_id, target_language, target_media, transcript, is_source, status, progress) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress
+INSERT INTO transformation (project_id, target_language, target_media, transcript, is_source, status, progress, created) VALUES ($1, $2, $3, $4, $5, $6, $7, clock_timestamp()) RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress, created
 `
 
 type CreateTransformationParams struct {
@@ -134,12 +135,13 @@ func (q *Queries) CreateTransformation(ctx context.Context, arg CreateTransforma
 		&i.IsSource,
 		&i.Status,
 		&i.Progress,
+		&i.Created,
 	)
 	return i, err
 }
 
 const deleteProjectById = `-- name: DeleteProjectById :one
-DELETE FROM project WHERE id = $1 RETURNING id, team_id, title, source_media
+DELETE FROM project WHERE id = $1 RETURNING id, team_id, title, source_media, created
 `
 
 func (q *Queries) DeleteProjectById(ctx context.Context, id int64) (Project, error) {
@@ -150,12 +152,13 @@ func (q *Queries) DeleteProjectById(ctx context.Context, id int64) (Project, err
 		&i.TeamID,
 		&i.Title,
 		&i.SourceMedia,
+		&i.Created,
 	)
 	return i, err
 }
 
 const deleteTransformationById = `-- name: DeleteTransformationById :one
-DELETE FROM transformation WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress
+DELETE FROM transformation WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress, created
 `
 
 func (q *Queries) DeleteTransformationById(ctx context.Context, id int64) (Transformation, error) {
@@ -170,12 +173,13 @@ func (q *Queries) DeleteTransformationById(ctx context.Context, id int64) (Trans
 		&i.IsSource,
 		&i.Status,
 		&i.Progress,
+		&i.Created,
 	)
 	return i, err
 }
 
 const getProjectById = `-- name: GetProjectById :one
-SELECT id, team_id, title, source_media FROM project WHERE id = $1 LIMIT 1
+SELECT id, team_id, title, source_media, created FROM project WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetProjectById(ctx context.Context, id int64) (Project, error) {
@@ -186,12 +190,13 @@ func (q *Queries) GetProjectById(ctx context.Context, id int64) (Project, error)
 		&i.TeamID,
 		&i.Title,
 		&i.SourceMedia,
+		&i.Created,
 	)
 	return i, err
 }
 
 const getProjectByProjectIdTeamId = `-- name: GetProjectByProjectIdTeamId :one
-SELECT id, team_id, title, source_media FROM project WHERE id = $1 AND team_id = $2 LIMIT 1
+SELECT id, team_id, title, source_media, created FROM project WHERE id = $1 AND team_id = $2 LIMIT 1
 `
 
 type GetProjectByProjectIdTeamIdParams struct {
@@ -207,12 +212,13 @@ func (q *Queries) GetProjectByProjectIdTeamId(ctx context.Context, arg GetProjec
 		&i.TeamID,
 		&i.Title,
 		&i.SourceMedia,
+		&i.Created,
 	)
 	return i, err
 }
 
 const getProjectsByTeamId = `-- name: GetProjectsByTeamId :many
-SELECT id, team_id, title, source_media FROM project WHERE team_id = $1
+SELECT id, team_id, title, source_media, created FROM project WHERE team_id = $1 ORDER BY created
 `
 
 func (q *Queries) GetProjectsByTeamId(ctx context.Context, teamID int64) ([]Project, error) {
@@ -229,6 +235,7 @@ func (q *Queries) GetProjectsByTeamId(ctx context.Context, teamID int64) ([]Proj
 			&i.TeamID,
 			&i.Title,
 			&i.SourceMedia,
+			&i.Created,
 		); err != nil {
 			return nil, err
 		}
@@ -244,7 +251,7 @@ func (q *Queries) GetProjectsByTeamId(ctx context.Context, teamID int64) ([]Proj
 }
 
 const getSourceTransformationByProjectId = `-- name: GetSourceTransformationByProjectId :one
-SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress FROM transformation WHERE project_id = $1 AND is_source = true LIMIT 1
+SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress, created FROM transformation WHERE project_id = $1 AND is_source = true LIMIT 1
 `
 
 func (q *Queries) GetSourceTransformationByProjectId(ctx context.Context, projectID int64) (Transformation, error) {
@@ -259,6 +266,7 @@ func (q *Queries) GetSourceTransformationByProjectId(ctx context.Context, projec
 		&i.IsSource,
 		&i.Status,
 		&i.Progress,
+		&i.Created,
 	)
 	return i, err
 }
@@ -353,7 +361,7 @@ func (q *Queries) GetTeamMemebershipsByUserId(ctx context.Context, userID int64)
 }
 
 const getTransformationById = `-- name: GetTransformationById :one
-SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress FROM transformation WHERE id = $1 LIMIT 1
+SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress, created FROM transformation WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetTransformationById(ctx context.Context, id int64) (Transformation, error) {
@@ -368,12 +376,13 @@ func (q *Queries) GetTransformationById(ctx context.Context, id int64) (Transfor
 		&i.IsSource,
 		&i.Status,
 		&i.Progress,
+		&i.Created,
 	)
 	return i, err
 }
 
 const getTransformationByProjectIdTargetLanguage = `-- name: GetTransformationByProjectIdTargetLanguage :one
-SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress FROM transformation WHERE project_id = $1 AND target_language = $2 LIMIT 1
+SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress, created FROM transformation WHERE project_id = $1 AND target_language = $2 LIMIT 1
 `
 
 type GetTransformationByProjectIdTargetLanguageParams struct {
@@ -393,12 +402,13 @@ func (q *Queries) GetTransformationByProjectIdTargetLanguage(ctx context.Context
 		&i.IsSource,
 		&i.Status,
 		&i.Progress,
+		&i.Created,
 	)
 	return i, err
 }
 
 const getTransformationByTransformationIdProjectId = `-- name: GetTransformationByTransformationIdProjectId :one
-SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress FROM transformation WHERE id = $1 AND project_id = $2 LIMIT 1
+SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress, created FROM transformation WHERE id = $1 AND project_id = $2 LIMIT 1
 `
 
 type GetTransformationByTransformationIdProjectIdParams struct {
@@ -418,12 +428,13 @@ func (q *Queries) GetTransformationByTransformationIdProjectId(ctx context.Conte
 		&i.IsSource,
 		&i.Status,
 		&i.Progress,
+		&i.Created,
 	)
 	return i, err
 }
 
 const getTransformationsByProjectId = `-- name: GetTransformationsByProjectId :many
-SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress FROM transformation WHERE project_id = $1
+SELECT id, project_id, target_language, target_media, transcript, is_source, status, progress, created FROM transformation WHERE project_id = $1 ORDER BY created
 `
 
 func (q *Queries) GetTransformationsByProjectId(ctx context.Context, projectID int64) ([]Transformation, error) {
@@ -444,6 +455,7 @@ func (q *Queries) GetTransformationsByProjectId(ctx context.Context, projectID i
 			&i.IsSource,
 			&i.Status,
 			&i.Progress,
+			&i.Created,
 		); err != nil {
 			return nil, err
 		}
@@ -491,7 +503,7 @@ func (q *Queries) GetUserById(ctx context.Context, id int64) (Userinfo, error) {
 }
 
 const updateTargetMediaById = `-- name: UpdateTargetMediaById :one
-UPDATE transformation SET target_media = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress
+UPDATE transformation SET target_media = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress, created
 `
 
 type UpdateTargetMediaByIdParams struct {
@@ -511,12 +523,13 @@ func (q *Queries) UpdateTargetMediaById(ctx context.Context, arg UpdateTargetMed
 		&i.IsSource,
 		&i.Status,
 		&i.Progress,
+		&i.Created,
 	)
 	return i, err
 }
 
 const updateTranscriptById = `-- name: UpdateTranscriptById :one
-UPDATE transformation SET transcript = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress
+UPDATE transformation SET transcript = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress, created
 `
 
 type UpdateTranscriptByIdParams struct {
@@ -536,12 +549,13 @@ func (q *Queries) UpdateTranscriptById(ctx context.Context, arg UpdateTranscript
 		&i.IsSource,
 		&i.Status,
 		&i.Progress,
+		&i.Created,
 	)
 	return i, err
 }
 
 const updateTransformationProgressById = `-- name: UpdateTransformationProgressById :one
-UPDATE transformation SET progress = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress
+UPDATE transformation SET progress = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress, created
 `
 
 type UpdateTransformationProgressByIdParams struct {
@@ -561,12 +575,13 @@ func (q *Queries) UpdateTransformationProgressById(ctx context.Context, arg Upda
 		&i.IsSource,
 		&i.Status,
 		&i.Progress,
+		&i.Created,
 	)
 	return i, err
 }
 
 const updateTransformationStatusById = `-- name: UpdateTransformationStatusById :one
-UPDATE transformation SET status = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress
+UPDATE transformation SET status = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress, created
 `
 
 type UpdateTransformationStatusByIdParams struct {
@@ -586,6 +601,7 @@ func (q *Queries) UpdateTransformationStatusById(ctx context.Context, arg Update
 		&i.IsSource,
 		&i.Status,
 		&i.Progress,
+		&i.Created,
 	)
 	return i, err
 }
