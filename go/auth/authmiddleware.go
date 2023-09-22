@@ -51,6 +51,11 @@ func Middleware() func(http.Handler) http.Handler {
 				return
 			}
 
+			if !authorizedUser(user) {
+				http.Error(w, "User Not Authorized. Please Sign Up On Our Waitlist", http.StatusForbidden)
+				return
+			}
+
 			ctx := context.WithValue(r.Context(), userCtxKey, user)
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
@@ -65,6 +70,10 @@ func FromContext(ctx context.Context) *clerk.User {
 
 func EmailFromContext(ctx context.Context) (string, error) {
 	user := FromContext(ctx)
+	return getEmail(user)
+}
+
+func getEmail(user *clerk.User) (string, error) {
 	if user == nil {
 		return "", fmt.Errorf("Not logged in")
 	}
@@ -82,4 +91,15 @@ func FullnameFromContext(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("Not logged in")
 	}
 	return fmt.Sprintf("%s %s", *user.FirstName, *user.LastName), nil
+}
+
+func authorizedUser(user *clerk.User) bool {
+	email, _ := getEmail(user)
+	allowedEmails := map[string]bool{
+		"shehbaj.dhillon@gmail.com": true,
+		"shehbaj@planetcast.ai":     true,
+		"jmn3lson@gmail.com":        true,
+	}
+	_, ok := allowedEmails[email]
+	return ok
 }
