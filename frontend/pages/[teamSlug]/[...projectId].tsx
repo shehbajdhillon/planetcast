@@ -36,7 +36,7 @@ import { useEffect, useState } from "react";
 import { useVideoSeekStore } from "@/stores/video_seek_store";
 import { formatTime } from "@/utils";
 import NewTransformationModel from "@/components/new_transformation_modal";
-import { Clipboard } from "lucide-react";
+import { Clipboard, TrashIcon } from "lucide-react";
 
 
 const DELETE_PROJECT = gql`
@@ -108,6 +108,14 @@ const GET_CURRENT_PROJECT = gql`
   }
 `;
 
+const DELETE_TRANSFORMATION = gql`
+  mutation DeleteTransformation($transformationId: Int64!) {
+    deleteTransformation(transformationId: $transformationId) {
+      id
+    }
+  }
+`;
+
 interface LoadingBoxProps {
   progress: number;
 }
@@ -144,6 +152,8 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
   const [getProjectData, { data, refetch }]
     = useLazyQuery(GET_CURRENT_PROJECT, { variables: { teamSlug, projectId: project?.id }, pollInterval: !isProcessing ? 0 : 10000, fetchPolicy: 'no-cache' });
 
+  const [deleteTransformation] = useMutation(DELETE_TRANSFORMATION);
+
   useEffect(() => {
     const newProjectData = data?.getTeamById.projects[0];
     const newTransformations = newProjectData?.transformations;
@@ -161,6 +171,14 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
 
   const setCurrentSeek = useVideoSeekStore((state) => state.setCurrentSeek);
   const onTimeUpdate = (time: number) => setCurrentSeek(time);
+
+  const deleteDubbing = async (tfnId: number) => {
+    const res = await deleteTransformation({ variables: { transformationId: tfnId } });
+    if (res) {
+      setTransformationIdx(0);
+      refetch();
+    }
+  }
 
   useEffect(() => {
     setCurrentSeek(0);
@@ -204,6 +222,7 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
                 </Button>
               ))}
               <NewTransformationModel project={project} refetch={refetch} />
+              {!transformations[transformationIdx]?.isSource && <Button onClick={() => deleteDubbing(transformations[transformationIdx].id)} leftIcon={<TrashIcon />} variant={"outline"}>Delete Dubbing</Button>}
             </HStack>
           </GridItem>
 
