@@ -3,6 +3,7 @@ import { gql, useMutation } from "@apollo/client";
 import {
   Box,
   Button,
+  Checkbox,
   FormLabel,
   Modal,
   ModalBody,
@@ -24,8 +25,8 @@ interface NewTransformationModelProps {
 };
 
 const CREATE_TRANSLATION = gql`
-  mutation CreateTranslation($projectId: Int64!, $targetLanguage: SupportedLanguage!) {
-    createTranslation(projectId: $projectId, targetLanguage: $targetLanguage) {
+  mutation CreateTranslation($projectId: Int64!, $targetLanguage: SupportedLanguage!, $lipSync: Boolean!) {
+    createTranslation(projectId: $projectId, targetLanguage: $targetLanguage, lipSync: $lipSync) {
       id
       projectId
     }
@@ -44,9 +45,10 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
   const [targetLanguage, setTargetLanguage] = useState<SupportedLanguage>(undubbedLanguages[0]);
 
   const [createTranslationMutation, { loading }] = useMutation(CREATE_TRANSLATION);
+  const [lipSync, setLipSync] = useState(false);
 
   const createTranslation = async () => {
-    const variables = { projectId: project.id, targetLanguage }
+    const variables = { projectId: project.id, targetLanguage, lipSync }
     const res = await createTranslationMutation({ variables });
     if (res) {
       refetch();
@@ -57,12 +59,13 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
 
   useEffect(() => {
     setTargetLanguage(undubbedLanguages[0]);
+    setLipSync(false);
   }, [isOpen]);
 
   return (
     <Box>
       <Button leftIcon={<PlusIcon />} onClick={onOpen} variant={"outline"}>New Dubbing</Button>
-      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+      <Modal isOpen={isOpen} onClose={onClose} isCentered size={"xl"}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>New Dubbing</ModalHeader>
@@ -70,7 +73,7 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
           <ModalBody overflow={"auto"}>
             <Stack w="full" h={"full"} direction={"row"}>
               <Box mx="auto">
-                <Stack spacing={2}>
+                <Stack spacing={5}>
                   <FormLabel
                     fontWeight={'600'}
                     fontSize={'lg'}
@@ -82,6 +85,9 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
                       <option key={idx} value={lang}>{lang}</option>
                     ))}
                   </Select>
+                  <Checkbox isChecked={lipSync} onChange={() => setLipSync(curr => !curr)}>
+                    Enable Lip Syncing (Experimental)
+                  </Checkbox>
                   <Button hidden={!targetLanguage} onClick={createTranslation} isDisabled={loading}>
                     Submit
                   </Button>
