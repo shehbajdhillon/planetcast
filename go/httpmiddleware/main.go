@@ -36,13 +36,14 @@ func HttpRequest(args HttpRequestStruct) ([]byte, error) {
 
 	defer res.Body.Close()
 
+	responseBody, err := ioutil.ReadAll(res.Body)
+
 	// Error out if response code is not 200 or 202.
 	// But what if the response code is okay but not equal to 200 or 202?
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusAccepted && res.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("Request failed: %d", res.StatusCode)
+		return nil, fmt.Errorf("Request failed: %d %s", res.StatusCode, responseBody)
 	}
 
-	responseBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read response body: " + err.Error())
 	}

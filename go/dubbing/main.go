@@ -80,6 +80,8 @@ func (d *Dubbing) getTranscript(fileName string) (*WhisperOutput, error) {
 
 	for retries > 0 {
 
+		sleepTime := getExponentialDelaySeconds(5 - retries)
+
 		replicateRequestBody := map[string]interface{}{
 			"version": "4a60104c44dd709fc08a03dfeca6c6906257633dd03fd58663ec896a4eeba30e",
 			"input": map[string]interface{}{
@@ -95,8 +97,8 @@ func (d *Dubbing) getTranscript(fileName string) (*WhisperOutput, error) {
 			break
 		} else {
 			retries -= 1
-			d.logger.Error("Whisper request failed, retrying after 5s", zap.Error(err))
-			time.Sleep(5 * time.Second)
+			d.logger.Error("Whisper request failed, retrying after sleeping", zap.Error(err), zap.Int("sleep_time", sleepTime), zap.Int("retries_left", retries))
+			time.Sleep(time.Duration(sleepTime) * time.Second)
 		}
 	}
 
@@ -469,7 +471,7 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 			Progress: percentage,
 		})
 
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(2 * time.Second)
 
 	}
 
@@ -541,6 +543,8 @@ func (d *Dubbing) fetchDubbedClip(segment Segment, identifier string) error {
 		id := segment.Id
 		audioFileName := getAudioFileName(identifier, id)
 
+		sleepTime := getExponentialDelaySeconds(5 - retries)
+
 		data := VoiceRequest{
 			Text:    segment.Text,
 			ModelID: "eleven_multilingual_v2",
@@ -582,8 +586,8 @@ func (d *Dubbing) fetchDubbedClip(segment Segment, identifier string) error {
 
 		} else {
 			retries -= 1
-			d.logger.Error("Request to Eleven Labs failed, retrying after 5 seconds", zap.Int("retries_left", retries), zap.Error(err))
-			time.Sleep(5 * time.Second)
+			d.logger.Error("Request to Eleven Labs failed, retrying after sleeping", zap.Int("retries_left", retries), zap.Error(err), zap.Int("sleep_time", sleepTime))
+			time.Sleep(time.Duration(sleepTime) * time.Second)
 		}
 
 	}
@@ -894,6 +898,8 @@ func (d *Dubbing) translateSegment(
 
 	for retries > 0 {
 
+		sleepTime := getExponentialDelaySeconds(5 - retries)
+
 		prompt := generateTranslationPrompt(string(targetLang), segment.Text, beforeTranslatedSentences, afterOriginalSentences)
 		chatGptInput := ChatRequestInput{
 			Model: "gpt-4",
@@ -917,21 +923,41 @@ func (d *Dubbing) translateSegment(
 			},
 		})
 
-		var chatResponse ChatCompletionResponse
-		err2 := json.Unmarshal(respBody, &chatResponse)
-
-		if err != nil || err2 != nil || len(chatResponse.Choices) == 0 {
-
+		if err != nil {
+			d.logger.Error(
+				"Could not make request to OpenAI. Retrying after sleeping.",
+				zap.Error(err),
+				zap.Int("retries_left", retries),
+				zap.Int("sleep_time", sleepTime),
+				zap.String("prompt", prompt),
+			)
 			retries -= 1
-			d.logger.Error("Open AI request failed, sleeping for 5s.", zap.Int("retries_left", retries))
-			time.Sleep(5 * time.Second)
-
+			time.Sleep(time.Duration(sleepTime) * time.Second)
 		} else {
 
-			segment.Text = chatResponse.Choices[0].Message.Content
-			return &segment, nil
+			var chatResponse ChatCompletionResponse
+			err = json.Unmarshal(respBody, &chatResponse)
 
+			if err != nil || len(chatResponse.Choices) == 0 {
+
+				retries -= 1
+				d.logger.Error(
+					"Could not parse OpenAI Request. Retying after sleeping.",
+					zap.Int("retries_left", retries),
+					zap.Int("sleep_time", sleepTime),
+					zap.Error(err),
+					zap.String("response_body", string(respBody)),
+					zap.String("prompt", prompt),
+					zap.Int("chat_choices", len(chatResponse.Choices)),
+				)
+				time.Sleep(time.Duration(sleepTime) * time.Second)
+
+			} else {
+				segment.Text = chatResponse.Choices[0].Message.Content
+				return &segment, nil
+			}
 		}
+
 	}
 
 	return nil, fmt.Errorf("Open AI Requests Failed")
@@ -963,4 +989,9 @@ func generateTranslationPrompt(targetLanguage string, targetSentence string, bef
 		targetLanguage, targetLanguage, targetSentence, disclaimer, beforeSentence, afterSentence, targetSentence, targetLanguage, targetLanguage,
 	)
 	return prompt
+}
+
+func getExponentialDelaySeconds(retryNumber int) int {
+	delayTime := int(5 * math.Pow(2, float64(retryNumber)))
+	return delayTime
 }
