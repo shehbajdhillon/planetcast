@@ -18,6 +18,7 @@ import {
   VStack,
   useClipboard,
   useColorModeValue,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { GetServerSideProps, NextPage } from "next";
 
@@ -37,6 +38,7 @@ import { useVideoSeekStore } from "@/stores/video_seek_store";
 import { formatTime } from "@/utils";
 import NewTransformationModel from "@/components/new_transformation_modal";
 import { Clipboard, TrashIcon } from "lucide-react";
+import SingleActionModal from "@/components/single_action_modal";
 
 
 const DELETE_PROJECT = gql`
@@ -54,7 +56,7 @@ interface SettingsTabProps {
 
 const SettingsTab: React.FC<SettingsTabProps> = ({ projectId, teamSlug }) => {
 
-  const [deleteProjectMutation, {}] = useMutation(DELETE_PROJECT);
+  const [deleteProjectMutation, { loading }] = useMutation(DELETE_PROJECT);
 
   const router = useRouter();
 
@@ -62,6 +64,8 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ projectId, teamSlug }) => {
     const res = await deleteProjectMutation({ variables: { projectId } });
     if (res) router.push(`/${teamSlug}`);
   };
+
+  const { isOpen, onClose, onOpen } = useDisclosure();
 
   return (
     <Box
@@ -72,7 +76,15 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ projectId, teamSlug }) => {
     >
       <Box w="full" maxW={"1920px"}>
         <Center>
-          <Button colorScheme="red" onClick={deleteProject}>
+          <SingleActionModal
+            heading={"Delete Project"}
+            body={`Are you sure you want to delete this Project? This will delete the original video and all the dubbings generated. This action is irreversible.`}
+            action={() => deleteProject()}
+            loading={loading}
+            isOpen={isOpen}
+            onClose={onClose}
+          />
+          <Button colorScheme="red" onClick={onOpen}>
             Delete Project
           </Button>
         </Center>
@@ -151,7 +163,7 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
   const [getProjectData, { data, refetch }]
     = useLazyQuery(GET_CURRENT_PROJECT, { variables: { teamSlug, projectId: project?.id }, pollInterval: !isProcessing ? 0 : 10000, fetchPolicy: 'no-cache' });
 
-  const [deleteTransformation] = useMutation(DELETE_TRANSFORMATION);
+  const [deleteTransformation, { loading: deleteTfnLoading } ] = useMutation(DELETE_TRANSFORMATION);
 
   useEffect(() => {
     const newProjectData = data?.getTeamById.projects[0];
@@ -166,6 +178,8 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
       getProjectData();
     }
   }, [isProcessing]);
+
+  const { isOpen, onClose, onOpen } = useDisclosure();
 
 
   const setCurrentSeek = useVideoSeekStore((state) => state.setCurrentSeek);
@@ -221,7 +235,15 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
                 </Button>
               ))}
               <NewTransformationModel project={project} refetch={refetch} />
-              {!transformations[transformationIdx]?.isSource && <Button onClick={() => deleteDubbing(transformations[transformationIdx].id)} leftIcon={<TrashIcon />} variant={"outline"}>Delete Dubbing</Button>}
+              <SingleActionModal
+                heading={"Delete Dubbing"}
+                body={`Are you sure you want to delete this dubbing? This action is irreversible.`}
+                action={() => deleteDubbing(transformations[transformationIdx].id)}
+                loading={deleteTfnLoading}
+                isOpen={isOpen}
+                onClose={onClose}
+              />
+              {!transformations[transformationIdx]?.isSource && <Button onClick={onOpen} leftIcon={<TrashIcon />} variant={"outline"}>Delete Dubbing</Button>}
             </HStack>
           </GridItem>
 
