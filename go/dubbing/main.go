@@ -145,6 +145,17 @@ func combineWordTimeStamps(whisperOutput *WhisperOutput) []Segment {
 		"|":   true,
 	}
 
+	punctuation := map[string]bool{
+		".": true,
+		"!": true,
+		"?": true,
+		"。": true, // Chinese
+		"।": true, // Hindi
+		"¿": true, // Spanish
+		"؟": true, // Arabic
+		";": true, // Greek
+	}
+
 	segments := whisperOutput.Segments
 
 	var newSegmentsArray []Segment
@@ -160,7 +171,7 @@ func combineWordTimeStamps(whisperOutput *WhisperOutput) []Segment {
 
 			// FUTURE OPTIMIZATION: USE strings.Join(..., " ")
 			// TRY REDUCING CALLS TO TRIM SPACE FUNC
-			if punctuationEndsSentence[lastChar] {
+			if punctuationEndsSentence[lastChar] || punctuation[lastChar] {
 				var text string
 				for _, w := range currNewSegment {
 					text = text + " " + strings.TrimSpace(w.Word)
