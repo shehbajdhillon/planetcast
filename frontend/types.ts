@@ -11,7 +11,6 @@ export interface Project {
   id: number;
   teamId: number;
   title: string;
-  sourceLanguage: SupportedLanguage;
   sourceMedia: string;
   transformations: Transformation[];
 };

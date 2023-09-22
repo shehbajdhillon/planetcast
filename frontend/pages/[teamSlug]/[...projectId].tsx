@@ -93,7 +93,6 @@ const GET_CURRENT_PROJECT = gql`
         id
         title
         sourceMedia
-        sourceLanguage
         transformations {
           id
           targetMedia

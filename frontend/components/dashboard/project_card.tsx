@@ -29,7 +29,6 @@ const GET_PROJECT_DATA = gql`
         id
         title
         sourceMedia
-        sourceLanguage
         transformations {
           id
           targetMedia

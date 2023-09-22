@@ -32,8 +32,8 @@ import NProgress from 'nprogress';
 import Image from 'next/image';
 
 const CREATE_PROJECT = gql`
-  mutation CreateProject($teamSlug: String!, $title: String!, $sourceLanguage: SupportedLanguage!, $sourceMedia: Upload!) {
-    createProject(teamSlug: $teamSlug, title: $title, sourceLanguage: $sourceLanguage, sourceMedia: $sourceMedia) {
+  mutation CreateProject($teamSlug: String!, $title: String!, $sourceMedia: Upload!) {
+    createProject(teamSlug: $teamSlug, title: $title, sourceMedia: $sourceMedia) {
       id
       title
     }
@@ -53,7 +53,6 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
 
   const [title, setTitle] = useState("");
   const [sourceMedia, setSourceMedia] = useState<File>();
-  const [sourceLanguage, setSourceLanguage] = useState<SupportedLanguage>("ENGLISH");
 
   const [formValid, setFormValid] = useState(false);
 
@@ -66,7 +65,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
   const bgColor = useColorModeValue('white', 'black');
 
   const createProject = async () => {
-    const res = await createProjectMutation({ variables: { title, teamSlug, sourceLanguage, sourceMedia } });
+    const res = await createProjectMutation({ variables: { title, teamSlug, sourceMedia } });
     if (res) {
       refetch();
       onClose();
@@ -90,11 +89,10 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
     const checkFormValid = () => {
       if (!title.length) return false;
       if (!sourceMedia) return false;
-      if (SupportedLanguages.indexOf(sourceLanguage) === -1) return false;
       return true;
     };
     setFormValid(checkFormValid());
-  }, [title, sourceMedia, sourceLanguage]);
+  }, [title, sourceMedia]);
 
   useEffect(() => {
     setTitle("");
@@ -180,22 +178,6 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
                   )}
                 </Dropzone>
               </Stack>
-              <HStack>
-                <Stack spacing={-1} py="10px" w="full">
-                  <FormLabel
-                    fontWeight={'600'}
-                    fontSize={'lg'}
-                  >
-                    Source Language
-                  </FormLabel>
-                  <Select value={sourceLanguage} onChange={(e) => setSourceLanguage((e.target.value as SupportedLanguage))}>
-                    {SupportedLanguages.map((lang, idx) => (
-                      <option key={idx} value={lang}>{lang}</option>
-                    ))}
-                  </Select>
-                </Stack>
-                <Spacer />
-              </HStack>
             </FormControl>
           </ModalBody>
           <ModalFooter alignSelf={"center"}>
