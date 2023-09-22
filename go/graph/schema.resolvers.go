@@ -83,7 +83,7 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (
 }
 
 // CreateTranslation is the resolver for the createTranslation field.
-func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int64, targetLanguage model.SupportedLanguage) (database.Transformation, error) {
+func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int64, targetLanguage model.SupportedLanguage, lipSync bool) (database.Transformation, error) {
 	// fetch source transcript for the project
 	sourceTransformation, err := r.DB.GetSourceTransformationByProjectId(ctx, projectID)
 	if err != nil {
@@ -114,7 +114,15 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 	})
 
 	newCtx := context.Background()
-	go r.Dubbing.CreateTranslation(newCtx, sourceTransformation, newTransformation, identifier)
+	go r.Dubbing.CreateTranslation(
+		newCtx,
+		dubbing.CreateTranslationProps{
+			SourceTransformation: sourceTransformation,
+			TargetTransformation: newTransformation,
+			Identifier:           identifier,
+			LipSync:              lipSync,
+		},
+	)
 
 	return newTransformation, nil
 }

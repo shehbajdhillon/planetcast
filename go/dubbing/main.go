@@ -246,12 +246,21 @@ func (d *Dubbing) CreateTransformation(
 	return transformation, nil
 }
 
+type CreateTranslationProps struct {
+	SourceTransformation database.Transformation
+	TargetTransformation database.Transformation
+	Identifier           string
+	LipSync              bool
+}
+
 func (d *Dubbing) CreateTranslation(
 	ctx context.Context,
-	sourceTransformation database.Transformation,
-	targetTransformation database.Transformation,
-	identifier string,
+	args CreateTranslationProps,
 ) (database.Transformation, error) {
+
+	sourceTransformation := args.SourceTransformation
+	identifier := args.Identifier
+	targetTransformation := args.TargetTransformation
 
 	fileUrl := d.storage.GetFileLink(sourceTransformation.TargetMedia)
 	//download original media, then save it as identifier.mp4
@@ -276,7 +285,16 @@ func (d *Dubbing) CreateTranslation(
 
 	// call chatgpt, convert the source text to target text
 	sourceSegments := whisperOutput.Segments
-	translatedSegmentsPtr, err := d.fetchAndDub(ctx, sourceSegments, sourceTransformation.ProjectID, identifier, model.SupportedLanguage(targetTransformation.TargetLanguage), targetTransformation.ID)
+
+	fetchAndDubArgs := fetchAndDubProps{
+		segments:               sourceSegments,
+		projectId:              sourceTransformation.ProjectID,
+		identifier:             identifier,
+		targetLanguage:         model.SupportedLanguage(targetTransformation.TargetLanguage),
+		targetTransformationId: targetTransformation.ID,
+		lipSync:                args.LipSync,
+	}
+	translatedSegmentsPtr, err := d.fetchAndDub(ctx, fetchAndDubArgs)
 	if err != nil {
 		return database.Transformation{}, fmt.Errorf("Error translating and fetching: %s", err.Error())
 	}
@@ -342,37 +360,39 @@ type VoiceRequest struct {
 	VoiceSetting VoiceSettings `json:"voice_settings"`
 }
 
-func (d *Dubbing) fetchAndDub(
-	ctx context.Context,
-	segments []Segment,
-	projectId int64,
-	identifier string,
-	targetLanguage model.SupportedLanguage,
-	targetTransformationId int64,
-) (*[]Segment, error) {
+type fetchAndDubProps struct {
+	segments               []Segment
+	projectId              int64
+	identifier             string
+	targetLanguage         model.SupportedLanguage
+	targetTransformationId int64
+	lipSync                bool
+}
+
+func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Segment, error) {
 
 	translatedSegments := []Segment{}
 
 	d.database.UpdateTransformationStatusById(ctx, database.UpdateTransformationStatusByIdParams{
-		ID:     targetTransformationId,
+		ID:     args.targetTransformationId,
 		Status: "processing",
 	})
 
-	for idx, segment := range segments {
+	for idx, segment := range args.segments {
 
 		logProgress := func(stage string) {
 			d.logger.Info(
 				stage,
-				zap.Int("project_id", int(projectId)),
-				zap.Int("transformation_id", int(targetTransformationId)),
-				zap.String("target_language", string(targetLanguage)),
+				zap.Int("project_id", int(args.projectId)),
+				zap.Int("transformation_id", int(args.targetTransformationId)),
+				zap.String("target_language", string(args.targetLanguage)),
 				zap.Int("segments_processed", idx+1),
-				zap.Int("total_segments", len(segments)),
+				zap.Int("total_segments", len(args.segments)),
 			)
 		}
 
 		beforeTranslatedSegments := translatedSegments[utils.MaxOf(0, idx-2):idx]
-		afterOriginalSegments := segments[idx+1 : utils.MinOf(idx+3, len(segments))]
+		afterOriginalSegments := args.segments[idx+1 : utils.MinOf(idx+3, len(args.segments))]
 
 		beforeTranslatedSentences := []string{}
 		for _, seg := range beforeTranslatedSegments {
@@ -384,60 +404,69 @@ func (d *Dubbing) fetchAndDub(
 			afterOriginalSentences = append(afterOriginalSentences, seg.Text)
 		}
 
-		translatedSegment, err := d.translateSegment(ctx, segment, targetLanguage, beforeTranslatedSentences, afterOriginalSentences)
+		translatedSegment, err := d.translateSegment(ctx, segment, args.targetLanguage, beforeTranslatedSentences, afterOriginalSentences)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to translated segment %d/%d: %s", idx+1, len(segments), err.Error())
+			return nil, fmt.Errorf("Failed to translated segment %d/%d: %s", idx+1, len(args.segments), err.Error())
 		}
 		logProgress("Translation Progress")
 
-		err = d.fetchDubbedClip(*translatedSegment, identifier)
+		err = d.fetchDubbedClip(*translatedSegment, args.identifier)
 		if err != nil {
-			return nil, fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(segments), err.Error())
+			return nil, fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(args.segments), err.Error())
 		}
 		logProgress("Audio Generation Progress")
 
-		err = d.dubVideoClip(ctx, *translatedSegment, identifier)
+		err = d.dubVideoClip(ctx, *translatedSegment, args.identifier)
 		if err != nil {
-			return nil, fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(segments), err.Error())
+			return nil, fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(args.segments), err.Error())
 		}
 		logProgress("Dubbing Progress")
 
-		err = d.lipSyncClip(*translatedSegment, identifier)
-		if err != nil {
-			return nil, fmt.Errorf("Could not lip sync clip %d/%d: %s\n", idx+1, len(segments), err.Error())
+		if args.lipSync {
+			err = d.lipSyncClip(*translatedSegment, args.identifier)
+			if err != nil {
+				return nil, fmt.Errorf("Could not lip sync clip %d/%d: %s\n", idx+1, len(args.segments), err.Error())
+			}
+			logProgress("Lip Syncing Progress")
+		} else {
+			videoSegmentName := getVideoSegmentName(args.identifier, segment.Id)
+			dubbedVideoSegmentName := "dubbed_" + videoSegmentName
+			syncedVideoSegmentName := "synced_" + videoSegmentName
+			copyFileCmd := fmt.Sprintf("cp %s %s", dubbedVideoSegmentName, syncedVideoSegmentName)
+			utils.ExecCommand(copyFileCmd)
+			utils.DeleteFiles([]string{dubbedVideoSegmentName})
 		}
-		logProgress("Lip Syncing Progress")
 
 		var beforeSegment *Segment = nil
 		if idx > 0 {
-			beforeSegment = &segments[idx-1]
+			beforeSegment = &args.segments[idx-1]
 		} else if idx == 0 {
 			beforeSegment = &Segment{End: 0}
 		}
 
-		err = d.addMissingInfo(ctx, addMissingInfoProps{identifier: identifier, currentSegment: *translatedSegment, beforeSegment: beforeSegment})
+		err = d.addMissingInfo(ctx, addMissingInfoProps{identifier: args.identifier, currentSegment: *translatedSegment, beforeSegment: beforeSegment})
 		if err != nil {
-			return nil, fmt.Errorf("Could not add missing info %d/%d: %s\n", idx+1, len(segments), err.Error())
+			return nil, fmt.Errorf("Could not add missing info %d/%d: %s\n", idx+1, len(args.segments), err.Error())
 		}
 		logProgress("Added Missing Info")
 
-		videoDuration, err := utils.GetAudioFileDuration(identifier + ".mp4")
-		if err == nil && idx == len(segments)-1 && videoDuration-translatedSegment.End <= 0.5 {
+		videoDuration, err := utils.GetAudioFileDuration(args.identifier + ".mp4")
+		if err == nil && idx == len(args.segments)-1 && videoDuration-translatedSegment.End <= 0.5 {
 			flip := true
-			err = d.addMissingInfo(ctx, addMissingInfoProps{identifier: identifier, currentSegment: Segment{Id: translatedSegment.Id, Start: videoDuration - 0.1}, beforeSegment: translatedSegment, flip: &flip})
+			err = d.addMissingInfo(ctx, addMissingInfoProps{identifier: args.identifier, currentSegment: Segment{Id: translatedSegment.Id, Start: videoDuration - 0.1}, beforeSegment: translatedSegment, flip: &flip})
 			if err != nil {
-				return nil, fmt.Errorf("Could not add missing info %d/%d: %s\n", idx+1, len(segments), err.Error())
+				return nil, fmt.Errorf("Could not add missing info %d/%d: %s\n", idx+1, len(args.segments), err.Error())
 			}
 			logProgress("Added Missing Info")
 		}
 
 		translatedSegments = append(translatedSegments, *translatedSegment)
 
-		percentage := 100 * (float64(len(translatedSegments)) / float64(len(segments)))
+		percentage := 100 * (float64(len(translatedSegments)) / float64(len(args.segments)))
 		percentage = math.Round(percentage*100) / 100
 
 		d.database.UpdateTransformationProgressById(ctx, database.UpdateTransformationProgressByIdParams{
-			ID:       targetTransformationId,
+			ID:       args.targetTransformationId,
 			Progress: percentage,
 		})
 
