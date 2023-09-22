@@ -28,7 +28,7 @@ SELECT * FROM team_membership WHERE team_id = $1 AND user_id = $2 LIMIT 1;
 
 
 -- name: CreateProject :one
-INSERT INTO project (team_id, title, source_language, source_media) VALUES ($1, $2, $3, $4) RETURNING *;
+INSERT INTO project (team_id, title, source_media) VALUES ($1, $2, $3) RETURNING *;
 
 -- name: GetProjectById :one
 SELECT * FROM project WHERE id = $1 LIMIT 1;

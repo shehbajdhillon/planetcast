@@ -40,17 +40,16 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 }
 
 // CreateProject is the resolver for the createProject field.
-func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceLanguage model.SupportedLanguage, sourceMedia graphql.Upload) (database.Project, error) {
+func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia graphql.Upload) (database.Project, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 
 	identifier := strings.Split(sourceMedia.Filename, ".mp4")[0] + uuid.NewString()
 	fileName := identifier + ".mp4"
 
 	project, _ := r.DB.CreateProject(ctx, database.CreateProjectParams{
-		TeamID:         team.ID,
-		Title:          title,
-		SourceLanguage: sourceLanguage.String(),
-		SourceMedia:    fileName,
+		TeamID:      team.ID,
+		Title:       title,
+		SourceMedia: fileName,
 	})
 
 	r.Storage.Upload(fileName, sourceMedia.File)
@@ -58,10 +57,9 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 	newCtx := context.Background()
 
 	go r.Dubbing.CreateTransformation(newCtx, dubbing.CreateTransformationParams{
-		ProjectID:      project.ID,
-		TargetLanguage: sourceLanguage,
-		FileName:       fileName,
-		IsSource:       true,
+		ProjectID: project.ID,
+		FileName:  fileName,
+		IsSource:  true,
 	})
 
 	return project, nil
@@ -137,11 +135,6 @@ func (r *mutationResolver) DeleteTransformation(ctx context.Context, transformat
 	}(newCtx)
 
 	return transformation, nil
-}
-
-// SourceLanguage is the resolver for the sourceLanguage field.
-func (r *projectResolver) SourceLanguage(ctx context.Context, obj *database.Project) (model.SupportedLanguage, error) {
-	return model.SupportedLanguage(obj.SourceLanguage), nil
 }
 
 // Transformations is the resolver for the transformations field.

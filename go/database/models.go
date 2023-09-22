@@ -98,11 +98,10 @@ func (ns NullTeamType) Value() (driver.Value, error) {
 }
 
 type Project struct {
-	ID             int64
-	TeamID         int64
-	Title          string
-	SourceLanguage string
-	SourceMedia    string
+	ID          int64
+	TeamID      int64
+	Title       string
+	SourceMedia string
 }
 
 type Team struct {

@@ -34,7 +34,7 @@ func getVideoSegmentName(identifier string, id int64) string {
 }
 
 type WhisperOutput struct {
-	Language string    `json:"language"`
+	Language string    `json:"detected_language"`
 	Segments []Segment `json:"segments"`
 }
 
@@ -202,10 +202,9 @@ func combineWordTimeStamps(whisperOutput *WhisperOutput) []Segment {
 }
 
 type CreateTransformationParams struct {
-	ProjectID      int64
-	TargetLanguage model.SupportedLanguage
-	FileName       string
-	IsSource       bool
+	ProjectID int64
+	FileName  string
+	IsSource  bool
 }
 
 func (d *Dubbing) CreateTransformation(
@@ -230,7 +229,7 @@ func (d *Dubbing) CreateTransformation(
 
 	transformation, err := d.database.CreateTransformation(ctx, database.CreateTransformationParams{
 		ProjectID:      args.ProjectID,
-		TargetLanguage: args.TargetLanguage.String(),
+		TargetLanguage: strings.ToUpper(transcriptObj.Language),
 		TargetMedia:    args.FileName,
 		Transcript:     pqtype.NullRawMessage{RawMessage: jsonBytes, Valid: true},
 		IsSource:       args.IsSource,

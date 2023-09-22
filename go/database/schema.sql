@@ -35,7 +35,6 @@ CREATE TABLE project (
   id BIGSERIAL PRIMARY KEY NOT NULL,
   team_id BIGINT REFERENCES team (id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL,
-  source_language TEXT NOT NULL,
   source_media TEXT NOT NULL
 );
 
