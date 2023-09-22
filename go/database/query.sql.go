@@ -162,6 +162,26 @@ func (q *Queries) DeleteProjectById(ctx context.Context, id int64) (Project, err
 	return i, err
 }
 
+const deleteTransformationById = `-- name: DeleteTransformationById :one
+DELETE FROM transformation WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress
+`
+
+func (q *Queries) DeleteTransformationById(ctx context.Context, id int64) (Transformation, error) {
+	row := q.db.QueryRowContext(ctx, deleteTransformationById, id)
+	var i Transformation
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.TargetLanguage,
+		&i.TargetMedia,
+		&i.Transcript,
+		&i.IsSource,
+		&i.Status,
+		&i.Progress,
+	)
+	return i, err
+}
+
 const getProjectById = `-- name: GetProjectById :one
 SELECT id, team_id, title, source_language, source_media FROM project WHERE id = $1 LIMIT 1
 `

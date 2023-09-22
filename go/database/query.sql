@@ -73,3 +73,6 @@ SELECT * FROM transformation WHERE project_id = $1 AND is_source = true LIMIT 1;
 -- name: GetTransformationByProjectIdTargetLanguage :one
 SELECT * FROM transformation WHERE project_id = $1 AND target_language = $2 LIMIT 1;
 
+-- name: DeleteTransformationById :one
+DELETE FROM transformation WHERE id = $1 RETURNING *;
+

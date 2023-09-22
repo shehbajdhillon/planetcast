@@ -62,6 +62,18 @@ func Connect(args GraphConnectProps) *handler.Server {
 		return next(ctx)
 	}
 
+	gqlConfig.Directives.OwnsTransformation = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+		transformationIdField := obj.(map[string]interface{})["transformationId"]
+		if transformationIdField == nil {
+			return nil, fmt.Errorf("Access Denied")
+		}
+		transformationId, err := transformationIdField.(json.Number).Int64()
+		if err != nil || ownsTransformation(ctx, transformationId, args.Queries) == false {
+			return nil, fmt.Errorf("Access Denied")
+		}
+		return next(ctx)
+	}
+
 	var MB int64 = 1 << 20
 
 	gqlServer := handler.New(NewExecutableSchema(gqlConfig))
@@ -129,4 +141,12 @@ func ownsProject(ctx context.Context, projectId int64, queries *database.Queries
 	}
 	team, err := queries.GetTeamById(ctx, project.TeamID)
 	return err == nil && memberTeam(ctx, team.Slug, queries)
+}
+
+func ownsTransformation(ctx context.Context, transformationId int64, queries *database.Queries) bool {
+	transformation, err := queries.GetTransformationById(ctx, transformationId)
+	if err != nil {
+		return false
+	}
+	return ownsProject(ctx, transformation.ProjectID, queries)
 }

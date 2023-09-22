@@ -127,6 +127,18 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 	return newTransformation, nil
 }
 
+// DeleteTransformation is the resolver for the deleteTransformation field.
+func (r *mutationResolver) DeleteTransformation(ctx context.Context, transformationID int64) (database.Transformation, error) {
+	transformation, _ := r.DB.DeleteTransformationById(ctx, transformationID)
+
+	newCtx := context.Background()
+	go func(ctx context.Context) {
+		r.Storage.DeleteFile(transformation.TargetMedia)
+	}(newCtx)
+
+	return transformation, nil
+}
+
 // SourceLanguage is the resolver for the sourceLanguage field.
 func (r *projectResolver) SourceLanguage(ctx context.Context, obj *database.Project) (model.SupportedLanguage, error) {
 	return model.SupportedLanguage(obj.SourceLanguage), nil

@@ -9,6 +9,7 @@ scalar Upload
 directive @loggedIn on FIELD_DEFINITION
 directive @memberTeam on ARGUMENT_DEFINITION
 directive @ownsProject on ARGUMENT_DEFINITION
+directive @ownsTransformation on ARGUMENT_DEFINITION
 
 type Team {
   id: Int64!
@@ -55,6 +56,7 @@ type Mutation {
   createProject(teamSlug: String! @memberTeam, title: String!, sourceLanguage: SupportedLanguage!, sourceMedia: Upload!): Project! @loggedIn
   deleteProject(projectId: Int64! @ownsProject): Project! @loggedIn
   createTranslation(projectId: Int64! @ownsProject, targetLanguage: SupportedLanguage!, lipSync: Boolean!): Transformation! @loggedIn
+  deleteTransformation(transformationId: Int64! @ownsTransformation): Transformation! @loggedIn
 }
 
 enum TeamType {
