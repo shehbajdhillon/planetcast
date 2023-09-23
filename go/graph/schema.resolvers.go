@@ -54,7 +54,9 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 
 	r.Storage.Upload(fileName, sourceMedia.File)
 
+	user := auth.FromContext(ctx)
 	newCtx := context.Background()
+	newCtx = auth.AttachContext(newCtx, user)
 
 	go r.Dubbing.CreateTransformation(newCtx, dubbing.CreateTransformationParams{
 		ProjectID: project.ID,
@@ -111,7 +113,10 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 		Progress:       0,
 	})
 
+	user := auth.FromContext(ctx)
 	newCtx := context.Background()
+	newCtx = auth.AttachContext(newCtx, user)
+
 	go r.Dubbing.CreateTranslation(
 		newCtx,
 		dubbing.CreateTranslationProps{

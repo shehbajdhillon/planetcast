@@ -56,11 +56,15 @@ func Middleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), userCtxKey, user)
+			ctx := AttachContext(r.Context(), user)
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func AttachContext(ctx context.Context, user *clerk.User) context.Context {
+	return context.WithValue(ctx, userCtxKey, user)
 }
 
 func FromContext(ctx context.Context) *clerk.User {
