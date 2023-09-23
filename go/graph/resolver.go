@@ -3,6 +3,7 @@ package graph
 import (
 	"planetcastdev/database"
 	"planetcastdev/dubbing"
+	"planetcastdev/email"
 	"planetcastdev/storage"
 
 	"go.uber.org/zap"
@@ -19,4 +20,5 @@ type Resolver struct {
 	Storage *storage.Storage
 	Dubbing *dubbing.Dubbing
 	Logger  *zap.Logger
+	Email   *email.Email
 }

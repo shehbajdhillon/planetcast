@@ -7,6 +7,7 @@ import (
 	"planetcastdev/auth"
 	"planetcastdev/database"
 	"planetcastdev/dubbing"
+	"planetcastdev/email"
 	"planetcastdev/ffmpegmiddleware"
 	"planetcastdev/graph"
 	"planetcastdev/logmiddleware"
@@ -37,12 +38,13 @@ func main() {
 		Logger.Info(".env: Loaded environment variables")
 	}
 
+	Email := email.Connect(email.EmailConnectProps{Logger: Logger})
 	Ffmpeg := ffmpegmiddleware.Connect(ffmpegmiddleware.FfmpegConnectProps{Logger: Logger})
 	Storage := storage.Connect(storage.StorageConnectProps{Logger: Logger})
 	Database := database.Connect(database.DatabaseConnectProps{Logger: Logger})
 
-	Dubbing := dubbing.Connect(dubbing.DubbingConnectProps{Storage: Storage, Database: Database, Logger: Logger, Ffmpeg: Ffmpeg})
-	GqlServer := graph.Connect(graph.GraphConnectProps{Dubbing: Dubbing, Storage: Storage, Queries: Database, Logger: Logger})
+	Dubbing := dubbing.Connect(dubbing.DubbingConnectProps{Storage: Storage, Database: Database, Logger: Logger, Ffmpeg: Ffmpeg, Email: Email})
+	GqlServer := graph.Connect(graph.GraphConnectProps{Dubbing: Dubbing, Storage: Storage, Queries: Database, Logger: Logger, Email: Email})
 
 	router := chi.NewRouter()
 	router.Use(auth.Middleware())

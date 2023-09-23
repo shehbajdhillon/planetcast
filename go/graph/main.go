@@ -7,6 +7,7 @@ import (
 	"planetcastdev/auth"
 	"planetcastdev/database"
 	"planetcastdev/dubbing"
+	"planetcastdev/email"
 	"planetcastdev/storage"
 	"time"
 
@@ -23,11 +24,12 @@ type GraphConnectProps struct {
 	Storage *storage.Storage
 	Dubbing *dubbing.Dubbing
 	Logger  *zap.Logger
+	Email   *email.Email
 }
 
 func Connect(args GraphConnectProps) *handler.Server {
 
-	gqlConfig := Config{Resolvers: &Resolver{DB: args.Queries, Storage: args.Storage, Dubbing: args.Dubbing, Logger: args.Logger}}
+	gqlConfig := Config{Resolvers: &Resolver{DB: args.Queries, Storage: args.Storage, Dubbing: args.Dubbing, Logger: args.Logger, Email: args.Email}}
 
 	logger := args.Logger
 

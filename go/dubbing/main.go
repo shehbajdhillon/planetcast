@@ -8,7 +8,9 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
+	"planetcastdev/auth"
 	"planetcastdev/database"
+	"planetcastdev/email"
 	"planetcastdev/ffmpegmiddleware"
 	"planetcastdev/graph/model"
 	"planetcastdev/httpmiddleware"
@@ -57,6 +59,7 @@ type Dubbing struct {
 	database *database.Queries
 	logger   *zap.Logger
 	ffmpeg   *ffmpegmiddleware.Ffmpeg
+	email    *email.Email
 }
 
 type DubbingConnectProps struct {
@@ -64,10 +67,11 @@ type DubbingConnectProps struct {
 	Database *database.Queries
 	Logger   *zap.Logger
 	Ffmpeg   *ffmpegmiddleware.Ffmpeg
+	Email    *email.Email
 }
 
 func Connect(args DubbingConnectProps) *Dubbing {
-	return &Dubbing{storage: args.Storage, database: args.Database, logger: args.Logger, ffmpeg: args.Ffmpeg}
+	return &Dubbing{storage: args.Storage, database: args.Database, logger: args.Logger, ffmpeg: args.Ffmpeg, email: args.Email}
 }
 
 func (d *Dubbing) getTranscript(fileName string) (*WhisperOutput, error) {
@@ -298,6 +302,22 @@ func (d *Dubbing) CreateTranslation(
 	// call chatgpt, convert the source text to target text
 	sourceSegments := whisperOutput.Segments
 
+	projectObj, _ := d.database.GetProjectById(ctx, args.SourceTransformation.ProjectID)
+	teamObj, _ := d.database.GetTeamById(ctx, projectObj.TeamID)
+
+	userEmail, err := auth.EmailFromContext(ctx)
+
+	if err != nil {
+		d.logger.Error("Could not send transformation start alert email to address", zap.Error(err), zap.Int("transformation_id", int(targetTransformation.ID)))
+	} else {
+		d.email.DubbingStartAlert(email.DubbingAlertProps{
+			TargetLanguage: args.TargetTransformation.TargetLanguage,
+			ProjectId:      args.SourceTransformation.ProjectID,
+			TeamSlug:       teamObj.Slug,
+			UserEmail:      userEmail,
+		})
+	}
+
 	fetchAndDubArgs := fetchAndDubProps{
 		segments:               sourceSegments,
 		projectId:              sourceTransformation.ProjectID,
@@ -356,6 +376,17 @@ func (d *Dubbing) CreateTranslation(
 		ID:       targetTransformation.ID,
 		Progress: 100,
 	})
+
+	if err != nil {
+		d.logger.Error("Could not send transformation processed alert email to address", zap.Error(err), zap.Int("transformation_id", int(targetTransformation.ID)))
+	} else {
+		d.email.DubbingEndedAlert(email.DubbingAlertProps{
+			TargetLanguage: args.TargetTransformation.TargetLanguage,
+			ProjectId:      args.SourceTransformation.ProjectID,
+			TeamSlug:       teamObj.Slug,
+			UserEmail:      userEmail,
+		})
+	}
 
 	// return the update transformation
 	return targetTransformation, nil
