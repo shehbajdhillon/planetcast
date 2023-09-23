@@ -40,7 +40,7 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 }
 
 // CreateProject is the resolver for the createProject field.
-func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia graphql.Upload) (database.Project, error) {
+func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia graphql.Upload, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool) (database.Project, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 
 	identifier := strings.Split(sourceMedia.Filename, ".mp4")[0] + uuid.NewString()
@@ -58,11 +58,19 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 	newCtx := context.Background()
 	newCtx = auth.AttachContext(newCtx, user)
 
-	go r.Dubbing.CreateTransformation(newCtx, dubbing.CreateTransformationParams{
-		ProjectID: project.ID,
-		FileName:  fileName,
-		IsSource:  true,
-	})
+	go func(context context.Context) {
+
+		r.Dubbing.CreateTransformation(context, dubbing.CreateTransformationParams{
+			ProjectID: project.ID,
+			FileName:  fileName,
+			IsSource:  true,
+		})
+
+		if initialTargetLanguage != nil {
+			r.CreateTranslation(context, project.ID, *initialTargetLanguage, initialLipSync)
+		}
+
+	}(newCtx)
 
 	return project, nil
 }
