@@ -21,6 +21,7 @@ import {
   Select,
   useColorModeValue,
   useDisclosure,
+  Checkbox,
 } from '@chakra-ui/react';
 import { Check } from 'lucide-react';
 import { useRouter } from 'next/router';
@@ -32,8 +33,8 @@ import NProgress from 'nprogress';
 import Image from 'next/image';
 
 const CREATE_PROJECT = gql`
-  mutation CreateProject($teamSlug: String!, $title: String!, $sourceMedia: Upload!) {
-    createProject(teamSlug: $teamSlug, title: $title, sourceMedia: $sourceMedia) {
+  mutation CreateProject($teamSlug: String!, $title: String!, $sourceMedia: Upload!, $initialLipSync: Boolean!, $initialTargetLanguage: SupportedLanguage) {
+    createProject(teamSlug: $teamSlug, title: $title, sourceMedia: $sourceMedia, initialLipSync: $initialLipSync, initialTargetLanguage: $initialTargetLanguage) {
       id
       title
     }
@@ -60,12 +61,27 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
 
   const { onOpen, isOpen, onClose } = useDisclosure();
 
+  const [initialTargetLang, setInitialTargetLang] = useState<SupportedLanguage>("HINDI");
+
+  const [enableDubbing, setEnableDubbing] = useState(false);
+
+  const [lipSync, setLipSync] = useState(false);
+
   const imgSrc = useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg');
   const borderColor = useColorModeValue('blackAlpha.400', 'whiteAlpha.500');
   const bgColor = useColorModeValue('white', 'black');
 
   const createProject = async () => {
-    const res = await createProjectMutation({ variables: { title, teamSlug, sourceMedia } });
+    const variables = {
+      title,
+      teamSlug,
+      sourceMedia,
+      initialLipSync: lipSync,
+      initialTargetLanguage: enableDubbing ? initialTargetLang : undefined,
+    }
+    const res = await createProjectMutation({
+      variables
+    });
     if (res) {
       refetch();
       onClose();
@@ -97,6 +113,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
   useEffect(() => {
     setTitle("");
     setSourceMedia(undefined);
+    setEnableDubbing(false);
+    setLipSync(false);
   }, [isOpen, onClose]);
 
   return (
@@ -179,6 +197,42 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
                 </Dropzone>
               </Stack>
             </FormControl>
+            <HStack>
+              <Stack spacing={2} py="10px" w="full">
+                <FormLabel
+                  fontWeight={'600'}
+                  fontSize={'lg'}
+                >
+                  <HStack spacing={3}>
+                    <Text>Add Initial Dubbing Language</Text>
+                    <Checkbox colorScheme='green' checked={enableDubbing} onChange={(e) => setEnableDubbing(e.target.checked)} />
+                  </HStack>
+                  <Text fontSize={'sm'} fontWeight={'light'} fontStyle={'italic'} hidden={enableDubbing}>
+                    You can optionally choose a language to dub your video to after it is transcribed.
+                    You can also decide to dub your video to any or more languages later as well after it has been transcribed by clicking on the project card.
+                  </Text>
+                </FormLabel>
+                { enableDubbing &&
+                  <>
+                    <FormLabel
+                      fontWeight={'600'}
+                      fontSize={'lg'}
+                    >
+                      Target Language
+                    </FormLabel>
+                    <Select value={initialTargetLang} onChange={(e) => setInitialTargetLang((e.target.value as SupportedLanguage))}>
+                      {SupportedLanguages.map((lang, idx) => (
+                        <option key={idx} value={lang}>{lang}</option>
+                      ))}
+                    </Select>
+                    <Checkbox isChecked={lipSync} onChange={() => setLipSync(curr => !curr)} colorScheme='green'>
+                      Enable Lip Syncing (Experimental)
+                    </Checkbox>
+                  </>
+                }
+              </Stack>
+              <Spacer />
+            </HStack>
           </ModalBody>
           <ModalFooter alignSelf={"center"}>
             <HStack w="full">
