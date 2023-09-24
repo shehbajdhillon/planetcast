@@ -103,6 +103,8 @@ func authorizedUser(user *clerk.User) bool {
 		"shehbaj.dhillon@gmail.com": true,
 		"shehbaj@planetcast.ai":     true,
 		"jmn3lson@gmail.com":        true,
+		"aarsala@calpoly.edu":       true,
+		"shdhillo@calpoly.edu":      true,
 	}
 	_, ok := allowedEmails[email]
 	return ok
