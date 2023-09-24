@@ -84,7 +84,7 @@ func (d *Dubbing) getTranscript(fileName string) (*WhisperOutput, error) {
 
 	for retries > 0 {
 
-		sleepTime := getExponentialDelaySeconds(5 - retries)
+		sleepTime := utils.GetExponentialDelaySeconds(5 - retries)
 
 		replicateRequestBody := map[string]interface{}{
 			"version": "4a60104c44dd709fc08a03dfeca6c6906257633dd03fd58663ec896a4eeba30e",
@@ -147,17 +147,10 @@ func combineWordTimeStamps(whisperOutput *WhisperOutput) []Segment {
 		"...": true,
 		"।":   true,
 		"|":   true,
-	}
-
-	punctuation := map[string]bool{
-		".": true,
-		"!": true,
-		"?": true,
-		"。": true, // Chinese
-		"।": true, // Hindi
-		"¿": true, // Spanish
-		"؟": true, // Arabic
-		";": true, // Greek
+		"。":   true, // Chinese
+		"¿":   true, // Spanish
+		"؟":   true, // Arabic
+		";":   true, // Greek
 	}
 
 	segments := whisperOutput.Segments
@@ -175,7 +168,7 @@ func combineWordTimeStamps(whisperOutput *WhisperOutput) []Segment {
 
 			// FUTURE OPTIMIZATION: USE strings.Join(..., " ")
 			// TRY REDUCING CALLS TO TRIM SPACE FUNC
-			if punctuationEndsSentence[lastChar] || punctuation[lastChar] {
+			if punctuationEndsSentence[lastChar] {
 				var text string
 				for _, w := range currNewSegment {
 					text = text + " " + strings.TrimSpace(w.Word)
@@ -585,7 +578,7 @@ func (d *Dubbing) fetchDubbedClip(segment Segment, identifier string) error {
 		id := segment.Id
 		audioFileName := getAudioFileName(identifier, id)
 
-		sleepTime := getExponentialDelaySeconds(5 - retries)
+		sleepTime := utils.GetExponentialDelaySeconds(5 - retries)
 
 		data := VoiceRequest{
 			Text:    segment.Text,
@@ -940,7 +933,7 @@ func (d *Dubbing) translateSegment(
 
 	for retries > 0 {
 
-		sleepTime := getExponentialDelaySeconds(5 - retries)
+		sleepTime := utils.GetExponentialDelaySeconds(5 - retries)
 
 		prompt := generateTranslationPrompt(string(targetLang), segment.Text, beforeTranslatedSentences, afterOriginalSentences)
 		chatGptInput := ChatRequestInput{
@@ -1031,9 +1024,4 @@ func generateTranslationPrompt(targetLanguage string, targetSentence string, bef
 		targetLanguage, targetLanguage, targetSentence, disclaimer, beforeSentence, afterSentence, targetSentence, targetLanguage, targetLanguage,
 	)
 	return prompt
-}
-
-func getExponentialDelaySeconds(retryNumber int) int {
-	delayTime := int(5 * math.Pow(2, float64(retryNumber)))
-	return delayTime
 }

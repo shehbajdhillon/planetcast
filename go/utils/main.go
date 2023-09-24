@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -75,4 +76,9 @@ func MaxOf(vars ...int) int {
 	}
 
 	return max
+}
+
+func GetExponentialDelaySeconds(retryNumber int) int {
+	delayTime := int(5 * math.Pow(2, float64(retryNumber)))
+	return delayTime
 }
