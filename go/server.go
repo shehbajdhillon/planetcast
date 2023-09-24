@@ -11,6 +11,7 @@ import (
 	"planetcastdev/ffmpegmiddleware"
 	"planetcastdev/graph"
 	"planetcastdev/logmiddleware"
+	"planetcastdev/openaimiddleware"
 	"planetcastdev/storage"
 
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -38,12 +39,21 @@ func main() {
 		Logger.Info(".env: Loaded environment variables")
 	}
 
+	OpenAI := openaimiddleware.Connect(openaimiddleware.OpenAIConnectProps{Logger: Logger})
 	Email := email.Connect(email.EmailConnectProps{Logger: Logger})
 	Ffmpeg := ffmpegmiddleware.Connect(ffmpegmiddleware.FfmpegConnectProps{Logger: Logger})
 	Storage := storage.Connect(storage.StorageConnectProps{Logger: Logger})
 	Database := database.Connect(database.DatabaseConnectProps{Logger: Logger})
 
-	Dubbing := dubbing.Connect(dubbing.DubbingConnectProps{Storage: Storage, Database: Database, Logger: Logger, Ffmpeg: Ffmpeg, Email: Email})
+	Dubbing := dubbing.Connect(
+		dubbing.DubbingConnectProps{
+			Storage:  Storage,
+			Database: Database,
+			Logger:   Logger,
+			Ffmpeg:   Ffmpeg,
+			Email:    Email,
+			Openai:   OpenAI,
+		})
 	GqlServer := graph.Connect(graph.GraphConnectProps{Dubbing: Dubbing, Storage: Storage, Queries: Database, Logger: Logger, Email: Email})
 
 	router := chi.NewRouter()

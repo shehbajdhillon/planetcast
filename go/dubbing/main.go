@@ -14,6 +14,7 @@ import (
 	"planetcastdev/ffmpegmiddleware"
 	"planetcastdev/graph/model"
 	"planetcastdev/httpmiddleware"
+	"planetcastdev/openaimiddleware"
 	"planetcastdev/replicatemiddleware"
 	"planetcastdev/storage"
 	"planetcastdev/utils"
@@ -60,6 +61,7 @@ type Dubbing struct {
 	logger   *zap.Logger
 	ffmpeg   *ffmpegmiddleware.Ffmpeg
 	email    *email.Email
+	openai   *openaimiddleware.OpenAI
 }
 
 type DubbingConnectProps struct {
@@ -68,10 +70,18 @@ type DubbingConnectProps struct {
 	Logger   *zap.Logger
 	Ffmpeg   *ffmpegmiddleware.Ffmpeg
 	Email    *email.Email
+	Openai   *openaimiddleware.OpenAI
 }
 
 func Connect(args DubbingConnectProps) *Dubbing {
-	return &Dubbing{storage: args.Storage, database: args.Database, logger: args.Logger, ffmpeg: args.Ffmpeg, email: args.Email}
+	return &Dubbing{
+		storage:  args.Storage,
+		database: args.Database,
+		logger:   args.Logger,
+		ffmpeg:   args.Ffmpeg,
+		email:    args.Email,
+		openai:   args.Openai,
+	}
 }
 
 func (d *Dubbing) getTranscript(fileName string) (*WhisperOutput, error) {
@@ -895,29 +905,6 @@ func (d *Dubbing) concatBatch(ctx context.Context, batch []string, batchIdentifi
 	return nil
 }
 
-type ChatCompletionMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type ChatRequestInput struct {
-	Model    string                  `json:"model"`
-	Messages []ChatCompletionMessage `json:"messages"`
-}
-
-type ChatCompletionChoice struct {
-	Index   int                   `json:"index"`
-	Message ChatCompletionMessage `json:"message"`
-}
-
-type ChatCompletionResponse struct {
-	ID      string                 `json:"id"`
-	Object  string                 `json:"object"`
-	Created int64                  `json:"created"`
-	Model   string                 `json:"model"`
-	Choices []ChatCompletionChoice `json:"choices"`
-}
-
 func (d *Dubbing) translateSegment(
 	ctx context.Context,
 	segment Segment,
@@ -927,75 +914,21 @@ func (d *Dubbing) translateSegment(
 ) (*Segment, error) {
 
 	retries := 5
-
-	API_KEY := os.Getenv("OPEN_AI_SECRET_KEY")
-	URL := "https://api.openai.com/v1/chat/completions"
-
-	for retries > 0 {
-
-		sleepTime := utils.GetExponentialDelaySeconds(5 - retries)
-
-		prompt := generateTranslationPrompt(string(targetLang), segment.Text, beforeTranslatedSentences, afterOriginalSentences)
-		chatGptInput := ChatRequestInput{
-			Model: "gpt-4",
-			Messages: []ChatCompletionMessage{
-				{Role: "user", Content: prompt},
-			},
-		}
-
-		jsonData, err := json.Marshal(chatGptInput)
-		if err != nil {
-			return nil, fmt.Errorf("Could not generate request body: " + err.Error())
-		}
-
-		respBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
-			Method: "POST",
-			Url:    URL,
-			Body:   bytes.NewBuffer(jsonData),
-			Headers: map[string]string{
-				"Authorization": "Bearer " + API_KEY,
-				"Content-Type":  "application/json",
-			},
-		})
-
-		if err != nil {
-			d.logger.Error(
-				"Could not make request to OpenAI. Retrying after sleeping.",
-				zap.Error(err),
-				zap.Int("retries_left", retries),
-				zap.Int("sleep_time", sleepTime),
-				zap.String("prompt", prompt),
-			)
-			retries -= 1
-			time.Sleep(time.Duration(sleepTime) * time.Second)
-		} else {
-
-			var chatResponse ChatCompletionResponse
-			err = json.Unmarshal(respBody, &chatResponse)
-
-			if err != nil || len(chatResponse.Choices) == 0 {
-
-				retries -= 1
-				d.logger.Error(
-					"Could not parse OpenAI Request. Retying after sleeping.",
-					zap.Int("retries_left", retries),
-					zap.Int("sleep_time", sleepTime),
-					zap.Error(err),
-					zap.String("response_body", string(respBody)),
-					zap.String("prompt", prompt),
-					zap.Int("chat_choices", len(chatResponse.Choices)),
-				)
-				time.Sleep(time.Duration(sleepTime) * time.Second)
-
-			} else {
-				segment.Text = chatResponse.Choices[0].Message.Content
-				return &segment, nil
-			}
-		}
-
+	prompt := generateTranslationPrompt(string(targetLang), segment.Text, beforeTranslatedSentences, afterOriginalSentences)
+	chatGptInput := openaimiddleware.ChatRequestInput{
+		Model: "gpt-4",
+		Messages: []openaimiddleware.ChatCompletionMessage{
+			{Role: "user", Content: prompt},
+		},
 	}
 
-	return nil, fmt.Errorf("Open AI Requests Failed")
+	chatResponse, err := d.openai.MakeAPIRequest(openaimiddleware.MakeAPIRequestProps{Retries: retries, RequestInput: chatGptInput})
+	segment.Text = chatResponse.Choices[0].Message.Content
+
+	if err != nil {
+		return nil, fmt.Errorf("Open AI Requests Failed: %s", err.Error())
+	}
+	return &segment, nil
 }
 
 func generateTranslationPrompt(targetLanguage string, targetSentence string, beforeTranslatedSentences []string, afterOriginalSentences []string) string {
