@@ -922,7 +922,7 @@ func (d *Dubbing) translateSegment(
 		},
 	}
 
-	chatResponse, err := d.openai.MakeAPIRequest(openaimiddleware.MakeAPIRequestProps{Retries: retries, RequestInput: chatGptInput})
+	chatResponse, err := d.openai.MakeAPIRequest(ctx, openaimiddleware.MakeAPIRequestProps{Retries: retries, RequestInput: chatGptInput})
 	segment.Text = chatResponse.Choices[0].Message.Content
 
 	if err != nil {

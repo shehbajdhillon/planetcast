@@ -2,6 +2,7 @@ package openaimiddleware
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"golang.org/x/sync/semaphore"
 )
 
 type ChatCompletionMessage struct {
@@ -40,11 +42,14 @@ type OpenAIConnectProps struct {
 }
 
 type OpenAI struct {
-	logger *zap.Logger
+	logger    *zap.Logger
+	semaphore *semaphore.Weighted
 }
 
 func Connect(args OpenAIConnectProps) *OpenAI {
-	return &OpenAI{logger: args.Logger}
+	maxWorkers := 3
+	sem := semaphore.NewWeighted(int64(maxWorkers))
+	return &OpenAI{logger: args.Logger, semaphore: sem}
 }
 
 type MakeAPIRequestProps struct {
@@ -52,7 +57,7 @@ type MakeAPIRequestProps struct {
 	RequestInput ChatRequestInput
 }
 
-func (o *OpenAI) MakeAPIRequest(args MakeAPIRequestProps) (*ChatCompletionResponse, error) {
+func (o *OpenAI) MakeAPIRequest(ctx context.Context, args MakeAPIRequestProps) (*ChatCompletionResponse, error) {
 
 	API_KEY := os.Getenv("OPEN_AI_SECRET_KEY")
 	URL := "https://api.openai.com/v1/chat/completions"
@@ -68,6 +73,11 @@ func (o *OpenAI) MakeAPIRequest(args MakeAPIRequestProps) (*ChatCompletionRespon
 	for retries >= 0 {
 
 		sleepTime := utils.GetExponentialDelaySeconds(5 - retries)
+
+		if err := o.semaphore.Acquire(ctx, 1); err != nil {
+			return nil, fmt.Errorf("Failed to acquire semaphore.")
+		}
+
 		respBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
 			Method: "POST",
 			Url:    URL,
@@ -77,6 +87,9 @@ func (o *OpenAI) MakeAPIRequest(args MakeAPIRequestProps) (*ChatCompletionRespon
 				"Content-Type":  "application/json",
 			},
 		})
+		time.Sleep(1 * time.Second)
+
+		o.semaphore.Release(1)
 
 		if err != nil {
 			o.logger.Error(
