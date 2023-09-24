@@ -2,12 +2,40 @@ package replicatemiddleware
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"planetcastdev/httpmiddleware"
 	"time"
+
+	"go.uber.org/zap"
+	"golang.org/x/sync/semaphore"
 )
+
+type ReplicateConnectProps struct {
+	Logger *zap.Logger
+}
+
+type Replicate struct {
+	logger               *zap.Logger
+	postRequestSemaphore *semaphore.Weighted
+	getRequestSemaphore  *semaphore.Weighted
+}
+
+func Connect(args ReplicateConnectProps) *Replicate {
+	maxPostRequestWorkers := 10
+	postReqSem := semaphore.NewWeighted(int64(maxPostRequestWorkers))
+
+	maxGetRequestWorkers := 50
+	getReqSem := semaphore.NewWeighted(int64(maxGetRequestWorkers))
+
+	return &Replicate{
+		logger:               args.Logger,
+		postRequestSemaphore: postReqSem,
+		getRequestSemaphore:  getReqSem,
+	}
+}
 
 type ReplicateGetRequestOutput struct {
 	ID     string `json:"id"`
@@ -21,16 +49,16 @@ type ReplicateTriggerRequestOutput struct {
 	Status string  `json:"status"`
 }
 
-func MakeRequest(body *bytes.Buffer) (any, error) {
+func (r *Replicate) MakeRequest(ctx context.Context, body *bytes.Buffer) (any, error) {
 
-	requestId, err := TriggerRequest(body)
+	requestId, err := r.TriggerRequest(ctx, body)
 
 	if err != nil {
 		return "", err
 	}
 
 	for {
-		requestOutput, err := FetchRequest(requestId)
+		requestOutput, err := r.FetchRequest(ctx, requestId)
 		if err != nil {
 			return "", err
 		}
@@ -45,10 +73,13 @@ func MakeRequest(body *bytes.Buffer) (any, error) {
 
 }
 
-func FetchRequest(requestId string) (*ReplicateGetRequestOutput, error) {
+func (r *Replicate) FetchRequest(ctx context.Context, requestId string) (*ReplicateGetRequestOutput, error) {
 
 	API_KEY := os.Getenv("REPLICATE_KEY")
 
+	if err := r.getRequestSemaphore.Acquire(ctx, 1); err != nil {
+		return nil, fmt.Errorf("Failed to acquire semaphore.")
+	}
 	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
 		Method: "GET",
 		Url:    fmt.Sprintf("https://api.replicate.com/v1/predictions/%s", requestId),
@@ -56,6 +87,9 @@ func FetchRequest(requestId string) (*ReplicateGetRequestOutput, error) {
 			"Authorization": fmt.Sprintf("Token %s", API_KEY),
 		},
 	})
+	time.Sleep(1 * time.Second)
+
+	r.getRequestSemaphore.Release(1)
 
 	if err != nil {
 		return nil, fmt.Errorf("Cannot make call to replicate: %s", err.Error())
@@ -68,9 +102,13 @@ func FetchRequest(requestId string) (*ReplicateGetRequestOutput, error) {
 
 }
 
-func TriggerRequest(body *bytes.Buffer) (string, error) {
+func (r *Replicate) TriggerRequest(ctx context.Context, body *bytes.Buffer) (string, error) {
 
 	API_KEY := os.Getenv("REPLICATE_KEY")
+
+	if err := r.postRequestSemaphore.Acquire(ctx, 1); err != nil {
+		return "", fmt.Errorf("Failed to acquire semaphore.")
+	}
 
 	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
 		Method: "POST",
@@ -80,6 +118,9 @@ func TriggerRequest(body *bytes.Buffer) (string, error) {
 		},
 		Body: body,
 	})
+	time.Sleep(1 * time.Second)
+
+	r.postRequestSemaphore.Release(1)
 
 	if err != nil {
 		return "", fmt.Errorf("Cannot make call to replicate: %s", err.Error())

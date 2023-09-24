@@ -56,35 +56,38 @@ type Word struct {
 }
 
 type Dubbing struct {
-	storage  *storage.Storage
-	database *database.Queries
-	logger   *zap.Logger
-	ffmpeg   *ffmpegmiddleware.Ffmpeg
-	email    *email.Email
-	openai   *openaimiddleware.OpenAI
+	storage   *storage.Storage
+	database  *database.Queries
+	logger    *zap.Logger
+	ffmpeg    *ffmpegmiddleware.Ffmpeg
+	email     *email.Email
+	openai    *openaimiddleware.OpenAI
+	replicate *replicatemiddleware.Replicate
 }
 
 type DubbingConnectProps struct {
-	Storage  *storage.Storage
-	Database *database.Queries
-	Logger   *zap.Logger
-	Ffmpeg   *ffmpegmiddleware.Ffmpeg
-	Email    *email.Email
-	Openai   *openaimiddleware.OpenAI
+	Storage   *storage.Storage
+	Database  *database.Queries
+	Logger    *zap.Logger
+	Ffmpeg    *ffmpegmiddleware.Ffmpeg
+	Email     *email.Email
+	Openai    *openaimiddleware.OpenAI
+	Replicate *replicatemiddleware.Replicate
 }
 
 func Connect(args DubbingConnectProps) *Dubbing {
 	return &Dubbing{
-		storage:  args.Storage,
-		database: args.Database,
-		logger:   args.Logger,
-		ffmpeg:   args.Ffmpeg,
-		email:    args.Email,
-		openai:   args.Openai,
+		storage:   args.Storage,
+		database:  args.Database,
+		logger:    args.Logger,
+		ffmpeg:    args.Ffmpeg,
+		email:     args.Email,
+		openai:    args.Openai,
+		replicate: args.Replicate,
 	}
 }
 
-func (d *Dubbing) getTranscript(fileName string) (*WhisperOutput, error) {
+func (d *Dubbing) getTranscript(ctx context.Context, fileName string) (*WhisperOutput, error) {
 
 	fileUrl := d.storage.GetFileLink(fileName)
 
@@ -105,7 +108,7 @@ func (d *Dubbing) getTranscript(fileName string) (*WhisperOutput, error) {
 			},
 		}
 		jsonBody, err := json.Marshal(replicateRequestBody)
-		output, err = replicatemiddleware.MakeRequest(bytes.NewBuffer(jsonBody))
+		output, err = d.replicate.MakeRequest(ctx, bytes.NewBuffer(jsonBody))
 
 		if err == nil {
 			break
@@ -232,7 +235,7 @@ func (d *Dubbing) CreateTransformation(
 	args CreateTransformationParams,
 ) (database.Transformation, error) {
 
-	transcriptPtr, err := d.getTranscript(args.FileName)
+	transcriptPtr, err := d.getTranscript(ctx, args.FileName)
 
 	if err != nil {
 		d.logger.Error("Failed to generate transcript", zap.Error(err))
@@ -469,7 +472,7 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 		logProgress("Dubbing Progress")
 
 		if args.lipSync {
-			err = d.lipSyncClip(*translatedSegment, args.identifier)
+			err = d.lipSyncClip(ctx, *translatedSegment, args.identifier)
 			if err != nil {
 				return nil, fmt.Errorf("Could not lip sync clip %d/%d: %s\n", idx+1, len(args.segments), err.Error())
 			}
@@ -709,7 +712,7 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 	return nil
 }
 
-func (d *Dubbing) lipSyncClip(segment Segment, identifier string) error {
+func (d *Dubbing) lipSyncClip(ctx context.Context, segment Segment, identifier string) error {
 
 	videoSegmentName := getVideoSegmentName(identifier, segment.Id)
 	dubbedVideoSegmentName := "dubbed_" + videoSegmentName
@@ -733,7 +736,7 @@ func (d *Dubbing) lipSyncClip(segment Segment, identifier string) error {
 	}
 
 	jsonBody, err := json.Marshal(replicateRequestBody)
-	outputUrl, err := replicatemiddleware.MakeRequest(bytes.NewBuffer(jsonBody))
+	outputUrl, err := d.replicate.MakeRequest(ctx, bytes.NewBuffer(jsonBody))
 	d.storage.DeleteFile(dubbedVideoSegmentName)
 
 	if err != nil {
