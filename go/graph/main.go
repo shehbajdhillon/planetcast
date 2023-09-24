@@ -9,6 +9,7 @@ import (
 	"planetcastdev/dubbing"
 	"planetcastdev/email"
 	"planetcastdev/storage"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -105,7 +106,7 @@ func Connect(args GraphConnectProps) *handler.Server {
 
 			user, err := args.Queries.GetUserByEmail(ctx, emailAddr)
 			if err != nil {
-				user, _ = args.Queries.AddUser(ctx, database.AddUserParams{Email: emailAddr, FullName: fullName})
+				user, _ = args.Queries.AddUser(ctx, database.AddUserParams{Email: emailAddr, FullName: strings.Title(strings.ToLower(fullName))})
 			}
 			logger.Info("Incoming Request", zap.String("operation_name", oc.OperationName), zap.String("user", user.Email))
 		}
