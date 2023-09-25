@@ -10,6 +10,7 @@ import (
 	"os"
 	"planetcastdev/auth"
 	"planetcastdev/database"
+	"planetcastdev/elevenlabsmiddleware"
 	"planetcastdev/email"
 	"planetcastdev/ffmpegmiddleware"
 	"planetcastdev/graph/model"
@@ -56,34 +57,37 @@ type Word struct {
 }
 
 type Dubbing struct {
-	storage   *storage.Storage
-	database  *database.Queries
-	logger    *zap.Logger
-	ffmpeg    *ffmpegmiddleware.Ffmpeg
-	email     *email.Email
-	openai    *openaimiddleware.OpenAI
-	replicate *replicatemiddleware.Replicate
+	storage    *storage.Storage
+	database   *database.Queries
+	logger     *zap.Logger
+	ffmpeg     *ffmpegmiddleware.Ffmpeg
+	email      *email.Email
+	openai     *openaimiddleware.OpenAI
+	replicate  *replicatemiddleware.Replicate
+	elevenlabs *elevenlabsmiddleware.ElevenLabs
 }
 
 type DubbingConnectProps struct {
-	Storage   *storage.Storage
-	Database  *database.Queries
-	Logger    *zap.Logger
-	Ffmpeg    *ffmpegmiddleware.Ffmpeg
-	Email     *email.Email
-	Openai    *openaimiddleware.OpenAI
-	Replicate *replicatemiddleware.Replicate
+	Storage    *storage.Storage
+	Database   *database.Queries
+	Logger     *zap.Logger
+	Ffmpeg     *ffmpegmiddleware.Ffmpeg
+	Email      *email.Email
+	Openai     *openaimiddleware.OpenAI
+	Replicate  *replicatemiddleware.Replicate
+	ElevenLabs *elevenlabsmiddleware.ElevenLabs
 }
 
 func Connect(args DubbingConnectProps) *Dubbing {
 	return &Dubbing{
-		storage:   args.Storage,
-		database:  args.Database,
-		logger:    args.Logger,
-		ffmpeg:    args.Ffmpeg,
-		email:     args.Email,
-		openai:    args.Openai,
-		replicate: args.Replicate,
+		storage:    args.Storage,
+		database:   args.Database,
+		logger:     args.Logger,
+		ffmpeg:     args.Ffmpeg,
+		email:      args.Email,
+		openai:     args.Openai,
+		replicate:  args.Replicate,
+		elevenlabs: args.ElevenLabs,
 	}
 }
 
@@ -459,7 +463,7 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 		}
 		logProgress("Translation Progress")
 
-		err = d.fetchDubbedClip(*translatedSegment, args.identifier)
+		err = d.fetchDubbedClip(ctx, *translatedSegment, args.identifier)
 		if err != nil {
 			return nil, fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(args.segments), err.Error())
 		}
@@ -579,68 +583,32 @@ func (d *Dubbing) addMissingInfo(ctx context.Context, args addMissingInfoProps) 
 	return nil
 }
 
-func (d *Dubbing) fetchDubbedClip(segment Segment, identifier string) error {
-
-	url := "https://api.elevenlabs.io/v1/text-to-speech/rU18Fk3uSDhmg5Xh41o4"
-	API_KEY := os.Getenv("ELEVEN_LABS_KEY")
+func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifier string) error {
 
 	retries := 5
+	id := segment.Id
+	audioFileName := getAudioFileName(identifier, id)
 
-	for retries > 0 {
-
-		id := segment.Id
-		audioFileName := getAudioFileName(identifier, id)
-
-		sleepTime := utils.GetExponentialDelaySeconds(5 - retries)
-
-		data := VoiceRequest{
-			Text:    segment.Text,
-			ModelID: "eleven_multilingual_v2",
-			VoiceSetting: VoiceSettings{
-				Stability:       1.0,
-				SimilarityBoost: 1.0,
-			},
-		}
-
-		payload, err := json.Marshal(data)
-		if err != nil {
-			return fmt.Errorf("Error encoding JSON for ElevenLabs request: %s", err.Error())
-		}
-
-		responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
-			Method: "POST",
-			Url:    url,
-			Body:   bytes.NewBuffer(payload),
-			Headers: map[string]string{
-				"Content-Type": "application/json",
-				"Accept":       "audio/mpeg",
-				"xi-api-key":   API_KEY,
-			},
-		})
-
-		if err == nil {
-
-			audioContent := responseBody
-			if err != nil {
-				return fmt.Errorf("Error reading response from ElevenLabs: %s", err.Error())
-			}
-
-			err = ioutil.WriteFile(audioFileName, audioContent, 0644)
-			if err != nil {
-				return fmt.Errorf("Error writing audio file: %s", err.Error())
-			}
-
-			return nil
-
-		} else {
-			retries -= 1
-			d.logger.Error("Request to Eleven Labs failed, retrying after sleeping", zap.Int("retries_left", retries), zap.Error(err), zap.Int("sleep_time", sleepTime))
-			time.Sleep(time.Duration(sleepTime) * time.Second)
-		}
-
+	data := elevenlabsmiddleware.VoiceRequest{
+		Text:    segment.Text,
+		ModelID: "eleven_multilingual_v2",
+		VoiceSetting: elevenlabsmiddleware.VoiceSettings{
+			Stability:       1.0,
+			SimilarityBoost: 1.0,
+		},
 	}
 
-	return fmt.Errorf("Failed to call elevenlabs")
+	audioContent, err := d.elevenlabs.MakeRequest(ctx, elevenlabsmiddleware.MakeRequestProps{Retries: retries, RequestInput: data})
+
+	if err != nil {
+		return fmt.Errorf("Error reading response from ElevenLabs: %s", err.Error())
+	}
+	err = ioutil.WriteFile(audioFileName, audioContent, 0644)
+	if err != nil {
+		return fmt.Errorf("Error writing audio file: %s", err.Error())
+	}
+	return nil
+
 }
 
 func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier string) error {
