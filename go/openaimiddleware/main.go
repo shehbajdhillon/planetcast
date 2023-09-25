@@ -47,7 +47,7 @@ type OpenAI struct {
 }
 
 func Connect(args OpenAIConnectProps) *OpenAI {
-	maxWorkers := 3
+	maxWorkers := 2
 	sem := semaphore.NewWeighted(int64(maxWorkers))
 	return &OpenAI{logger: args.Logger, semaphore: sem}
 }
