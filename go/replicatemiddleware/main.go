@@ -78,9 +78,10 @@ func (r *Replicate) FetchRequest(ctx context.Context, requestId string) (*Replic
 	API_KEY := os.Getenv("REPLICATE_KEY")
 
 	if err := r.getRequestSemaphore.Acquire(ctx, 1); err != nil {
-		defer r.getRequestSemaphore.Release(1)
 		return nil, fmt.Errorf("Failed to acquire semaphore.")
 	}
+	defer r.getRequestSemaphore.Release(1)
+
 	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
 		Method: "GET",
 		Url:    fmt.Sprintf("https://api.replicate.com/v1/predictions/%s", requestId),
@@ -89,8 +90,6 @@ func (r *Replicate) FetchRequest(ctx context.Context, requestId string) (*Replic
 		},
 	})
 	time.Sleep(1 * time.Second)
-
-	r.getRequestSemaphore.Release(1)
 
 	if err != nil {
 		return nil, fmt.Errorf("Cannot make call to replicate: %s", err.Error())
@@ -108,9 +107,9 @@ func (r *Replicate) TriggerRequest(ctx context.Context, body *bytes.Buffer) (str
 	API_KEY := os.Getenv("REPLICATE_KEY")
 
 	if err := r.postRequestSemaphore.Acquire(ctx, 1); err != nil {
-		defer r.postRequestSemaphore.Release(1)
 		return "", fmt.Errorf("Failed to acquire semaphore.")
 	}
+	defer r.postRequestSemaphore.Release(1)
 
 	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
 		Method: "POST",
@@ -121,8 +120,6 @@ func (r *Replicate) TriggerRequest(ctx context.Context, body *bytes.Buffer) (str
 		Body: body,
 	})
 	time.Sleep(1 * time.Second)
-
-	r.postRequestSemaphore.Release(1)
 
 	if err != nil {
 		return "", fmt.Errorf("Cannot make call to replicate: %s", err.Error())

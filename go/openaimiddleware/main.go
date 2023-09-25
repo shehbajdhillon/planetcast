@@ -75,9 +75,9 @@ func (o *OpenAI) MakeAPIRequest(ctx context.Context, args MakeAPIRequestProps) (
 		sleepTime := utils.GetExponentialDelaySeconds(5 - retries)
 
 		if err := o.semaphore.Acquire(ctx, 1); err != nil {
-			defer o.semaphore.Release(1)
 			return nil, fmt.Errorf("Failed to acquire semaphore.")
 		}
+		defer o.semaphore.Release(1)
 
 		respBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
 			Method: "POST",
@@ -89,8 +89,6 @@ func (o *OpenAI) MakeAPIRequest(ctx context.Context, args MakeAPIRequestProps) (
 			},
 		})
 		time.Sleep(1 * time.Second)
-
-		o.semaphore.Release(1)
 
 		if err != nil {
 			o.logger.Error(
