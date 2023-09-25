@@ -139,7 +139,7 @@ const LoadingBox: React.FC<LoadingBoxProps> = ({ progress }) => {
         maxW={"1280px"}
       >
           <Box mt={"0px"} mx="5px" w="full">
-            <Progress value={progress} hasStripe size="md" isAnimated={true} colorScheme="green" rounded={"lg"} />
+            <Progress value={progress} hasStripe size="md" isAnimated={true} rounded={"lg"} />
             <Center pt="10px">{progress + "%"}</Center>
           </Box>
       </Box>

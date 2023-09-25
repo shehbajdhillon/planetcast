@@ -205,7 +205,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
                 >
                   <HStack spacing={3}>
                     <Text>Add Initial Dubbing Language</Text>
-                    <Checkbox colorScheme='green' checked={enableDubbing} onChange={(e) => setEnableDubbing(e.target.checked)} />
+                    <Checkbox checked={enableDubbing} onChange={(e) => setEnableDubbing(e.target.checked)} />
                   </HStack>
                   <Text fontSize={'sm'} fontWeight={'light'} fontStyle={'italic'} hidden={enableDubbing}>
                     You can optionally choose a language to dub your video to after it is transcribed.
@@ -225,7 +225,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
                         <option key={idx} value={lang}>{lang}</option>
                       ))}
                     </Select>
-                    <Checkbox isChecked={lipSync} onChange={() => setLipSync(curr => !curr)} colorScheme='green'>
+                    <Checkbox isChecked={lipSync} onChange={() => setLipSync(curr => !curr)}>
                       Enable Lip Syncing (Experimental)
                     </Checkbox>
                   </>
