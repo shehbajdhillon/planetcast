@@ -17,6 +17,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/google/uuid"
 	"github.com/tabbed/pqtype"
+	"go.uber.org/zap"
 )
 
 // CreateTeam is the resolver for the createTeam field.
@@ -125,15 +126,26 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 	newCtx := context.Background()
 	newCtx = auth.AttachContext(newCtx, user)
 
-	go r.Dubbing.CreateTranslation(
-		newCtx,
-		dubbing.CreateTranslationProps{
-			SourceTransformation: sourceTransformation,
-			TargetTransformation: newTransformation,
-			Identifier:           identifier,
-			LipSync:              lipSync,
-		},
-	)
+	go func(context context.Context) {
+		_, err := r.Dubbing.CreateTranslation(
+			newCtx,
+			dubbing.CreateTranslationProps{
+				SourceTransformation: sourceTransformation,
+				TargetTransformation: newTransformation,
+				Identifier:           identifier,
+				LipSync:              lipSync,
+			},
+		)
+
+		if err != nil {
+			r.Logger.Error("Failed to process transformation", zap.Error(err), zap.Int("project_id", int(projectID)), zap.Int("transformation_id", int(newTransformation.ID)), zap.String("target_language", string(targetLanguage)))
+			r.DB.UpdateTransformationStatusById(ctx, database.UpdateTransformationStatusByIdParams{
+				ID:     newTransformation.ID,
+				Status: "error",
+			})
+		}
+
+	}(newCtx)
 
 	return newTransformation, nil
 }

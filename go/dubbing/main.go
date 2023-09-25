@@ -282,7 +282,7 @@ type CreateTranslationProps struct {
 func (d *Dubbing) CreateTranslation(
 	ctx context.Context,
 	args CreateTranslationProps,
-) (database.Transformation, error) {
+) (*database.Transformation, error) {
 
 	sourceTransformation := args.SourceTransformation
 	identifier := args.Identifier
@@ -299,11 +299,11 @@ func (d *Dubbing) CreateTranslation(
 		},
 	})
 	if err != nil {
-		return database.Transformation{}, fmt.Errorf("Error downloading original audio file from S3: %s", err.Error())
+		return nil, fmt.Errorf("Error downloading original audio file from S3: %s", err.Error())
 	}
 	err = ioutil.WriteFile(identifier+".mp4", responseBody, 0644)
 	if err != nil {
-		return database.Transformation{}, fmt.Errorf("Error writing audio file: %s", err.Error())
+		return nil, fmt.Errorf("Error writing audio file: %s", err.Error())
 	}
 
 	var whisperOutput WhisperOutput
@@ -338,12 +338,12 @@ func (d *Dubbing) CreateTranslation(
 	}
 	translatedSegmentsPtr, err := d.fetchAndDub(ctx, fetchAndDubArgs)
 	if err != nil {
-		return database.Transformation{}, fmt.Errorf("Error translating and fetching: %s", err.Error())
+		return nil, fmt.Errorf("Error translating and fetching: %s", err.Error())
 	}
 	translatedSegments := *translatedSegmentsPtr
 
 	if err != nil {
-		return database.Transformation{}, fmt.Errorf("Could not process translated segments " + err.Error())
+		return nil, fmt.Errorf("Could not process translated segments " + err.Error())
 	}
 
 	newFileName, err := d.concatSegments(ctx, translatedSegments, identifier)
@@ -374,7 +374,7 @@ func (d *Dubbing) CreateTranslation(
 	})
 
 	if err != nil {
-		return database.Transformation{}, fmt.Errorf("Could not update transformation: " + err.Error())
+		return nil, fmt.Errorf("Could not update transformation: " + err.Error())
 	}
 
 	targetTransformation, err = d.database.UpdateTransformationStatusById(ctx, database.UpdateTransformationStatusByIdParams{
@@ -399,7 +399,7 @@ func (d *Dubbing) CreateTranslation(
 	}
 
 	// return the update transformation
-	return targetTransformation, nil
+	return &targetTransformation, nil
 }
 
 type VoiceSettings struct {
@@ -894,11 +894,11 @@ func (d *Dubbing) translateSegment(
 	}
 
 	chatResponse, err := d.openai.MakeAPIRequest(ctx, openaimiddleware.MakeAPIRequestProps{Retries: retries, RequestInput: chatGptInput})
-	segment.Text = chatResponse.Choices[0].Message.Content
-
 	if err != nil {
 		return nil, fmt.Errorf("Open AI Requests Failed: %s", err.Error())
 	}
+
+	segment.Text = chatResponse.Choices[0].Message.Content
 	return &segment, nil
 }
 
