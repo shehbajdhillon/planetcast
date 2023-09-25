@@ -63,6 +63,7 @@ func (e *ElevenLabs) MakeRequest(ctx context.Context, args MakeRequestProps) ([]
 		}
 
 		if err := e.semaphore.Acquire(ctx, 1); err != nil {
+			defer e.semaphore.Release(1)
 			return nil, fmt.Errorf("Failed to acquire semaphore.")
 		}
 		audioContent, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{

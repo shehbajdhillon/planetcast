@@ -75,6 +75,7 @@ func (o *OpenAI) MakeAPIRequest(ctx context.Context, args MakeAPIRequestProps) (
 		sleepTime := utils.GetExponentialDelaySeconds(5 - retries)
 
 		if err := o.semaphore.Acquire(ctx, 1); err != nil {
+			defer o.semaphore.Release(1)
 			return nil, fmt.Errorf("Failed to acquire semaphore.")
 		}
 

@@ -78,6 +78,7 @@ func (r *Replicate) FetchRequest(ctx context.Context, requestId string) (*Replic
 	API_KEY := os.Getenv("REPLICATE_KEY")
 
 	if err := r.getRequestSemaphore.Acquire(ctx, 1); err != nil {
+		defer r.getRequestSemaphore.Release(1)
 		return nil, fmt.Errorf("Failed to acquire semaphore.")
 	}
 	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
@@ -107,6 +108,7 @@ func (r *Replicate) TriggerRequest(ctx context.Context, body *bytes.Buffer) (str
 	API_KEY := os.Getenv("REPLICATE_KEY")
 
 	if err := r.postRequestSemaphore.Acquire(ctx, 1); err != nil {
+		defer r.postRequestSemaphore.Release(1)
 		return "", fmt.Errorf("Failed to acquire semaphore.")
 	}
 
