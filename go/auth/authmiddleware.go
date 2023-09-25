@@ -51,11 +51,6 @@ func Middleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			if !authorizedUser(user) {
-				http.Error(w, "User Not Authorized. Please Sign Up On Our Waitlist", http.StatusForbidden)
-				return
-			}
-
 			ctx := AttachContext(r.Context(), user)
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
