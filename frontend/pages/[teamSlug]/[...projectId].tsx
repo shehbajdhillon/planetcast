@@ -10,9 +10,9 @@ import {
   Grid,
   GridItem,
   HStack,
-  Heading,
   IconButton,
   Progress,
+  SkeletonText,
   Spinner,
   Text,
   VStack,
@@ -250,12 +250,7 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
           <GridItem area={'transcript'} p={!parseTranscript ? "10px" : "0px"} h="full" w="full" borderWidth={"1px"} rounded="lg" maxH={"596px"}>
 
           { !parseTranscript ?
-            <Center h="full">
-              <HStack spacing={4}>
-                <Heading size={"md"}>Processing </Heading>
-                <Spinner />
-              </HStack>
-            </Center>
+            <LoadingTranscriptView />
             :
             <TranscriptView segments={parseTranscript?.segments} />
           }
@@ -310,17 +305,52 @@ const TranscriptView: React.FC<TranscriptViewProps> = ({ segments }) => {
       </Checkbox>
       <VStack overflow={"scroll"} h="full" id={parentId} position={"relative"} w="full">
         {segments?.map((segment: Segment, idx: number) => (
-          <MessageView
-            segment={segment}
-            key={idx}
-            htmlId={transcriptMessageId(segment)}
-            highlight={highlight(segment)}
-          />
+          <>
+            <MessageView
+              segment={segment}
+              key={idx}
+              htmlId={transcriptMessageId(segment)}
+              highlight={highlight(segment)}
+            />
+          </>
         ))}
       </VStack>
     </VStack>
   );
 };
+
+
+const LoadingTranscriptView = () => {
+  return (
+    <VStack h="full" p="10px">
+      <VStack overflow={"scroll"} h="full" position={"relative"} w="full">
+        {new Array(7).fill(0).map((_, idx: number) => (
+          <LoadingMessageView key={idx} />
+        ))}
+      </VStack>
+    </VStack>
+  );
+}
+
+const LoadingMessageView: React.FC = () => {
+
+  return (
+    <Box
+      rounded="10px"
+      whiteSpace={'normal'}
+      height="auto"
+      blockSize={'auto'}
+      w="full"
+      justifyContent="left"
+      borderWidth={"1px"}
+      p={2}
+    >
+      <SkeletonText noOfLines={4} h={"66px"} rounded={"10px"} />
+    </Box>
+  );
+
+};
+
 
 interface MessageViewProps {
   segment: Segment;
