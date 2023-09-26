@@ -22,6 +22,8 @@ import {
   useColorModeValue,
   useDisclosure,
   Checkbox,
+  RadioGroup,
+  Radio,
 } from '@chakra-ui/react';
 import { Check } from 'lucide-react';
 import { useRouter } from 'next/router';
@@ -66,6 +68,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
   const [enableDubbing, setEnableDubbing] = useState(false);
 
   const [lipSync, setLipSync] = useState(false);
+  const [gender, setGender] = useState("male");
 
   const imgSrc = useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg');
   const borderColor = useColorModeValue('blackAlpha.400', 'whiteAlpha.500');
@@ -115,6 +118,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
     setSourceMedia(undefined);
     setEnableDubbing(false);
     setLipSync(false);
+    setGender("male")
   }, [isOpen, onClose]);
 
   return (
@@ -227,13 +231,23 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
                     <Checkbox isChecked={lipSync} onChange={() => setLipSync(curr => !curr)}>
                       Enable Lip Syncing (Experimental)
                     </Checkbox>
+                    <RadioGroup value={gender} onChange={setGender}>
+                      <HStack>
+                        <Radio value='male'>Male</Radio>
+                        <Radio value='female'>Female</Radio>
+                      </HStack>
+                      <Text fontSize={'sm'} fontWeight={'light'} fontStyle={'italic'}>
+                        We are currently only offering single speaker dubbing in male or female voices,
+                        but are working on adding more voice options and multi-speaker dubbing capabilities.
+                      </Text>
+                    </RadioGroup>
                   </>
                 }
               </Stack>
               <Spacer />
             </HStack>
           </ModalBody>
-          <ModalFooter alignSelf={"center"}>
+          <ModalFooter w="full">
             <HStack w="full">
               <Button
                 leftIcon={<Check />}

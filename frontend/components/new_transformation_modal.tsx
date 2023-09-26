@@ -3,8 +3,10 @@ import { gql, useMutation } from "@apollo/client";
 import {
   Box,
   Button,
+  Text,
   Checkbox,
   FormLabel,
+  HStack,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -12,9 +14,12 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Radio,
+  RadioGroup,
   Select,
   Stack,
-  useDisclosure
+  useDisclosure,
+  Center
 } from "@chakra-ui/react";
 import { PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -44,6 +49,8 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
 
   const [targetLanguage, setTargetLanguage] = useState<SupportedLanguage>(undubbedLanguages[0]);
 
+  const [gender, setGender] = useState("male");
+
   const [createTranslationMutation, { loading }] = useMutation(CREATE_TRANSLATION);
   const [lipSync, setLipSync] = useState(false);
 
@@ -60,6 +67,7 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
   useEffect(() => {
     setTargetLanguage(undubbedLanguages[0]);
     setLipSync(false);
+    setGender("male")
   }, [isOpen]);
 
   return (
@@ -88,15 +96,36 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
                   <Checkbox isChecked={lipSync} onChange={() => setLipSync(curr => !curr)}>
                     Enable Lip Syncing (Experimental)
                   </Checkbox>
-                  <Button hidden={!targetLanguage} onClick={createTranslation} isDisabled={loading}>
-                    Submit
-                  </Button>
+                  <RadioGroup value={gender} onChange={setGender}>
+                    <HStack>
+                      <Radio value='male'>Male</Radio>
+                      <Radio value='female'>Female</Radio>
+                    </HStack>
+                    <Text fontSize={'sm'} fontWeight={'light'} fontStyle={'italic'}>
+                      We are currently only offering single speaker dubbing in male or female voices,
+                      but are working on adding more voice options and multi-speaker dubbing capabilities.
+                    </Text>
+                  </RadioGroup>
                 </Stack>
               </Box>
             </Stack>
           </ModalBody>
-          <ModalFooter w="full">
-            <Button colorScheme="gray" onClick={onClose}>Close</Button>
+          <ModalFooter alignItems={"center"}>
+            <Center w="full">
+              <HStack>
+                <Button
+                  hidden={!targetLanguage}
+                  onClick={createTranslation}
+                  isDisabled={loading}
+                  colorScheme="green"
+                >
+                  Submit
+                </Button>
+                <Button colorScheme="gray" onClick={onClose}>
+                  Close
+                </Button>
+              </HStack>
+            </Center>
           </ModalFooter>
         </ModalContent>
       </Modal>
