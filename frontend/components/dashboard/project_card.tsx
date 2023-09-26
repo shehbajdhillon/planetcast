@@ -53,7 +53,7 @@ const LoadingBox: React.FC<LoadingBoxProps> = ({ progress }) => {
       h={{ base: "185.63px", md:"202.5px" }}
     >
         <Box mt={"110px"} mx="5px">
-          <Progress value={progress} hasStripe size="md" isAnimated={true} rounded={"lg"} />
+          <Progress value={progress} hasStripe size="md" isAnimated={true} rounded={"sm"} backgroundColor={"gray.800"} />
           <Center pt="10px">{progress + "%"}</Center>
         </Box>
     </Box>

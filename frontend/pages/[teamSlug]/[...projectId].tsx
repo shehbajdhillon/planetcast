@@ -139,7 +139,7 @@ const LoadingBox: React.FC<LoadingBoxProps> = ({ progress }) => {
         maxW={"1280px"}
       >
           <Box mt={"0px"} mx="5px" w="full">
-            <Progress value={progress} hasStripe size="md" isAnimated={true} rounded={"lg"} />
+            <Progress value={progress} hasStripe size="md" isAnimated={true} rounded={"sm"} backgroundColor={"gray.800"} />
             <Center pt="10px">{progress + "%"}</Center>
           </Box>
       </Box>
@@ -247,7 +247,7 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
             </HStack>
           </GridItem>
 
-          <GridItem area={'transcript'} p={!parseTranscript ? "10px" : "0px"} h="full" w="full" borderWidth={"1px"} rounded="lg" maxH={"596px"}>
+          <GridItem area={'transcript'} h="full" w="full" borderWidth={"1px"} rounded="lg" maxH={"596px"}>
 
           { !parseTranscript ?
             <LoadingTranscriptView />
