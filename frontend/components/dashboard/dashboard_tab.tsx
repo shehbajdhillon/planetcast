@@ -3,6 +3,7 @@ import {
   Center,
   Grid,
   GridItem,
+  Skeleton,
   useColorModeValue,
 } from "@chakra-ui/react";
 import ProjectCard from "./project_card";
@@ -24,9 +25,9 @@ const LoadingBox: React.FC = () => {
       rounded={"lg"}
       borderColor={bgColor}
     >
-      <Box py="10px" h={{ base: "185px", md: "202px" }} backgroundColor={bgColor} rounded={"lg"} />
-      <Box m="10px" h="27px" w="100px" backgroundColor={bgColor} rounded={"lg"} />
-      <Box m="10px" h="27px" w="50px" backgroundColor={bgColor} rounded={"lg"} />
+      <Skeleton py="10px" h={{ base: "185px", md: "202px" }} rounded={"lg"} />
+      <Skeleton m="10px" h="27px" w="100px" rounded={"lg"} />
+      <Skeleton m="10px" h="27px" w="50px" rounded={"lg"} />
     </Box>
   );
 };
