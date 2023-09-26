@@ -155,10 +155,9 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
                   fontWeight={'600'}
                   fontSize={'lg'}
                 >
-                  Title
+                  Project Title
                 </FormLabel>
                 <Input
-                  placeholder="PlanetCast Episode #234"
                   onChange={(e) => setTitle(e.target.value)}
                   value={title}
                 />
@@ -204,12 +203,12 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
                   fontSize={'lg'}
                 >
                   <HStack spacing={3}>
-                    <Text>Add Initial Dubbing Language</Text>
+                    <Text>Dub video to another language after transcription</Text>
                     <Checkbox checked={enableDubbing} onChange={(e) => setEnableDubbing(e.target.checked)} />
                   </HStack>
                   <Text fontSize={'sm'} fontWeight={'light'} fontStyle={'italic'} hidden={enableDubbing}>
-                    You can optionally choose a language to dub your video to after it is transcribed.
-                    You can also decide to dub your video to any or more languages later as well after it has been transcribed by clicking on the project card.
+                    Check this box to have the video automatically dubbed into another language of your choice after transcription is complete.
+                    You can also add dubbing languages later if needed.
                   </Text>
                 </FormLabel>
                 { enableDubbing &&
