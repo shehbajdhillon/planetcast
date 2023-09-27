@@ -134,6 +134,7 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 				TargetTransformation: newTransformation,
 				Identifier:           identifier,
 				LipSync:              lipSync,
+				Gender:               gender,
 			},
 		)
 

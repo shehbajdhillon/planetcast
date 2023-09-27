@@ -277,6 +277,7 @@ type CreateTranslationProps struct {
 	TargetTransformation database.Transformation
 	Identifier           string
 	LipSync              bool
+	Gender               string
 }
 
 func (d *Dubbing) CreateTranslation(
@@ -335,6 +336,7 @@ func (d *Dubbing) CreateTranslation(
 		targetLanguage:         model.SupportedLanguage(targetTransformation.TargetLanguage),
 		targetTransformationId: targetTransformation.ID,
 		lipSync:                args.LipSync,
+		gender:                 args.Gender,
 	}
 	translatedSegmentsPtr, err := d.fetchAndDub(ctx, fetchAndDubArgs)
 	if err != nil {
@@ -420,6 +422,7 @@ type fetchAndDubProps struct {
 	targetLanguage         model.SupportedLanguage
 	targetTransformationId int64
 	lipSync                bool
+	gender                 string
 }
 
 func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Segment, error) {
@@ -463,7 +466,7 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 		}
 		logProgress("Translation Progress")
 
-		err = d.fetchDubbedClip(ctx, *translatedSegment, args.identifier)
+		err = d.fetchDubbedClip(ctx, *translatedSegment, args.identifier, args.gender)
 		if err != nil {
 			return nil, fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(args.segments), err.Error())
 		}
@@ -583,7 +586,7 @@ func (d *Dubbing) addMissingInfo(ctx context.Context, args addMissingInfoProps) 
 	return nil
 }
 
-func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifier string) error {
+func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifier string, gender string) error {
 
 	retries := 5
 	id := segment.Id
@@ -598,7 +601,7 @@ func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifi
 		},
 	}
 
-	audioContent, err := d.elevenlabs.MakeRequest(ctx, elevenlabsmiddleware.MakeRequestProps{Retries: retries, RequestInput: data})
+	audioContent, err := d.elevenlabs.MakeRequest(ctx, elevenlabsmiddleware.MakeRequestProps{Retries: retries, RequestInput: data, Gender: gender})
 
 	if err != nil {
 		return fmt.Errorf("Error reading response from ElevenLabs: %s", err.Error())

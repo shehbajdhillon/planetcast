@@ -43,13 +43,21 @@ type VoiceRequest struct {
 type MakeRequestProps struct {
 	Retries      int
 	RequestInput VoiceRequest
+	Gender       string
 }
 
 func (e *ElevenLabs) MakeRequest(ctx context.Context, args MakeRequestProps) ([]byte, error) {
 
 	retries := args.Retries
 
+	gender := args.Gender
+
 	URL := "https://api.elevenlabs.io/v1/text-to-speech/rU18Fk3uSDhmg5Xh41o4"
+
+	if gender == "female" {
+		URL = "https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM"
+	}
+
 	API_KEY := os.Getenv("ELEVEN_LABS_KEY")
 	data := args.RequestInput
 
