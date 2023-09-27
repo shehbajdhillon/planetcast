@@ -52,9 +52,9 @@ type Query {
 
 type Mutation {
   createTeam(slug: String!, name: String!, teamType: TeamType!): Team! @loggedIn
-  createProject(teamSlug: String! @memberTeam, title: String!, sourceMedia: Upload!, initialTargetLanguage: SupportedLanguage, initialLipSync: Boolean!): Project! @loggedIn
+  createProject(teamSlug: String! @memberTeam, title: String!, sourceMedia: Upload!, initialTargetLanguage: SupportedLanguage, initialLipSync: Boolean!, gender: String!): Project! @loggedIn
   deleteProject(projectId: Int64! @ownsProject): Project! @loggedIn
-  createTranslation(projectId: Int64! @ownsProject, targetLanguage: SupportedLanguage!, lipSync: Boolean!): Transformation! @loggedIn
+  createTranslation(projectId: Int64! @ownsProject, targetLanguage: SupportedLanguage!, lipSync: Boolean!, gender: String!): Transformation! @loggedIn
   deleteTransformation(transformationId: Int64! @ownsTransformation): Transformation! @loggedIn
 }
 
