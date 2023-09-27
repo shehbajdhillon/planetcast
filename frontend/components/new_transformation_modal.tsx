@@ -30,8 +30,8 @@ interface NewTransformationModelProps {
 };
 
 const CREATE_TRANSLATION = gql`
-  mutation CreateTranslation($projectId: Int64!, $targetLanguage: SupportedLanguage!, $lipSync: Boolean!) {
-    createTranslation(projectId: $projectId, targetLanguage: $targetLanguage, lipSync: $lipSync) {
+  mutation CreateTranslation($projectId: Int64!, $targetLanguage: SupportedLanguage!, $lipSync: Boolean!, $gender: String!) {
+    createTranslation(projectId: $projectId, targetLanguage: $targetLanguage, lipSync: $lipSync, gender: $gender) {
       id
       projectId
     }
@@ -55,7 +55,7 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
   const [lipSync, setLipSync] = useState(false);
 
   const createTranslation = async () => {
-    const variables = { projectId: project.id, targetLanguage, lipSync }
+    const variables = { projectId: project.id, targetLanguage, lipSync, gender }
     const res = await createTranslationMutation({ variables });
     if (res) {
       refetch();

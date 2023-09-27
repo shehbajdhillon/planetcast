@@ -35,8 +35,8 @@ import NProgress from 'nprogress';
 import Image from 'next/image';
 
 const CREATE_PROJECT = gql`
-  mutation CreateProject($teamSlug: String!, $title: String!, $sourceMedia: Upload!, $initialLipSync: Boolean!, $initialTargetLanguage: SupportedLanguage) {
-    createProject(teamSlug: $teamSlug, title: $title, sourceMedia: $sourceMedia, initialLipSync: $initialLipSync, initialTargetLanguage: $initialTargetLanguage) {
+  mutation CreateProject($teamSlug: String!, $title: String!, $sourceMedia: Upload!, $initialLipSync: Boolean!, $initialTargetLanguage: SupportedLanguage, $gender: String!) {
+    createProject(teamSlug: $teamSlug, title: $title, sourceMedia: $sourceMedia, initialLipSync: $initialLipSync, initialTargetLanguage: $initialTargetLanguage, gender: $gender) {
       id
       title
     }
@@ -81,6 +81,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
       sourceMedia,
       initialLipSync: lipSync,
       initialTargetLanguage: enableDubbing ? initialTargetLang : undefined,
+      gender,
     }
     const res = await createProjectMutation({
       variables
