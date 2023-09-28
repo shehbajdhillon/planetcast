@@ -44,18 +44,32 @@ const GET_PROJECT_DATA = gql`
 
 interface LoadingBoxProps {
   progress: number;
+  status: string;
 }
 
-const LoadingBox: React.FC<LoadingBoxProps> = ({ progress }) => {
+const LoadingBox: React.FC<LoadingBoxProps> = ({ status, progress }) => {
   return (
     <Box
       w={{ base: "330px", md: "360px" }}
       h={{ base: "185.63px", md:"202.5px" }}
     >
-        <Box mt={"110px"} mx="5px">
-          <Progress value={progress} hasStripe size="md" isAnimated={true} rounded={"sm"} backgroundColor={"gray.800"} />
-          <Center pt="10px">{progress + "%"}</Center>
-        </Box>
+        { status !== "error" ?
+          <Box mt={"110px"} mx="5px" w="full">
+            <Progress value={progress} hasStripe size="md" isAnimated={true} rounded={"sm"} backgroundColor={"gray.800"} />
+            <Center pt="10px">{progress + "%"}</Center>
+          </Box>
+          :
+          <Box mt={"110px"} mx="5px" w="full">
+            <Progress value={100} size="md" rounded={"sm"} backgroundColor={"gray.800"} colorScheme="red" />
+            <Center pt="10px">
+              <Text
+                noOfLines={1}
+              >
+                {"An error occured while processing your dubbing"}
+              </Text>
+            </Center>
+          </Box>
+        }
     </Box>
   );
 }
@@ -69,8 +83,11 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
   const [transformationIdx, setTransformationIdx] = useState(0);
 
   const transformations = project?.transformations;
+  const transformation = transformations && transformations[transformationIdx];
+  const currentStatus = transformation && transformation?.status;
 
-  const isProcessing = transformations?.length === 0 || (transformations[transformationIdx].status && transformations[transformationIdx].status !== "complete")
+
+  const isProcessing = transformations?.length === 0 || currentStatus !== "complete"
 
   const [getProjectData, { data } ] = useLazyQuery(GET_PROJECT_DATA, { variables: { teamSlug, projectId: project.id }, fetchPolicy: 'no-cache', pollInterval: isProcessing ? 10000 : 0 })
 
@@ -109,7 +126,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
     >
       <HStack pb="2px" pt="10px" rounded={"lg"}>
         {
-          (isProcessing && transformations?.length) ? <LoadingBox progress={transformations?.[transformationIdx].progress} /> :
+          (isProcessing && transformations?.length) ? <LoadingBox progress={transformations?.[transformationIdx].progress} status={currentStatus} /> :
           <VideoPlayer src={transformations.length ? transformations?.[transformationIdx].targetMedia : project.sourceMedia } style={{ borderRadius: "100px" }}/>
         }
       </HStack>

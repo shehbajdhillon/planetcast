@@ -129,19 +129,27 @@ const DELETE_TRANSFORMATION = gql`
 
 interface LoadingBoxProps {
   progress: number;
+  status: string;
 }
 
-const LoadingBox: React.FC<LoadingBoxProps> = ({ progress }) => {
+const LoadingBox: React.FC<LoadingBoxProps> = ({ status, progress }) => {
   return (
     <AspectRatio ratio={16/9}>
       <Box
         w={"full"}
         maxW={"1280px"}
       >
-          <Box mt={"0px"} mx="5px" w="full">
-            <Progress value={progress} hasStripe size="md" isAnimated={true} rounded={"sm"} backgroundColor={"gray.800"} />
-            <Center pt="10px">{progress + "%"}</Center>
-          </Box>
+          { status !== "error" ?
+            <Box mt={"0px"} mx="5px" w="full">
+              <Progress value={progress} hasStripe size="md" isAnimated={true} rounded={"sm"} backgroundColor={"gray.800"} />
+              <Center pt="10px">{progress + "%"}</Center>
+            </Box>
+            :
+            <Box mt={"0px"} mx="5px" w="full">
+              <Progress value={100} size="md" rounded={"sm"} backgroundColor={"gray.800"} colorScheme="red" />
+              <Center pt="10px">{"An error occured while processing your dubbing, please delete and try again. All credits used for this dubbing have been refunded."}</Center>
+            </Box>
+          }
       </Box>
     </AspectRatio>
   );
@@ -156,9 +164,10 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
 
   const transformations = project && project?.transformations;
   const transformation = transformations && transformations[transformationIdx];
+  const currentStatus = transformation && transformation?.status;
   const parseTranscript = transformation && transformation.transcript && JSON.parse(transformation.transcript)
 
-  const isProcessing = transformations?.length === 0 || (transformations[transformationIdx].status && transformations[transformationIdx].status !== "complete")
+  const isProcessing = transformations?.length === 0 || currentStatus !== "complete"
 
   const [getProjectData, { data, refetch }]
     = useLazyQuery(GET_CURRENT_PROJECT, { variables: { teamSlug, projectId: project?.id }, pollInterval: !isProcessing ? 0 : 10000, fetchPolicy: 'no-cache' });
@@ -222,7 +231,7 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
         >
 
           <GridItem area={'video'} h="full" w="full" rounded={"lg"} maxW={"1280px"}>
-            { (isProcessing && transformation) ? <LoadingBox progress={transformation.progress} /> : <VideoPlayer src={transformation ? transformation?.targetMedia : project.sourceMedia } onTimeUpdate={onTimeUpdate} /> }
+            { (isProcessing && transformation) ? <LoadingBox status={transformation.status} progress={transformation.progress} /> : <VideoPlayer src={transformation ? transformation?.targetMedia : project.sourceMedia } onTimeUpdate={onTimeUpdate} /> }
             <HStack display="flex" flexWrap={"wrap"} overflow={"auto"} spacing={"10px"} pt="10px" hidden={!transformations?.length}>
               { transformations?.map((t: any, idx: number) => (
                 <Button

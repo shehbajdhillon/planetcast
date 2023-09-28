@@ -140,7 +140,7 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 
 		if err != nil {
 			r.Logger.Error("Failed to process transformation", zap.Error(err), zap.Int("project_id", int(projectID)), zap.Int("transformation_id", int(newTransformation.ID)), zap.String("target_language", string(targetLanguage)))
-			r.DB.UpdateTransformationStatusById(ctx, database.UpdateTransformationStatusByIdParams{
+			r.DB.UpdateTransformationStatusById(newCtx, database.UpdateTransformationStatusByIdParams{
 				ID:     newTransformation.ID,
 				Status: "error",
 			})
