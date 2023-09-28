@@ -121,10 +121,29 @@ func isLoggedIn(ctx context.Context) bool {
 	return user != nil
 }
 
+func isSuperAdmin(ctx context.Context) bool {
+	userEmail, _ := auth.EmailFromContext(ctx)
+
+	if strings.Split(userEmail, "@")[1] == "planetcast.ai" {
+		return true
+	}
+
+	if userEmail == "shehbaj.dhillon@gmail.com" {
+		return true
+	}
+
+	return false
+}
+
 func memberTeam(ctx context.Context, teamSlug string, queries *database.Queries) bool {
 	if !isLoggedIn(ctx) {
 		return false
 	}
+
+	if isSuperAdmin(ctx) {
+		return true
+	}
+
 	userEmail, _ := auth.EmailFromContext(ctx)
 	user, _ := queries.GetUserByEmail(ctx, userEmail)
 	team, _ := queries.GetTeamBySlug(ctx, teamSlug)
