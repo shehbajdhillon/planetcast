@@ -250,7 +250,7 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
           <GridItem area={'transcript'} h="full" w="full" borderWidth={"1px"} rounded="lg" maxH={"596px"}>
 
           { !parseTranscript ?
-            <LoadingTranscriptView />
+            <LoadingTranscriptView transcribing={transformations?.length <= 0 || transformations === undefined} />
             :
             <TranscriptView segments={parseTranscript?.segments} />
           }
@@ -319,11 +319,20 @@ const TranscriptView: React.FC<TranscriptViewProps> = ({ segments }) => {
   );
 };
 
+interface LoadingTranscriptView {
+  transcribing: boolean;
+};
 
-const LoadingTranscriptView = () => {
+const LoadingTranscriptView: React.FC<LoadingTranscriptView> = ({ transcribing }) => {
   return (
     <VStack h="full" p="10px">
       <VStack overflow={"scroll"} h="full" position={"relative"} w="full">
+        { transcribing &&
+          <HStack>
+            <Text>Video is currently being transcribed. This may take 5-15 minutes.</Text>
+            <Spinner />
+          </HStack>
+        }
         {new Array(7).fill(0).map((_, idx: number) => (
           <LoadingMessageView key={idx} />
         ))}
