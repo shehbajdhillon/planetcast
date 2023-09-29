@@ -12,6 +12,7 @@ import {
   HStack,
   IconButton,
   Progress,
+  Skeleton,
   SkeletonText,
   Spinner,
   Text,
@@ -466,7 +467,7 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
         <Navbar projects={projects} teams={teams} teamSlug={teamSlug} projectId={projectId} />
       </Box>
 
-      { !loading && currentTeamsData ?
+      { (!loading && currentTeamsData) ?
 
         <Box pt={"70px"}>
           <Tabs
@@ -505,11 +506,41 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
         :
 
         <Center pt="100px">
-          <Spinner size={"lg"} />
+          <LoadingTabs />
         </Center>
 
       }
 
+    </Box>
+  );
+};
+
+const LoadingTabs = () => {
+  return (
+    <Box w="full" maxW={"1920px"}>
+      <Grid
+        templateAreas={{
+          base: `
+            "video"
+            "transcript"
+          `,
+          lg: `"video transcript"`
+        }}
+        gridTemplateColumns={{ base: "1fr", lg: "2fr 1fr" }}
+        w="full"
+        h={"full"}
+        gap={"10px"}
+        p="1rem"
+      >
+        <GridItem area={'video'} h="full" w="full" rounded={"lg"} maxW={"1280px"}>
+          <AspectRatio ratio={16/9}>
+            <Skeleton w="full" h="100px" rounded={"lg"} />
+          </AspectRatio>
+        </GridItem>
+        <GridItem area={'transcript'} h="full" w="full" borderWidth={"1px"} rounded="lg" maxH={"596px"}>
+          <LoadingTranscriptView transcribing={false} />
+        </GridItem>
+      </Grid>
     </Box>
   );
 };

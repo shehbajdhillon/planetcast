@@ -13,6 +13,7 @@ import {
   useColorModeValue,
   Divider,
   IconButton,
+  Skeleton,
 } from '@chakra-ui/react';
 import { useClerk, useUser } from '@clerk/nextjs';
 import { ChevronsUpDown } from 'lucide-react';
@@ -145,9 +146,10 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
             alt='planet cast logo'
           />
 
-          { teamSlug && teams &&
+          <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
+
+          { teamSlug && teams ?
             <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4} h="full">
-              <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
               {teams?.filter((team: Team) => team.slug === teamSlug).map((team: Team, idx: number) => (
                 <Link href={`/${team.slug}`} key={idx}>
                   <Text
@@ -183,6 +185,8 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
                 </MenuList>
               </Menu>
             </HStack>
+            :
+            <Skeleton rounded={"lg"} w="232px" h="40px" />
           }
 
           { projectId && projects &&
