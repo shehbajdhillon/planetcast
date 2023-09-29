@@ -94,6 +94,27 @@ const GET_TEAMS = gql`
   }
 `;
 
+const GET_TEAM_BY_ID = gql`
+  query GetTeamById($teamSlug: String!) {
+    getTeamById(teamSlug: $teamSlug) {
+      slug
+      name
+      projects {
+        id
+        title
+        sourceMedia
+        transformations {
+          id
+          targetMedia
+          targetLanguage
+          status
+          progress
+        }
+      }
+    }
+  }
+`;
+
 export interface DashboardPageProps {
   teams: Team[];
   teamSlug: string;
@@ -101,10 +122,17 @@ export interface DashboardPageProps {
 
 const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug }) => {
 
-  const { data, refetch } = useQuery(GET_TEAMS, { fetchPolicy: 'cache-and-network' });
+  const { data, refetch: getAllTeamsRefetch } = useQuery(GET_TEAMS, { fetchPolicy: 'no-cache' });
+  const { data: currentTeamProjectsData, refetch: currentTeamRefetch } = useQuery(GET_TEAM_BY_ID, { fetchPolicy: 'no-cache', variables: { teamSlug } });
 
   const teams = data?.getTeams;
   const projects = data?.getTeams.find((team: Team) => team.slug === teamSlug)?.projects;
+  const currentTeamProjects = currentTeamProjectsData?.getTeamById?.projects;
+
+  const refetch = async () => {
+    await currentTeamRefetch();
+    await getAllTeamsRefetch();
+  };
 
   return (
     <Box>
@@ -141,7 +169,7 @@ const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug }) => {
             display={"flex"}
             flexDir={"column"}
           >
-            <DashboardTab teamSlug={teamSlug} projects={projects} refetch={refetch} />
+            <DashboardTab teamSlug={teamSlug} projects={currentTeamProjects} refetch={refetch} />
           </GridItem>
         </Grid>
       </Box>

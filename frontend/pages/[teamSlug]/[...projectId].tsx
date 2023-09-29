@@ -438,10 +438,10 @@ interface ProjectDashboardProps {
 
 const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId }) => {
 
-  const { data: currentTeamsData, loading } = useQuery(GET_TEAMS);
+  const { data: currentTeamsData, loading } = useQuery(GET_TEAMS, { fetchPolicy: 'no-cache' });
 
   const { data: currentProjectData }
-  = useQuery(GET_CURRENT_PROJECT, { variables: { teamSlug, projectId }, fetchPolicy: 'cache-and-network' });
+  = useQuery(GET_CURRENT_PROJECT, { variables: { teamSlug, projectId }, fetchPolicy: 'no-cache' });
 
   const currentProject: Project = currentProjectData?.getTeamById?.projects?.[0];
 
