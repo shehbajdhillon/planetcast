@@ -336,7 +336,7 @@ interface LoadingTranscriptView {
 const LoadingTranscriptView: React.FC<LoadingTranscriptView> = ({ transcribing }) => {
   return (
     <VStack h="full" p="10px">
-      <VStack overflow={"scroll"} h="full" position={"relative"} w="full">
+      <VStack overflow={"hidden"} h="full" position={"relative"} w="full">
         { transcribing &&
           <HStack>
             <Text>Video is currently being transcribed. This may take 5-15 minutes.</Text>
