@@ -54,12 +54,12 @@ const LoadingBox: React.FC<LoadingBoxProps> = ({ status, progress }) => {
       h={{ base: "185.63px", md:"202.5px" }}
     >
         { status !== "error" ?
-          <Box mt={"110px"} mx="5px" w="full">
+          <Box mt={"110px"} px="5px" w="full">
             <Progress value={progress} hasStripe size="md" isAnimated={true} rounded={"sm"} backgroundColor={"gray.800"} />
             <Center pt="10px">{progress + "%"}</Center>
           </Box>
           :
-          <Box mt={"110px"} mx="5px" w="full">
+          <Box mt={"110px"} px="5px" w="full">
             <Progress value={100} size="md" rounded={"sm"} backgroundColor={"gray.800"} colorScheme="red" />
             <Center pt="10px">
               <Text
