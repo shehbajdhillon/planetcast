@@ -38,8 +38,9 @@ import { useEffect, useState } from "react";
 import { useVideoSeekStore } from "@/stores/video_seek_store";
 import { formatTime } from "@/utils";
 import NewTransformationModel from "@/components/new_transformation_modal";
-import { Clipboard, TrashIcon } from "lucide-react";
+import { Clipboard, DownloadIcon, TrashIcon } from "lucide-react";
 import SingleActionModal from "@/components/single_action_modal";
+import Link from "next/link";
 
 
 const DELETE_PROJECT = gql`
@@ -245,6 +246,7 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
                 </Button>
               ))}
               <NewTransformationModel project={project} refetch={refetch} />
+              <Link href={transformation.targetMedia}><Button leftIcon={<DownloadIcon />} variant={"outline"}>Download</Button></Link>
               <SingleActionModal
                 heading={"Delete Dubbing"}
                 body={`Are you sure you want to delete this dubbing? This action is irreversible.`}
