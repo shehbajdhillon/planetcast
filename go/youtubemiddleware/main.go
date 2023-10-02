@@ -53,6 +53,10 @@ func (y *Youtube) downloadVideo(video *youtube.Video) (io.ReadSeeker, error) {
 	err := y.download.DownloadComposite(newCtx, randomFileName, video, "hd1080", "")
 
 	if err != nil {
+		err = y.download.DownloadComposite(newCtx, randomFileName, video, "large", "")
+	}
+
+	if err != nil {
 		y.logger.Error("Could not download youtube video", zap.Error(err), zap.String("video_id", video.ID))
 		return nil, err
 	}
