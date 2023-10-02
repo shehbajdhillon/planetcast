@@ -10,6 +10,7 @@ import {
   IconButton,
   Center,
   Progress,
+  VStack,
 } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -45,6 +46,20 @@ const GET_PROJECT_DATA = gql`
 interface LoadingBoxProps {
   progress: number;
   status: string;
+}
+
+const VideoProcessingBox: React.FC = () => {
+  return (
+    <Box
+      w={{ base: "330px", md: "360px" }}
+      h={{ base: "185.63px", md:"202.5px" }}
+    >
+      <VStack mt={"55px"} mx="5px" w="full">
+        <Spinner size={'xl'} />
+        <Center pt="10px" fontSize={'xl'}>{"Processing Upload"}</Center>
+      </VStack>
+    </Box>
+  );
 }
 
 const LoadingBox: React.FC<LoadingBoxProps> = ({ status, progress }) => {
@@ -93,8 +108,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
 
   useEffect(() => {
     const newProjectData = data?.getTeamById.projects[0];
-    const newTransformations = newProjectData?.transformations;
-    if (newTransformations?.length) {
+    if (newProjectData) {
       setProject(newProjectData);
     }
   }, [data]);
@@ -127,7 +141,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
       <HStack pb="2px" pt="10px" rounded={"lg"}>
         {
           (isProcessing && transformations?.length) ? <LoadingBox progress={transformations?.[transformationIdx].progress} status={currentStatus} /> :
-          <VideoPlayer src={transformations.length ? transformations?.[transformationIdx].targetMedia : project.sourceMedia } style={{ borderRadius: "100px" }}/>
+          project.sourceMedia === "" ? <VideoProcessingBox /> : <VideoPlayer src={transformations.length ? transformations?.[transformationIdx].targetMedia : project.sourceMedia } style={{ borderRadius: "100px" }}/>
         }
       </HStack>
       <Box p="5px" onClick={() => router.push(`/${teamSlug}/${project.id}`)}>
