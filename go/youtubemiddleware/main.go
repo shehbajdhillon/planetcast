@@ -33,7 +33,7 @@ func Connect(args YoutubeConnectProps) *Youtube {
 	return &Youtube{logger: args.Logger, youtubeClient: &client, download: &download, ffmpeg: args.Ffmpeg}
 }
 
-func (y *Youtube) getVideoInfo(videoUrl string) (*youtube.Video, error) {
+func (y *Youtube) GetVideoInfo(videoUrl string) (*youtube.Video, error) {
 	video, err := y.youtubeClient.GetVideo(videoUrl)
 	if err != nil {
 		y.logger.Error("Could not fetch video data", zap.Error(err), zap.String("video_url", videoUrl))
@@ -84,7 +84,7 @@ func (y *Youtube) downloadVideo(video *youtube.Video) (io.ReadSeeker, error) {
 }
 
 func (y *Youtube) Download(videoUrl string) (io.ReadSeeker, string, error) {
-	video, err := y.getVideoInfo(videoUrl)
+	video, err := y.GetVideoInfo(videoUrl)
 	if err != nil {
 		return nil, "", err
 	}
