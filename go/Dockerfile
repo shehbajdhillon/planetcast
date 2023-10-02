@@ -1,4 +1,4 @@
-FROM golang:1.19.9-bullseye
+FROM golang:1.21.1-bullseye
 
 RUN apt-get update -qq && apt-get install ffmpeg -y
 
