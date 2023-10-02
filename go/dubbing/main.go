@@ -125,7 +125,7 @@ func (d *Dubbing) getTranscript(ctx context.Context, fileName string) (*WhisperO
 
 	if retries <= 0 {
 		d.logger.Error("Failed to transcribe whisper request")
-		return nil, nil
+		return nil, fmt.Errorf("Failed to transcribe whisper request")
 	}
 
 	outputJson, ok := output.(map[string]interface{})
