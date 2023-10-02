@@ -134,6 +134,22 @@ interface LoadingBoxProps {
   status: string;
 }
 
+const VideoProcessingBox: React.FC = () => {
+  return (
+    <AspectRatio ratio={16/9}>
+      <Box
+        w={"full"}
+        maxW={"1280px"}
+      >
+        <VStack mt={"0px"} mx="5px" w="full">
+          <Spinner size={'xl'} />
+          <Center pt="10px" fontSize={'xl'}>{"Processing Upload"}</Center>
+        </VStack>
+      </Box>
+    </AspectRatio>
+  )
+};
+
 const LoadingBox: React.FC<LoadingBoxProps> = ({ status, progress }) => {
   return (
     <AspectRatio ratio={16/9}>
@@ -178,8 +194,7 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
 
   useEffect(() => {
     const newProjectData = data?.getTeamById.projects[0];
-    const newTransformations = newProjectData?.transformations;
-    if (newTransformations?.length) {
+    if (newProjectData) {
       setProject(newProjectData);
     }
   }, [data]);
@@ -208,6 +223,10 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
     setCurrentSeek(0);
   }, [setCurrentSeek]);
 
+  useEffect(() => {
+    console.log({ project });
+  }, [project])
+
   return (
     project &&
     <Box
@@ -233,7 +252,10 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
         >
 
           <GridItem area={'video'} h="full" w="full" rounded={"lg"} maxW={"1280px"}>
-            { (isProcessing && transformation) ? <LoadingBox status={transformation.status} progress={transformation.progress} /> : <VideoPlayer src={transformation ? transformation?.targetMedia : project.sourceMedia } onTimeUpdate={onTimeUpdate} /> }
+            {
+              (isProcessing && transformation) ? <LoadingBox status={transformation.status} progress={transformation.progress} /> :
+              project.sourceMedia === "" ? <VideoProcessingBox /> : <VideoPlayer src={transformation ? transformation?.targetMedia : project.sourceMedia } onTimeUpdate={onTimeUpdate} />
+            }
             <HStack display="flex" flexWrap={"wrap"} overflow={"auto"} spacing={"10px"} pt="10px" hidden={!transformations?.length}>
               { transformations?.map((t: any, idx: number) => (
                 <Button

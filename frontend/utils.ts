@@ -13,3 +13,11 @@ export function formatTime(seconds: number): string {
   return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
 }
 
+export function matchYoutubeUrl(url: string): boolean {
+  const p = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/;
+  if (url.match(p)) {
+    return true;
+  }
+  return false;
+}
+

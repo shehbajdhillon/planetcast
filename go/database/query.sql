@@ -39,6 +39,9 @@ SELECT * FROM project WHERE id = $1 AND team_id = $2 LIMIT 1;
 -- name: GetProjectsByTeamId :many
 SELECT * FROM project WHERE team_id = $1 ORDER BY created;
 
+-- name: UpdateProjectSourceMedia :one
+UPDATE project SET source_media = $2 WHERE id = $1 RETURNING *;
+
 -- name: DeleteProjectById :one
 DELETE FROM project WHERE id = $1 RETURNING *;
 

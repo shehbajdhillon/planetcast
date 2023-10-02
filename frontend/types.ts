@@ -72,3 +72,10 @@ export const SupportedLanguages = [
 
 export type SupportedLanguage = typeof SupportedLanguages[number];
 
+export const UploadOptions = [
+  "FILE_UPLOAD",
+  "YOUTUBE_LINK",
+] as const;
+
+export type UploadOption = typeof UploadOptions[number];
+

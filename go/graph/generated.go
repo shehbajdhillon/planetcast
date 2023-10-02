@@ -54,7 +54,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CreateProject        func(childComplexity int, teamSlug string, title string, sourceMedia graphql.Upload, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool, gender string) int
+		CreateProject        func(childComplexity int, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool, gender string) int
 		CreateTeam           func(childComplexity int, slug string, name string, teamType database.TeamType) int
 		CreateTranslation    func(childComplexity int, projectID int64, targetLanguage model.SupportedLanguage, lipSync bool, gender string) int
 		DeleteProject        func(childComplexity int, projectID int64) int
@@ -103,7 +103,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateTeam(ctx context.Context, slug string, name string, teamType database.TeamType) (database.Team, error)
-	CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia graphql.Upload, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool, gender string) (database.Project, error)
+	CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool, gender string) (database.Project, error)
 	DeleteProject(ctx context.Context, projectID int64) (database.Project, error)
 	CreateTranslation(ctx context.Context, projectID int64, targetLanguage model.SupportedLanguage, lipSync bool, gender string) (database.Transformation, error)
 	DeleteTransformation(ctx context.Context, transformationID int64) (database.Transformation, error)
@@ -150,7 +150,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateProject(childComplexity, args["teamSlug"].(string), args["title"].(string), args["sourceMedia"].(graphql.Upload), args["initialTargetLanguage"].(*model.SupportedLanguage), args["initialLipSync"].(bool), args["gender"].(string)), true
+		return e.complexity.Mutation.CreateProject(childComplexity, args["teamSlug"].(string), args["title"].(string), args["sourceMedia"].(*graphql.Upload), args["youtubeLink"].(*string), args["uploadOption"].(model.UploadOption), args["initialTargetLanguage"].(*model.SupportedLanguage), args["initialLipSync"].(bool), args["gender"].(string)), true
 
 	case "Mutation.createTeam":
 		if e.complexity.Mutation.CreateTeam == nil {
@@ -540,42 +540,60 @@ func (ec *executionContext) field_Mutation_createProject_args(ctx context.Contex
 		}
 	}
 	args["title"] = arg1
-	var arg2 graphql.Upload
+	var arg2 *graphql.Upload
 	if tmp, ok := rawArgs["sourceMedia"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceMedia"))
-		arg2, err = ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, tmp)
+		arg2, err = ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["sourceMedia"] = arg2
-	var arg3 *model.SupportedLanguage
+	var arg3 *string
+	if tmp, ok := rawArgs["youtubeLink"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("youtubeLink"))
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["youtubeLink"] = arg3
+	var arg4 model.UploadOption
+	if tmp, ok := rawArgs["uploadOption"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("uploadOption"))
+		arg4, err = ec.unmarshalNUploadOption2planetcastdevᚋgraphᚋmodelᚐUploadOption(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["uploadOption"] = arg4
+	var arg5 *model.SupportedLanguage
 	if tmp, ok := rawArgs["initialTargetLanguage"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("initialTargetLanguage"))
-		arg3, err = ec.unmarshalOSupportedLanguage2ᚖplanetcastdevᚋgraphᚋmodelᚐSupportedLanguage(ctx, tmp)
+		arg5, err = ec.unmarshalOSupportedLanguage2ᚖplanetcastdevᚋgraphᚋmodelᚐSupportedLanguage(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["initialTargetLanguage"] = arg3
-	var arg4 bool
+	args["initialTargetLanguage"] = arg5
+	var arg6 bool
 	if tmp, ok := rawArgs["initialLipSync"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("initialLipSync"))
-		arg4, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		arg6, err = ec.unmarshalNBoolean2bool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["initialLipSync"] = arg4
-	var arg5 string
+	args["initialLipSync"] = arg6
+	var arg7 string
 	if tmp, ok := rawArgs["gender"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gender"))
-		arg5, err = ec.unmarshalNString2string(ctx, tmp)
+		arg7, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["gender"] = arg5
+	args["gender"] = arg7
 	return args, nil
 }
 
@@ -938,7 +956,7 @@ func (ec *executionContext) _Mutation_createProject(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateProject(rctx, fc.Args["teamSlug"].(string), fc.Args["title"].(string), fc.Args["sourceMedia"].(graphql.Upload), fc.Args["initialTargetLanguage"].(*model.SupportedLanguage), fc.Args["initialLipSync"].(bool), fc.Args["gender"].(string))
+			return ec.resolvers.Mutation().CreateProject(rctx, fc.Args["teamSlug"].(string), fc.Args["title"].(string), fc.Args["sourceMedia"].(*graphql.Upload), fc.Args["youtubeLink"].(*string), fc.Args["uploadOption"].(model.UploadOption), fc.Args["initialTargetLanguage"].(*model.SupportedLanguage), fc.Args["initialLipSync"].(bool), fc.Args["gender"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.LoggedIn == nil {
@@ -5523,19 +5541,14 @@ func (ec *executionContext) marshalNTransformation2ᚕplanetcastdevᚋdatabase�
 	return ret
 }
 
-func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (graphql.Upload, error) {
-	res, err := graphql.UnmarshalUpload(v)
+func (ec *executionContext) unmarshalNUploadOption2planetcastdevᚋgraphᚋmodelᚐUploadOption(ctx context.Context, v interface{}) (model.UploadOption, error) {
+	var res model.UploadOption
+	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v graphql.Upload) graphql.Marshaler {
-	res := graphql.MarshalUpload(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
+func (ec *executionContext) marshalNUploadOption2planetcastdevᚋgraphᚋmodelᚐUploadOption(ctx context.Context, sel ast.SelectionSet, v model.UploadOption) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -5863,6 +5876,22 @@ func (ec *executionContext) marshalOSupportedLanguage2ᚖplanetcastdevᚋgraph�
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (*graphql.Upload, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalUpload(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v *graphql.Upload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalUpload(*v)
+	return res
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

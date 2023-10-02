@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"io"
 	"planetcastdev/auth"
 	"planetcastdev/database"
 	"planetcastdev/dubbing"
@@ -41,25 +42,59 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 }
 
 // CreateProject is the resolver for the createProject field.
-func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia graphql.Upload, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool, gender string) (database.Project, error) {
+func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool, gender string) (database.Project, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 
-	identifier := strings.Split(sourceMedia.Filename, ".mp4")[0] + uuid.NewString()
-	fileName := identifier + ".mp4"
+	// check if file upload or youtube
+	// if youtube link, validate the link, if valid, start download
+
+	var file io.ReadSeeker
+	var identifier string
+	var fileName string
+
+	if uploadOption == model.UploadOptionYoutubeLink {
+		_, err := r.Youtube.GetVideoInfo(*youtubeLink)
+		if err != nil {
+			return database.Project{}, fmt.Errorf("Error processing YouTube video: %s", err.Error())
+		}
+	}
 
 	project, _ := r.DB.CreateProject(ctx, database.CreateProjectParams{
 		TeamID:      team.ID,
 		Title:       title,
-		SourceMedia: fileName,
+		SourceMedia: "",
 	})
-
-	r.Storage.Upload(fileName, sourceMedia.File)
 
 	user := auth.FromContext(ctx)
 	newCtx := context.Background()
 	newCtx = auth.AttachContext(newCtx, user)
 
 	go func(context context.Context) {
+
+		if uploadOption == model.UploadOptionYoutubeLink {
+			youtubeFile, youtubeFileName, err := r.Youtube.Download(*youtubeLink)
+
+			if err != nil {
+				r.Logger.Info("Could not download youtube video for project", zap.Error(err), zap.Int64("project_id", project.ID), zap.String("youtube_url", *youtubeLink))
+				return
+			}
+
+			file = youtubeFile
+			fileName = strings.ReplaceAll(youtubeFileName, " ", "_")
+		} else {
+			file = sourceMedia.File
+			fileName = strings.Split(sourceMedia.Filename, ".mp4")[0]
+		}
+
+		identifier = fileName + uuid.NewString()
+		fileName = identifier + ".mp4"
+
+		r.Storage.Upload(fileName, file)
+
+		project, _ = r.DB.UpdateProjectSourceMedia(context, database.UpdateProjectSourceMediaParams{
+			ID:          project.ID,
+			SourceMedia: fileName,
+		})
 
 		r.Dubbing.CreateTransformation(context, dubbing.CreateTransformationParams{
 			ProjectID: project.ID,
@@ -180,7 +215,9 @@ func (r *projectResolver) Transformations(ctx context.Context, obj *database.Pro
 	filteredTransformation := []database.Transformation{}
 	for _, t := range transformations {
 		if len(t.TargetMedia) > 0 {
-			t.TargetMedia = r.Storage.GetFileLink(t.TargetMedia)
+			if t.TargetMedia != "" {
+				t.TargetMedia = r.Storage.GetFileLink(t.TargetMedia)
+			}
 		}
 		filteredTransformation = append(filteredTransformation, t)
 	}
@@ -230,7 +267,9 @@ func (r *teamResolver) Projects(ctx context.Context, obj *database.Team, project
 
 	filteredProject := []database.Project{}
 	for _, p := range projects {
-		p.SourceMedia = r.Storage.GetFileLink(p.SourceMedia)
+		if p.SourceMedia != "" {
+			p.SourceMedia = r.Storage.GetFileLink(p.SourceMedia)
+		}
 		filteredProject = append(filteredProject, p)
 	}
 
