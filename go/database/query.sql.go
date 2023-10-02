@@ -502,6 +502,28 @@ func (q *Queries) GetUserById(ctx context.Context, id int64) (Userinfo, error) {
 	return i, err
 }
 
+const updateProjectSourceMedia = `-- name: UpdateProjectSourceMedia :one
+UPDATE project SET source_media = $2 WHERE id = $1 RETURNING id, team_id, title, source_media, created
+`
+
+type UpdateProjectSourceMediaParams struct {
+	ID          int64
+	SourceMedia string
+}
+
+func (q *Queries) UpdateProjectSourceMedia(ctx context.Context, arg UpdateProjectSourceMediaParams) (Project, error) {
+	row := q.db.QueryRowContext(ctx, updateProjectSourceMedia, arg.ID, arg.SourceMedia)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.Title,
+		&i.SourceMedia,
+		&i.Created,
+	)
+	return i, err
+}
+
 const updateTargetMediaById = `-- name: UpdateTargetMediaById :one
 UPDATE transformation SET target_media = $2 WHERE id = $1 RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress, created
 `
