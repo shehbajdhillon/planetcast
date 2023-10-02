@@ -246,7 +246,7 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
                 </Button>
               ))}
               <NewTransformationModel project={project} refetch={refetch} />
-              <Link href={transformation.targetMedia}><Button leftIcon={<DownloadIcon />} variant={"outline"}>Download</Button></Link>
+              { transformation && <Link href={transformation?.targetMedia}><Button leftIcon={<DownloadIcon />} variant={"outline"}>Download</Button></Link> }
               <SingleActionModal
                 heading={"Delete Dubbing"}
                 body={`Are you sure you want to delete this dubbing? This action is irreversible.`}
