@@ -5,6 +5,7 @@ import (
 	"planetcastdev/dubbing"
 	"planetcastdev/email"
 	"planetcastdev/storage"
+	"planetcastdev/youtubemiddleware"
 
 	"go.uber.org/zap"
 )
@@ -21,4 +22,5 @@ type Resolver struct {
 	Dubbing *dubbing.Dubbing
 	Logger  *zap.Logger
 	Email   *email.Email
+	Youtube *youtubemiddleware.Youtube
 }

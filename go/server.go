@@ -15,6 +15,7 @@ import (
 	"planetcastdev/openaimiddleware"
 	"planetcastdev/replicatemiddleware"
 	"planetcastdev/storage"
+	"planetcastdev/youtubemiddleware"
 
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
@@ -46,6 +47,7 @@ func main() {
 	OpenAI := openaimiddleware.Connect(openaimiddleware.OpenAIConnectProps{Logger: Logger})
 	Email := email.Connect(email.EmailConnectProps{Logger: Logger})
 	Ffmpeg := ffmpegmiddleware.Connect(ffmpegmiddleware.FfmpegConnectProps{Logger: Logger})
+	Youtube := youtubemiddleware.Connect(youtubemiddleware.YoutubeConnectProps{Logger: Logger, Ffmpeg: Ffmpeg})
 	Storage := storage.Connect(storage.StorageConnectProps{Logger: Logger})
 	Database := database.Connect(database.DatabaseConnectProps{Logger: Logger})
 
@@ -60,7 +62,7 @@ func main() {
 			Replicate:  Replicate,
 			ElevenLabs: ElevenLabs,
 		})
-	GqlServer := graph.Connect(graph.GraphConnectProps{Dubbing: Dubbing, Storage: Storage, Queries: Database, Logger: Logger, Email: Email})
+	GqlServer := graph.Connect(graph.GraphConnectProps{Dubbing: Dubbing, Storage: Storage, Queries: Database, Logger: Logger, Email: Email, Youtube: Youtube})
 
 	router := chi.NewRouter()
 	router.Use(auth.Middleware())

@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"io"
 	"planetcastdev/auth"
 	"planetcastdev/database"
 	"planetcastdev/dubbing"
@@ -41,11 +42,33 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 }
 
 // CreateProject is the resolver for the createProject field.
-func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia graphql.Upload, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool, gender string) (database.Project, error) {
+func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool, gender string) (database.Project, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 
-	identifier := strings.Split(sourceMedia.Filename, ".mp4")[0] + uuid.NewString()
-	fileName := identifier + ".mp4"
+	// check if file upload or youtube
+	// if youtube link, validate the link, if valid, start download
+
+	var file io.ReadSeeker
+	var identifier string
+	var fileName string
+
+	if uploadOption == model.UploadOptionYoutubeLink {
+
+		youtubeFile, youtubeFileName, err := r.Youtube.Download(*youtubeLink)
+		if err != nil {
+			return database.Project{}, err
+		}
+
+		file = youtubeFile
+		fileName = strings.ReplaceAll(youtubeFileName, " ", "_")
+
+	} else {
+		file = sourceMedia.File
+		fileName = strings.Split(sourceMedia.Filename, ".mp4")[0]
+	}
+
+	identifier = fileName + uuid.NewString()
+	fileName = identifier + ".mp4"
 
 	project, _ := r.DB.CreateProject(ctx, database.CreateProjectParams{
 		TeamID:      team.ID,
@@ -53,7 +76,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 		SourceMedia: fileName,
 	})
 
-	r.Storage.Upload(fileName, sourceMedia.File)
+	r.Storage.Upload(fileName, file)
 
 	user := auth.FromContext(ctx)
 	newCtx := context.Background()
