@@ -1,4 +1,4 @@
-import { SupportedLanguage, SupportedLanguages } from '@/types';
+import { SupportedLanguage, SupportedLanguages, UploadOption } from '@/types';
 import { gql, useMutation } from '@apollo/client';
 import {
   Modal,
@@ -33,10 +33,11 @@ import Dropzone from "react-dropzone";
 import NProgress from 'nprogress';
 
 import Image from 'next/image';
+import { matchYoutubeUrl } from '@/utils';
 
 const CREATE_PROJECT = gql`
-  mutation CreateProject($teamSlug: String!, $title: String!, $sourceMedia: Upload!, $initialLipSync: Boolean!, $initialTargetLanguage: SupportedLanguage, $gender: String!) {
-    createProject(teamSlug: $teamSlug, title: $title, sourceMedia: $sourceMedia, initialLipSync: $initialLipSync, initialTargetLanguage: $initialTargetLanguage, gender: $gender) {
+  mutation CreateProject($teamSlug: String!, $title: String!, $sourceMedia: Upload, $uploadOption: UploadOption!, $youtubeLink: String, $initialLipSync: Boolean!, $initialTargetLanguage: SupportedLanguage, $gender: String!) {
+    createProject(teamSlug: $teamSlug, title: $title, sourceMedia: $sourceMedia, initialLipSync: $initialLipSync, initialTargetLanguage: $initialTargetLanguage, gender: $gender, uploadOption: $uploadOption, youtubeLink: $youtubeLink) {
       id
       title
     }
@@ -56,6 +57,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
 
   const [title, setTitle] = useState("");
   const [sourceMedia, setSourceMedia] = useState<File>();
+  const [youtubeLink, setYoutubeLink] = useState("");
 
   const [formValid, setFormValid] = useState(false);
 
@@ -70,6 +72,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
   const [lipSync, setLipSync] = useState(false);
   const [gender, setGender] = useState("male");
 
+  const [uploadOption, setUploadOption] = useState<UploadOption>("FILE_UPLOAD");
+
   const imgSrc = useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg');
   const borderColor = useColorModeValue('blackAlpha.400', 'whiteAlpha.500');
   const bgColor = useColorModeValue('white', 'black');
@@ -82,6 +86,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
       initialLipSync: lipSync,
       initialTargetLanguage: enableDubbing ? initialTargetLang : undefined,
       gender,
+      uploadOption,
+      youtubeLink,
     }
     const res = await createProjectMutation({
       variables
@@ -108,19 +114,26 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
   useEffect(() => {
     const checkFormValid = () => {
       if (!title.length) return false;
-      if (!sourceMedia) return false;
+      if (uploadOption === "FILE_UPLOAD" && !sourceMedia) return false;
+      if (uploadOption === "YOUTUBE_LINK" && !matchYoutubeUrl(youtubeLink)) return false
       return true;
     };
     setFormValid(checkFormValid());
-  }, [title, sourceMedia]);
+  }, [title, sourceMedia, uploadOption, youtubeLink]);
 
   useEffect(() => {
     setTitle("");
     setSourceMedia(undefined);
+    setYoutubeLink("");
     setEnableDubbing(false);
     setLipSync(false);
     setGender("male")
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    setYoutubeLink("");
+    setSourceMedia(undefined);
+  }, [uploadOption]);
 
   return (
     <Box>
@@ -165,41 +178,76 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
                 <Input
                   onChange={(e) => setTitle(e.target.value)}
                   value={title}
+                  placeholder='PlanetCast Podcast Episode #3'
                 />
               </Stack>
+
               <Stack spacing={-1} py="10px">
-                <FormLabel
-                  fontWeight={'600'}
-                  fontSize={'lg'}
-                >
-                  Media File (Max Size: 500 MB)
-                </FormLabel>
-                <Dropzone
-                  accept={{ 'video/mp4': ['.mp4', '.MP4'] }}
-                  minSize={0}
-                  maxSize={500 * MB}
-                  onDrop={(acceptedFiles) => setSourceMedia(acceptedFiles[0])}
-                >
-                  {({ getRootProps, getInputProps }) => (
-                    <Box
-                      w="full"
-                      h="full"
-                      minH={"80px"}
-                      borderWidth={"2px"}
-                      borderRadius={"10px"}
-                      borderStyle={"dotted"}
-                      {...getRootProps({className: 'dropzone'})}
-                    >
-                      <Center>
-                        <input {...getInputProps()} type='file' />
-                        <Text py="20px">
-                          { !sourceMedia? "Upload Media File" : (sourceMedia as File).name }
-                        </Text>
-                      </Center>
-                    </Box>
-                  )}
-                </Dropzone>
+                <RadioGroup value={uploadOption} onChange={(val) => setUploadOption(val as UploadOption)}>
+                  <HStack>
+                    <Radio value="FILE_UPLOAD">
+                      File Upload
+                    </Radio>
+                    <Radio value="YOUTUBE_LINK">
+                      YouTube Link
+                    </Radio>
+                  </HStack>
+                </RadioGroup>
               </Stack>
+
+              { uploadOption === 'FILE_UPLOAD' &&
+                <Stack spacing={-1} py="10px">
+                  <FormLabel
+                    fontWeight={'600'}
+                    fontSize={'lg'}
+                  >
+                    Media File (Max Size: 500 MB)
+                  </FormLabel>
+                  <Dropzone
+                    accept={{ 'video/mp4': ['.mp4', '.MP4'] }}
+                    minSize={0}
+                    maxSize={500 * MB}
+                    onDrop={(acceptedFiles) => setSourceMedia(acceptedFiles[0])}
+                  >
+                    {({ getRootProps, getInputProps }) => (
+                      <Box
+                        w="full"
+                        h="full"
+                        minH={"80px"}
+                        borderWidth={"2px"}
+                        borderRadius={"10px"}
+                        borderStyle={"dotted"}
+                        {...getRootProps({className: 'dropzone'})}
+                      >
+                        <Center>
+                          <input {...getInputProps()} type='file' />
+                          <Text py="20px">
+                            { !sourceMedia? "Upload Media File" : (sourceMedia as File).name }
+                          </Text>
+                        </Center>
+                      </Box>
+                    )}
+                  </Dropzone>
+                </Stack>
+              }
+
+              { uploadOption === "YOUTUBE_LINK" &&
+                <Stack spacing={-1} py="10px">
+                  <FormLabel
+                    fontWeight={'600'}
+                    fontSize={'lg'}
+                  >
+                    YouTube Link
+                  </FormLabel>
+                  <Input
+                    onChange={(e) => setYoutubeLink(e.target.value)}
+                    value={youtubeLink}
+                    placeholder='https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+                  />
+                </Stack>
+              }
+
+
             </FormControl>
             <HStack>
               <Stack spacing={2} py="10px" w="full">
