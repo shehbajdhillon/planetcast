@@ -149,8 +149,10 @@ func (d *Dubbing) getTranscript(ctx context.Context, fileName string) (*WhisperO
 	}
 	d.logger.Info("Whisper request processes successfully for:", zap.String("fileName", fileName))
 
-	cleanedSegments := combineWordTimeStamps(&whisperOutput)
-	whisperOutput.Segments = cleanedSegments
+	/**
+		cleanedSegments := combineWordTimeStamps(&whisperOutput)
+		whisperOutput.Segments = cleanedSegments
+	  **/
 
 	return &whisperOutput, nil
 }
