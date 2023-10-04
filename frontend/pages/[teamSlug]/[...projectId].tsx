@@ -263,6 +263,8 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
                   onClick={() => setTransformationIdx(idx)}
                   variant={idx === transformationIdx ? "solid" : "outline"}
                   pointerEvents={idx === transformationIdx ? "none" : "auto"}
+                  background={idx === transformationIdx ? 'white' : '' }
+                  color={idx === transformationIdx ? 'black' : '' }
                 >
                   {t?.targetLanguage}
                 </Button>
