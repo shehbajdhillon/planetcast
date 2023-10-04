@@ -33,7 +33,7 @@ import Dropzone from "react-dropzone";
 import NProgress from 'nprogress';
 
 import Image from 'next/image';
-import { matchYoutubeUrl } from '@/utils';
+import { extractVideoID } from '@/utils';
 
 const CREATE_PROJECT = gql`
   mutation CreateProject($teamSlug: String!, $title: String!, $sourceMedia: Upload, $uploadOption: UploadOption!, $youtubeLink: String, $initialLipSync: Boolean!, $initialTargetLanguage: SupportedLanguage, $gender: String!) {
@@ -115,7 +115,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
     const checkFormValid = () => {
       if (!title.length) return false;
       if (uploadOption === "FILE_UPLOAD" && !sourceMedia) return false;
-      if (uploadOption === "YOUTUBE_LINK" && !matchYoutubeUrl(youtubeLink)) return false
+      if (uploadOption === "YOUTUBE_LINK" && !extractVideoID(youtubeLink)) return false
       return true;
     };
     setFormValid(checkFormValid());

@@ -21,3 +21,31 @@ export function matchYoutubeUrl(url: string): boolean {
   return false;
 }
 
+const videoRegexpList: RegExp[] = [
+  /(?:v|embed|shorts|watch\?v)(?:=|\/)([^"&?\/=%]{11})/,
+  /(?:=|\/)([^"&?\/=%]{11})/,
+  /([^"&?/=%]{11})/,
+];
+
+// ExtractVideoID extracts the videoID from the given string
+export function extractVideoID(videoID: string): boolean {
+  if (videoID.includes("youtu") || /["?&/<%]/.test(videoID)) {
+    for (const re of videoRegexpList) {
+      if (re.test(videoID)) {
+        const subs = videoID.match(re) || [];
+        videoID = subs[1] || videoID;
+      }
+    }
+  }
+
+  if (/["?&/<%]/.test(videoID)) {
+    return false
+  }
+
+  if (videoID.length < 10) {
+    return false
+  }
+
+  return true;
+}
+
