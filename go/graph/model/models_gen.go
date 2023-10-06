@@ -12,69 +12,27 @@ type SupportedLanguage string
 
 const (
 	SupportedLanguageEnglish    SupportedLanguage = "ENGLISH"
-	SupportedLanguageJapanese   SupportedLanguage = "JAPANESE"
-	SupportedLanguageChinese    SupportedLanguage = "CHINESE"
 	SupportedLanguageGerman     SupportedLanguage = "GERMAN"
-	SupportedLanguageHindi      SupportedLanguage = "HINDI"
 	SupportedLanguageFrench     SupportedLanguage = "FRENCH"
-	SupportedLanguageKorean     SupportedLanguage = "KOREAN"
-	SupportedLanguagePortuguese SupportedLanguage = "PORTUGUESE"
-	SupportedLanguageItalian    SupportedLanguage = "ITALIAN"
 	SupportedLanguageSpanish    SupportedLanguage = "SPANISH"
-	SupportedLanguageIndonesian SupportedLanguage = "INDONESIAN"
-	SupportedLanguageDutch      SupportedLanguage = "DUTCH"
-	SupportedLanguageTurkish    SupportedLanguage = "TURKISH"
-	SupportedLanguageFilipino   SupportedLanguage = "FILIPINO"
+	SupportedLanguageItalian    SupportedLanguage = "ITALIAN"
+	SupportedLanguagePortuguese SupportedLanguage = "PORTUGUESE"
 	SupportedLanguagePolish     SupportedLanguage = "POLISH"
-	SupportedLanguageSwedish    SupportedLanguage = "SWEDISH"
-	SupportedLanguageBulgarian  SupportedLanguage = "BULGARIAN"
-	SupportedLanguageRomanian   SupportedLanguage = "ROMANIAN"
-	SupportedLanguageArabic     SupportedLanguage = "ARABIC"
-	SupportedLanguageCzech      SupportedLanguage = "CZECH"
-	SupportedLanguageGreek      SupportedLanguage = "GREEK"
-	SupportedLanguageFinnish    SupportedLanguage = "FINNISH"
-	SupportedLanguageCroatian   SupportedLanguage = "CROATIAN"
-	SupportedLanguageMalay      SupportedLanguage = "MALAY"
-	SupportedLanguageSlovak     SupportedLanguage = "SLOVAK"
-	SupportedLanguageDanish     SupportedLanguage = "DANISH"
-	SupportedLanguageTamil      SupportedLanguage = "TAMIL"
-	SupportedLanguageUkrainian  SupportedLanguage = "UKRAINIAN"
 )
 
 var AllSupportedLanguage = []SupportedLanguage{
 	SupportedLanguageEnglish,
-	SupportedLanguageJapanese,
-	SupportedLanguageChinese,
 	SupportedLanguageGerman,
-	SupportedLanguageHindi,
 	SupportedLanguageFrench,
-	SupportedLanguageKorean,
-	SupportedLanguagePortuguese,
-	SupportedLanguageItalian,
 	SupportedLanguageSpanish,
-	SupportedLanguageIndonesian,
-	SupportedLanguageDutch,
-	SupportedLanguageTurkish,
-	SupportedLanguageFilipino,
+	SupportedLanguageItalian,
+	SupportedLanguagePortuguese,
 	SupportedLanguagePolish,
-	SupportedLanguageSwedish,
-	SupportedLanguageBulgarian,
-	SupportedLanguageRomanian,
-	SupportedLanguageArabic,
-	SupportedLanguageCzech,
-	SupportedLanguageGreek,
-	SupportedLanguageFinnish,
-	SupportedLanguageCroatian,
-	SupportedLanguageMalay,
-	SupportedLanguageSlovak,
-	SupportedLanguageDanish,
-	SupportedLanguageTamil,
-	SupportedLanguageUkrainian,
 }
 
 func (e SupportedLanguage) IsValid() bool {
 	switch e {
-	case SupportedLanguageEnglish, SupportedLanguageJapanese, SupportedLanguageChinese, SupportedLanguageGerman, SupportedLanguageHindi, SupportedLanguageFrench, SupportedLanguageKorean, SupportedLanguagePortuguese, SupportedLanguageItalian, SupportedLanguageSpanish, SupportedLanguageIndonesian, SupportedLanguageDutch, SupportedLanguageTurkish, SupportedLanguageFilipino, SupportedLanguagePolish, SupportedLanguageSwedish, SupportedLanguageBulgarian, SupportedLanguageRomanian, SupportedLanguageArabic, SupportedLanguageCzech, SupportedLanguageGreek, SupportedLanguageFinnish, SupportedLanguageCroatian, SupportedLanguageMalay, SupportedLanguageSlovak, SupportedLanguageDanish, SupportedLanguageTamil, SupportedLanguageUkrainian:
+	case SupportedLanguageEnglish, SupportedLanguageGerman, SupportedLanguageFrench, SupportedLanguageSpanish, SupportedLanguageItalian, SupportedLanguagePortuguese, SupportedLanguagePolish:
 		return true
 	}
 	return false
