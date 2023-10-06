@@ -36,8 +36,8 @@ import Image from 'next/image';
 import { extractVideoID } from '@/utils';
 
 const CREATE_PROJECT = gql`
-  mutation CreateProject($teamSlug: String!, $title: String!, $sourceMedia: Upload, $uploadOption: UploadOption!, $youtubeLink: String, $initialLipSync: Boolean!, $initialTargetLanguage: SupportedLanguage, $gender: String!) {
-    createProject(teamSlug: $teamSlug, title: $title, sourceMedia: $sourceMedia, initialLipSync: $initialLipSync, initialTargetLanguage: $initialTargetLanguage, gender: $gender, uploadOption: $uploadOption, youtubeLink: $youtubeLink) {
+  mutation CreateProject($teamSlug: String!, $title: String!, $sourceMedia: Upload, $uploadOption: UploadOption!, $youtubeLink: String, $initialLipSync: Boolean!, $initialTargetLanguage: SupportedLanguage) {
+    createProject(teamSlug: $teamSlug, title: $title, sourceMedia: $sourceMedia, initialLipSync: $initialLipSync, initialTargetLanguage: $initialTargetLanguage, uploadOption: $uploadOption, youtubeLink: $youtubeLink) {
       id
       title
     }
@@ -65,12 +65,11 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
 
   const { onOpen, isOpen, onClose } = useDisclosure();
 
-  const [initialTargetLang, setInitialTargetLang] = useState<SupportedLanguage>("HINDI");
+  const [initialTargetLang, setInitialTargetLang] = useState<SupportedLanguage>("SPANISH");
 
   const [enableDubbing, setEnableDubbing] = useState(false);
 
   const [lipSync, setLipSync] = useState(false);
-  const [gender, setGender] = useState("male");
 
   const [uploadOption, setUploadOption] = useState<UploadOption>("FILE_UPLOAD");
 
@@ -85,7 +84,6 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
       sourceMedia,
       initialLipSync: lipSync,
       initialTargetLanguage: enableDubbing ? initialTargetLang : undefined,
-      gender,
       uploadOption,
       youtubeLink,
     }
@@ -127,7 +125,6 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
     setYoutubeLink("");
     setEnableDubbing(false);
     setLipSync(false);
-    setGender("male")
   }, [isOpen, onClose]);
 
   useEffect(() => {
@@ -280,16 +277,6 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
                     <Checkbox isChecked={lipSync} onChange={() => setLipSync(curr => !curr)}>
                       Enable Lip Syncing (Experimental)
                     </Checkbox>
-                    <RadioGroup value={gender} onChange={setGender}>
-                      <HStack>
-                        <Radio value='male'>Male</Radio>
-                        <Radio value='female'>Female</Radio>
-                      </HStack>
-                      <Text fontSize={'sm'} fontWeight={'light'} fontStyle={'italic'}>
-                        We are currently only offering single speaker dubbing in male or female voices,
-                        but are working on adding more voice options and multi-speaker dubbing capabilities.
-                      </Text>
-                    </RadioGroup>
                   </>
                 }
               </Stack>
