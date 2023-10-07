@@ -71,6 +71,8 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 
 	go func(context context.Context) {
 
+		randomString := uuid.NewString()
+
 		if uploadOption == model.UploadOptionYoutubeLink {
 			youtubeFile, youtubeFileName, err := r.Youtube.Download(*youtubeLink)
 
@@ -82,11 +84,11 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 			file = youtubeFile
 			fileName = strings.ReplaceAll(youtubeFileName, " ", "_")
 		} else {
-			file = sourceMedia.File
+			file, _ = r.Ffmpeg.DownscaleFile(context, sourceMedia.File)
 			fileName = strings.Split(sourceMedia.Filename, ".mp4")[0]
 		}
 
-		identifier = fileName + uuid.NewString()
+		identifier = fileName + randomString
 		fileName = identifier + ".mp4"
 
 		r.Storage.Upload(fileName, file)
