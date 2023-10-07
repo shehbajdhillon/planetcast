@@ -3,6 +3,7 @@ package youtubemiddleware
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"planetcastdev/ffmpegmiddleware"
@@ -90,6 +91,11 @@ func (y *Youtube) Download(videoUrl string) (io.ReadSeeker, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
+
+	if video.Duration.Minutes() > 90 {
+		return nil, "", fmt.Errorf("video longer than 90 minutes, please provide a video under the 90 minute limit")
+	}
+
 	file, err := y.downloadVideo(video)
 	if err != nil {
 		return nil, "", err
