@@ -4,6 +4,7 @@ import (
 	"planetcastdev/database"
 	"planetcastdev/dubbing"
 	"planetcastdev/email"
+	"planetcastdev/ffmpegmiddleware"
 	"planetcastdev/storage"
 	"planetcastdev/youtubemiddleware"
 
@@ -23,4 +24,5 @@ type Resolver struct {
 	Logger  *zap.Logger
 	Email   *email.Email
 	Youtube *youtubemiddleware.Youtube
+	Ffmpeg  *ffmpegmiddleware.Ffmpeg
 }
