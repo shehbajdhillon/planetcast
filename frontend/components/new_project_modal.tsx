@@ -267,7 +267,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
                       fontWeight={'600'}
                       fontSize={'lg'}
                     >
-                      Target Language
+                      Dubbing Language
                     </FormLabel>
                     <Select value={initialTargetLang} onChange={(e) => setInitialTargetLang((e.target.value as SupportedLanguage))}>
                       {SupportedLanguages.map((lang, idx) => (

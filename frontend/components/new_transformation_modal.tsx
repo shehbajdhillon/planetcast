@@ -83,7 +83,7 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
                     fontWeight={'600'}
                     fontSize={'lg'}
                   >
-                    Target Language
+                    Dubbing Language
                   </FormLabel>
                   <Select value={targetLanguage} onChange={(e) => setTargetLanguage((e.target.value as SupportedLanguage))}>
                     {undubbedLanguages.map((lang, idx) => (
