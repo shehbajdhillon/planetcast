@@ -151,6 +151,7 @@ const VideoProcessingBox: React.FC = () => {
 };
 
 const LoadingBox: React.FC<LoadingBoxProps> = ({ status, progress }) => {
+  const bgColor = useColorModeValue("gray.200", "gray.800");
   return (
     <AspectRatio ratio={16/9}>
       <Box
@@ -159,12 +160,12 @@ const LoadingBox: React.FC<LoadingBoxProps> = ({ status, progress }) => {
       >
           { status !== "error" ?
             <Box mt={"0px"} mx="5px" w="full">
-              <Progress value={progress} hasStripe size="md" isAnimated={true} rounded={"sm"} backgroundColor={"gray.800"} />
+              <Progress value={progress} hasStripe size="md" isAnimated={true} rounded={"sm"} backgroundColor={bgColor} />
               <Center pt="10px">{progress + "%"}</Center>
             </Box>
             :
             <Box mt={"0px"} mx="5px" w="full">
-              <Progress value={100} size="md" rounded={"sm"} backgroundColor={"gray.800"} colorScheme="red" />
+              <Progress value={100} size="md" rounded={"sm"} backgroundColor={bgColor} colorScheme="red" />
               <Center pt="10px">{"An error occured while processing your dubbing, please delete and try again. All credits used for this dubbing have been refunded."}</Center>
             </Box>
           }
