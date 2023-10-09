@@ -88,7 +88,6 @@ func (o *OpenAI) MakeAPIRequest(ctx context.Context, args MakeAPIRequestProps) (
 				"Content-Type":  "application/json",
 			},
 		})
-		time.Sleep(1 * time.Second)
 
 		if err != nil {
 			o.logger.Error(

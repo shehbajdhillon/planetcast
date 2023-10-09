@@ -547,9 +547,6 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 			ID:       args.targetTransformationId,
 			Progress: percentage,
 		})
-
-		time.Sleep(2 * time.Second)
-
 	}
 
 	return &translatedSegments, nil

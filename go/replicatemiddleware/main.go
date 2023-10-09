@@ -89,7 +89,6 @@ func (r *Replicate) FetchRequest(ctx context.Context, requestId string) (*Replic
 			"Authorization": fmt.Sprintf("Token %s", API_KEY),
 		},
 	})
-	time.Sleep(1 * time.Second)
 
 	if err != nil {
 		return nil, fmt.Errorf("Cannot make call to replicate: %s", err.Error())
@@ -119,7 +118,6 @@ func (r *Replicate) TriggerRequest(ctx context.Context, body *bytes.Buffer) (str
 		},
 		Body: body,
 	})
-	time.Sleep(1 * time.Second)
 
 	if err != nil {
 		return "", fmt.Errorf("Cannot make call to replicate: %s", err.Error())
