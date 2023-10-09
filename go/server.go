@@ -62,7 +62,7 @@ func main() {
 			Replicate:  Replicate,
 			ElevenLabs: ElevenLabs,
 		})
-	GqlServer := graph.Connect(graph.GraphConnectProps{Dubbing: Dubbing, Storage: Storage, Queries: Database, Logger: Logger, Email: Email, Youtube: Youtube})
+	GqlServer := graph.Connect(graph.GraphConnectProps{Dubbing: Dubbing, Storage: Storage, Queries: Database, Logger: Logger, Email: Email, Youtube: Youtube, Ffmpeg: Ffmpeg})
 
 	router := chi.NewRouter()
 	router.Use(auth.Middleware())

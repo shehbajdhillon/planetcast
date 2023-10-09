@@ -48,7 +48,6 @@ func (y *Youtube) downloadVideo(video *youtube.Video) (io.ReadSeeker, error) {
 	randomString := uuid.NewString()
 
 	randomFileName := randomString + ".mp4"
-	encodedFileName := randomString + "_encoded.mp4"
 
 	err := y.download.DownloadComposite(newCtx, randomFileName, video, "hd1080", "")
 
@@ -62,27 +61,27 @@ func (y *Youtube) downloadVideo(video *youtube.Video) (io.ReadSeeker, error) {
 	}
 	y.logger.Info("Downloaded youtube file successfully", zap.String("video_id", video.ID), zap.String("file_name", randomFileName))
 
-	ffmpegCmd := fmt.Sprintf("ffmpeg -i file:'%s' -vcodec libx264 -acodec aac -vsync 2 file:'%s'", randomFileName, encodedFileName)
-	y.ffmpeg.Run(newCtx, ffmpegCmd)
-
-	file, err := os.Open(encodedFileName)
+	file, err := os.Open(randomFileName)
 	if err != nil {
-		y.logger.Error("Could not read downloaded youtube file", zap.Error(err), zap.String("video_id", video.ID), zap.String("file_name", randomFileName))
+		y.logger.Error("Could not open downloaded youtube video", zap.Error(err), zap.String("video_id", video.ID), zap.String("file_name", randomFileName))
 		return nil, err
 	}
 	defer file.Close()
 
 	fileContent, err := io.ReadAll(file)
 	if err != nil {
-		y.logger.Error("Could not read downloaded youtube file", zap.Error(err), zap.String("video_id", video.ID), zap.String("file_name", randomFileName))
+		y.logger.Error("Could not read opened downloaded youtube video", zap.Error(err), zap.String("video_id", video.ID), zap.String("file_name", randomFileName))
 		return nil, err
 	}
+	seeker := bytes.NewReader(fileContent)
 
-	y.logger.Info("Read downloaded youtube file successfully", zap.String("video_id", video.ID), zap.String("file_name", randomFileName))
+	readSeeker, err := y.ffmpeg.DownscaleFile(newCtx, seeker)
+	utils.DeleteFiles([]string{randomFileName})
 
-	readSeeker := bytes.NewReader(fileContent)
-
-	utils.DeleteFiles([]string{randomFileName, encodedFileName})
+	if err != nil {
+		y.logger.Error("Could not downscale downloaded youtube video", zap.Error(err), zap.String("video_id", video.ID), zap.String("file_name", randomFileName))
+		return nil, err
+	}
 
 	return readSeeker, nil
 }
@@ -92,6 +91,11 @@ func (y *Youtube) Download(videoUrl string) (io.ReadSeeker, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
+
+	if video.Duration.Minutes() > 90 {
+		return nil, "", fmt.Errorf("video longer than 90 minutes, please provide a video under the 90 minute limit")
+	}
+
 	file, err := y.downloadVideo(video)
 	if err != nil {
 		return nil, "", err
