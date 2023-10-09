@@ -228,6 +228,9 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
     console.log({ project });
   }, [project])
 
+  const buttonColor = useColorModeValue("white", "black");
+  const buttonBg = useColorModeValue("black", "white");
+
   return (
     project &&
     <Box
@@ -264,8 +267,8 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
                   onClick={() => setTransformationIdx(idx)}
                   variant={idx === transformationIdx ? "solid" : "outline"}
                   pointerEvents={idx === transformationIdx ? "none" : "auto"}
-                  background={idx === transformationIdx ? 'white' : '' }
-                  color={idx === transformationIdx ? 'black' : '' }
+                  background={idx === transformationIdx ? buttonBg : '' }
+                  color={idx === transformationIdx ? buttonColor : '' }
                 >
                   {t?.targetLanguage}
                 </Button>
