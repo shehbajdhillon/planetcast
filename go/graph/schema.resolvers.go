@@ -42,7 +42,7 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 }
 
 // CreateProject is the resolver for the createProject field.
-func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool, gender string) (database.Project, error) {
+func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool) (database.Project, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 
 	// check if file upload or youtube
@@ -105,7 +105,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 		})
 
 		if initialTargetLanguage != nil {
-			r.CreateTranslation(context, project.ID, *initialTargetLanguage, initialLipSync, gender)
+			r.CreateTranslation(context, project.ID, *initialTargetLanguage, initialLipSync)
 		}
 
 	}(newCtx)
@@ -129,7 +129,7 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (
 }
 
 // CreateTranslation is the resolver for the createTranslation field.
-func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int64, targetLanguage model.SupportedLanguage, lipSync bool, gender string) (database.Transformation, error) {
+func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int64, targetLanguage model.SupportedLanguage, lipSync bool) (database.Transformation, error) {
 	// fetch source transcript for the project
 	sourceTransformation, err := r.DB.GetSourceTransformationByProjectId(ctx, projectID)
 	if err != nil {
@@ -171,7 +171,6 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 				TargetTransformation: newTransformation,
 				Identifier:           identifier,
 				LipSync:              lipSync,
-				Gender:               gender,
 			},
 		)
 

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"planetcastdev/auth"
@@ -279,7 +278,6 @@ type CreateTranslationProps struct {
 	TargetTransformation database.Transformation
 	Identifier           string
 	LipSync              bool
-	Gender               string
 }
 
 func (d *Dubbing) CreateTranslation(
@@ -304,7 +302,7 @@ func (d *Dubbing) CreateTranslation(
 	if err != nil {
 		return nil, fmt.Errorf("Error downloading original audio file from S3: %s", err.Error())
 	}
-	err = ioutil.WriteFile(identifier+".mp4", responseBody, 0644)
+	err = os.WriteFile(identifier+".mp4", responseBody, 0644)
 	if err != nil {
 		return nil, fmt.Errorf("Error writing audio file: %s", err.Error())
 	}
@@ -338,7 +336,6 @@ func (d *Dubbing) CreateTranslation(
 		targetLanguage:         model.SupportedLanguage(targetTransformation.TargetLanguage),
 		targetTransformationId: targetTransformation.ID,
 		lipSync:                args.LipSync,
-		gender:                 args.Gender,
 	}
 	translatedSegmentsPtr, err := d.fetchAndDub(ctx, fetchAndDubArgs)
 	if err != nil {
@@ -424,7 +421,6 @@ type fetchAndDubProps struct {
 	targetLanguage         model.SupportedLanguage
 	targetTransformationId int64
 	lipSync                bool
-	gender                 string
 }
 
 func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Segment, error) {
@@ -435,6 +431,11 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 		ID:     args.targetTransformationId,
 		Status: "processing",
 	})
+
+	mappedLanguage, err := languageMap(args.targetLanguage.String())
+	if err != nil {
+		return nil, fmt.Errorf("Invalid language provided: %s", err.Error())
+	}
 
 	for idx, segment := range args.segments {
 
@@ -468,7 +469,26 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 		}
 		logProgress("Translation Progress")
 
-		err = d.fetchDubbedClip(ctx, *translatedSegment, args.identifier, args.gender)
+		/**
+		  Extract the video clip
+		**/
+
+		videoSegmentName := getVideoSegmentName(args.identifier, translatedSegment.Id)
+		originalVideoSegmentName := "original_" + videoSegmentName
+		originalAudioSegmentName := originalVideoSegmentName + ".mp3"
+
+		generateVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s.mp4' -ss %f -to %f file:'%s'", args.identifier, translatedSegment.Start, translatedSegment.End, originalVideoSegmentName)
+		_, err = d.ffmpeg.Run(ctx, generateVideoClip)
+
+		generateAudioClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -vn -acodec libmp3lame -q:a 4 file:'%s'", originalVideoSegmentName, originalAudioSegmentName)
+		_, err = d.ffmpeg.Run(ctx, generateAudioClip)
+
+		if err != nil {
+			return nil, fmt.Errorf("Clip %d/%d extraction failed: %s\n%s\n", idx+1, len(args.segments), err.Error(), generateVideoClip)
+		}
+		logProgress("Clip Extration")
+
+		err = d.fetchDubbedClip(ctx, *translatedSegment, args.identifier, mappedLanguage)
 		if err != nil {
 			return nil, fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(args.segments), err.Error())
 		}
@@ -588,32 +608,54 @@ func (d *Dubbing) addMissingInfo(ctx context.Context, args addMissingInfoProps) 
 	return nil
 }
 
-func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifier string, gender string) error {
+func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifier string, language string) error {
 
-	retries := 5
 	id := segment.Id
 	audioFileName := getAudioFileName(identifier, id)
 
-	data := elevenlabsmiddleware.VoiceRequest{
-		Text:    segment.Text,
-		ModelID: "eleven_multilingual_v2",
-		VoiceSetting: elevenlabsmiddleware.VoiceSettings{
-			Stability:       1.0,
-			SimilarityBoost: 1.0,
-		},
-	}
+	videoSegmentName := getVideoSegmentName(identifier, id)
+	originalVideoSegmentName := "original_" + videoSegmentName
 
-	audioContent, err := d.elevenlabs.MakeRequest(ctx, elevenlabsmiddleware.MakeRequestProps{Retries: retries, RequestInput: data, Gender: gender})
+	originalAudioSegmentName := originalVideoSegmentName + ".mp3"
+
+	audioContent, err := d.elevenlabs.CoquiMakeRequest(ctx, elevenlabsmiddleware.CoquiRequestArgs{AudioFileName: originalAudioSegmentName, Text: segment.Text, Language: language})
 
 	if err != nil {
 		return fmt.Errorf("Error reading response from ElevenLabs: %s", err.Error())
 	}
-	err = ioutil.WriteFile(audioFileName, audioContent, 0644)
+	err = os.WriteFile(audioFileName, audioContent, 0644)
 	if err != nil {
 		return fmt.Errorf("Error writing audio file: %s", err.Error())
 	}
 	return nil
 
+}
+
+func languageMap(currLanguage string) (string, error) {
+
+	languageMap := map[string]string{
+		"ENGLISH":    "en",
+		"GERMAN":     "de",
+		"FRENCH":     "fr",
+		"SPANISH":    "es",
+		"ITALIAN":    "it",
+		"PORTUGUESE": "pt",
+		"POLISH":     "pl",
+
+		"CZECH":   "cs",
+		"RUSSIAN": "ru",
+		"DUTCH":   "nl",
+		"TURKISH": "tr",
+		"ARABIC":  "ar",
+		"CHINESE": "zh-cn",
+	}
+
+	val, ok := languageMap[currLanguage]
+
+	if ok {
+		return val, nil
+	}
+	return "", fmt.Errorf("Invalid language")
 }
 
 func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier string) error {
@@ -626,6 +668,8 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 	videoSegmentName := getVideoSegmentName(identifier, id)
 	originalVideoSegmentName := "original_" + videoSegmentName
 	dubbedVideoSegmentName := "dubbed_" + videoSegmentName
+
+	originalAudioSegmentName := originalVideoSegmentName + ".mp3"
 
 	start := segment.Start
 	end := segment.End
@@ -655,18 +699,11 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 		audioStretchRatio = 1
 	}
 
-	generateVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s.mp4' -ss %f -to %f file:'%s'", identifier, start, end, originalVideoSegmentName)
-	_, err = d.ffmpeg.Run(ctx, generateVideoClip)
-
-	if err != nil {
-		return fmt.Errorf("Clip extraction failed: %s\n%s\n", err.Error(), generateVideoClip)
-	}
-
 	stretchVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -vf 'setpts=%f*PTS' file:'%s'", originalVideoSegmentName, videoStretchRatio, videoSegmentName)
 	_, err = d.ffmpeg.Run(ctx, stretchVideoClip)
 
 	if err != nil {
-		return fmt.Errorf("Clip stretching failed: %s\n%s\n", err.Error(), generateVideoClip)
+		return fmt.Errorf("Clip stretching failed: %s\n%s\n", err.Error(), stretchAudioFileName)
 	}
 
 	stretchAudioClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -filter:a 'atempo=%f' file:'%s'", audioFileName, audioStretchRatio, stretchAudioFileName)
@@ -677,10 +714,10 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 	_, err = d.ffmpeg.Run(ctx, dubVideoClip)
 
 	if err != nil {
-		return fmt.Errorf("Clip dubbing failed: %s\n%s\n", err.Error(), generateVideoClip)
+		return fmt.Errorf("Clip dubbing failed: %s\n%s\n", err.Error(), dubVideoClip)
 	}
 
-	utils.DeleteFiles([]string{videoSegmentName, originalVideoSegmentName, audioFileName, stretchAudioFileName})
+	utils.DeleteFiles([]string{videoSegmentName, originalVideoSegmentName, audioFileName, stretchAudioFileName, originalAudioSegmentName})
 
 	return nil
 }
@@ -734,7 +771,7 @@ func (d *Dubbing) lipSyncClip(ctx context.Context, segment Segment, identifier s
 		return err
 	}
 
-	err = ioutil.WriteFile(syncedVideoSegmentName, responseBody, 0644)
+	err = os.WriteFile(syncedVideoSegmentName, responseBody, 0644)
 
 	if err != nil {
 		return err

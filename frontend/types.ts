@@ -35,39 +35,12 @@ export interface Segment {
 
 export const SupportedLanguages = [
   "ENGLISH",
-  "JAPANESE",
-  "CHINESE",
   "GERMAN",
-
-  "HINDI",
   "FRENCH",
-  "KOREAN",
-  "PORTUGUESE",
-
-  "ITALIAN",
   "SPANISH",
-  "INDONESIAN",
-  "DUTCH",
-
-  "TURKISH",
-  "FILIPINO",
+  "ITALIAN",
+  "PORTUGUESE",
   "POLISH",
-  "SWEDISH",
-
-  "BULGARIAN",
-  "ROMANIAN",
-  "ARABIC",
-  "CZECH",
-
-  "GREEK",
-  "FINNISH",
-  "CROATIAN",
-  "MALAY",
-
-  "SLOVAK",
-  "DANISH",
-  "TAMIL",
-  "UKRAINIAN",
 ] as const;
 
 export type SupportedLanguage = typeof SupportedLanguages[number];
