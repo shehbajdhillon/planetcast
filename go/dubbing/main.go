@@ -379,7 +379,6 @@ func (d *Dubbing) CreateTranslation(
 
 	defer file.Close()
 	d.storage.Upload(newFileName, file)
-	utils.DeleteFiles([]string{identifier + ".mp4", identifier + "_dubbed.mp4"})
 
 	// get the target text, and parse it
 	json.Unmarshal(targetTransformation.Transcript.RawMessage, &whisperOutput)
@@ -387,12 +386,26 @@ func (d *Dubbing) CreateTranslation(
 	whisperOutput.Language = strings.ToLower(string(targetTransformation.TargetLanguage))
 
 	// store the target text in db
-	jsonBytes, err := json.Marshal(whisperOutput)
+	jsonBytesUntimed, err := json.Marshal(whisperOutput)
+	transcriptPtr, err := d.getTranscript(ctx, newFileName)
+	var transcriptObj WhisperOutput
+	var jsonBytesTimed []byte
+	if err == nil {
+		transcriptObj = *transcriptPtr
+		jsonBytesTimed, err = json.Marshal(transcriptObj)
+	}
 
-	targetTransformation, err = d.database.UpdateTranscriptById(ctx, database.UpdateTranscriptByIdParams{
-		ID:         targetTransformation.ID,
-		Transcript: pqtype.NullRawMessage{Valid: true, RawMessage: jsonBytes},
-	})
+	if err == nil {
+		targetTransformation, err = d.database.UpdateTranscriptById(ctx, database.UpdateTranscriptByIdParams{
+			ID:         targetTransformation.ID,
+			Transcript: pqtype.NullRawMessage{Valid: true, RawMessage: jsonBytesTimed},
+		})
+	} else {
+		targetTransformation, err = d.database.UpdateTranscriptById(ctx, database.UpdateTranscriptByIdParams{
+			ID:         targetTransformation.ID,
+			Transcript: pqtype.NullRawMessage{Valid: true, RawMessage: jsonBytesUntimed},
+		})
+	}
 
 	if err != nil {
 		return nil, fmt.Errorf("Could not update transformation: " + err.Error())
@@ -418,6 +431,9 @@ func (d *Dubbing) CreateTranslation(
 			UserEmail:      userEmail,
 		})
 	}
+
+	//Delete any files written
+	utils.DeleteFiles([]string{identifier + ".mp4", identifier + "_dubbed.mp4"})
 
 	// return the update transformation
 	return &targetTransformation, nil
