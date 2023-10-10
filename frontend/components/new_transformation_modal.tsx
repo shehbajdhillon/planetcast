@@ -30,7 +30,7 @@ interface NewTransformationModelProps {
 };
 
 const CREATE_TRANSLATION = gql`
-  mutation CreateTranslation($projectId: Int64!, $targetLanguage: SupportedLanguage!, $lipSync: Boolean!) {
+  mutation CreateTranslation($projectId: Int64!, $targetLanguage: String!, $lipSync: Boolean!) {
     createTranslation(projectId: $projectId, targetLanguage: $targetLanguage, lipSync: $lipSync) {
       id
       projectId

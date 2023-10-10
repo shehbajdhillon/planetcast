@@ -36,7 +36,7 @@ import Image from 'next/image';
 import { extractVideoID } from '@/utils';
 
 const CREATE_PROJECT = gql`
-  mutation CreateProject($teamSlug: String!, $title: String!, $sourceMedia: Upload, $uploadOption: UploadOption!, $youtubeLink: String, $initialLipSync: Boolean!, $initialTargetLanguage: SupportedLanguage) {
+  mutation CreateProject($teamSlug: String!, $title: String!, $sourceMedia: Upload, $uploadOption: UploadOption!, $youtubeLink: String, $initialLipSync: Boolean!, $initialTargetLanguage: String) {
     createProject(teamSlug: $teamSlug, title: $title, sourceMedia: $sourceMedia, initialLipSync: $initialLipSync, initialTargetLanguage: $initialTargetLanguage, uploadOption: $uploadOption, youtubeLink: $youtubeLink) {
       id
       title
