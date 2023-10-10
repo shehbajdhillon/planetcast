@@ -34,13 +34,16 @@ type ElevenLabsRequestArgs struct {
 
 func (e *ElevenLabs) ElevenLabsMakeRequest(ctx context.Context, args ElevenLabsRequestArgs) ([]byte, error) {
 
-	fileName := args.AudioFileName
 	originalVoiceId := "rU18Fk3uSDhmg5Xh41o4" //Fallback voice id
+	voiceId := originalVoiceId
 
-	voiceId, err := e.cloneVoice(ctx, fileName)
-	if err != nil {
-		voiceId = originalVoiceId
-	}
+	/**
+		fileName := args.AudioFileName
+		voiceId, err := e.cloneVoice(ctx, fileName)
+		if err != nil {
+			voiceId = originalVoiceId
+		}
+	  **/
 
 	data := VoiceRequest{
 		Text:    args.Text,
@@ -52,9 +55,11 @@ func (e *ElevenLabs) ElevenLabsMakeRequest(ctx context.Context, args ElevenLabsR
 	}
 
 	audioContent, err := e.elevenLabsPerformTextToSpeech(ctx, data, voiceId)
-	if voiceId != originalVoiceId {
-		e.elevenLabsDeleteClonedVoice(voiceId)
-	}
+	/**
+		if voiceId != originalVoiceId {
+			e.elevenLabsDeleteClonedVoice(voiceId)
+		}
+	  **/
 
 	if err != nil {
 		return nil, err

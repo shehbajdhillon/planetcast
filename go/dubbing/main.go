@@ -651,7 +651,7 @@ func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifi
 
 	originalAudioSegmentName := originalVideoSegmentName + ".mp3"
 
-	audioContent, err := d.elevenlabs.CoquiMakeRequest(ctx, elevenlabsmiddleware.CoquiRequestArgs{AudioFileName: originalAudioSegmentName, Text: segment.Text, Language: language})
+	audioContent, err := d.elevenlabs.ElevenLabsMakeRequest(ctx, elevenlabsmiddleware.ElevenLabsRequestArgs{AudioFileName: originalAudioSegmentName, Text: segment.Text, Language: language})
 
 	if err != nil {
 		return fmt.Errorf("Error reading response from ElevenLabs: %s", err.Error())
