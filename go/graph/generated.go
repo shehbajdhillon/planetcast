@@ -54,9 +54,9 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CreateProject        func(childComplexity int, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool) int
+		CreateProject        func(childComplexity int, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *string, initialLipSync bool) int
 		CreateTeam           func(childComplexity int, slug string, name string, teamType database.TeamType) int
-		CreateTranslation    func(childComplexity int, projectID int64, targetLanguage model.SupportedLanguage, lipSync bool) int
+		CreateTranslation    func(childComplexity int, projectID int64, targetLanguage string, lipSync bool) int
 		DeleteProject        func(childComplexity int, projectID int64) int
 		DeleteTransformation func(childComplexity int, transformationID int64) int
 	}
@@ -103,9 +103,9 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateTeam(ctx context.Context, slug string, name string, teamType database.TeamType) (database.Team, error)
-	CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool) (database.Project, error)
+	CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *string, initialLipSync bool) (database.Project, error)
 	DeleteProject(ctx context.Context, projectID int64) (database.Project, error)
-	CreateTranslation(ctx context.Context, projectID int64, targetLanguage model.SupportedLanguage, lipSync bool) (database.Transformation, error)
+	CreateTranslation(ctx context.Context, projectID int64, targetLanguage string, lipSync bool) (database.Transformation, error)
 	DeleteTransformation(ctx context.Context, transformationID int64) (database.Transformation, error)
 }
 type ProjectResolver interface {
@@ -120,8 +120,6 @@ type TeamResolver interface {
 	Projects(ctx context.Context, obj *database.Team, projectID *int64) ([]database.Project, error)
 }
 type TransformationResolver interface {
-	TargetLanguage(ctx context.Context, obj *database.Transformation) (model.SupportedLanguage, error)
-
 	Transcript(ctx context.Context, obj *database.Transformation) (string, error)
 }
 
@@ -150,7 +148,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateProject(childComplexity, args["teamSlug"].(string), args["title"].(string), args["sourceMedia"].(*graphql.Upload), args["youtubeLink"].(*string), args["uploadOption"].(model.UploadOption), args["initialTargetLanguage"].(*model.SupportedLanguage), args["initialLipSync"].(bool)), true
+		return e.complexity.Mutation.CreateProject(childComplexity, args["teamSlug"].(string), args["title"].(string), args["sourceMedia"].(*graphql.Upload), args["youtubeLink"].(*string), args["uploadOption"].(model.UploadOption), args["initialTargetLanguage"].(*string), args["initialLipSync"].(bool)), true
 
 	case "Mutation.createTeam":
 		if e.complexity.Mutation.CreateTeam == nil {
@@ -174,7 +172,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateTranslation(childComplexity, args["projectId"].(int64), args["targetLanguage"].(model.SupportedLanguage), args["lipSync"].(bool)), true
+		return e.complexity.Mutation.CreateTranslation(childComplexity, args["projectId"].(int64), args["targetLanguage"].(string), args["lipSync"].(bool)), true
 
 	case "Mutation.deleteProject":
 		if e.complexity.Mutation.DeleteProject == nil {
@@ -567,10 +565,10 @@ func (ec *executionContext) field_Mutation_createProject_args(ctx context.Contex
 		}
 	}
 	args["uploadOption"] = arg4
-	var arg5 *model.SupportedLanguage
+	var arg5 *string
 	if tmp, ok := rawArgs["initialTargetLanguage"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("initialTargetLanguage"))
-		arg5, err = ec.unmarshalOSupportedLanguage2ᚖplanetcastdevᚋgraphᚋmodelᚐSupportedLanguage(ctx, tmp)
+		arg5, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -646,10 +644,10 @@ func (ec *executionContext) field_Mutation_createTranslation_args(ctx context.Co
 		}
 	}
 	args["projectId"] = arg0
-	var arg1 model.SupportedLanguage
+	var arg1 string
 	if tmp, ok := rawArgs["targetLanguage"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetLanguage"))
-		arg1, err = ec.unmarshalNSupportedLanguage2planetcastdevᚋgraphᚋmodelᚐSupportedLanguage(ctx, tmp)
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -938,7 +936,7 @@ func (ec *executionContext) _Mutation_createProject(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateProject(rctx, fc.Args["teamSlug"].(string), fc.Args["title"].(string), fc.Args["sourceMedia"].(*graphql.Upload), fc.Args["youtubeLink"].(*string), fc.Args["uploadOption"].(model.UploadOption), fc.Args["initialTargetLanguage"].(*model.SupportedLanguage), fc.Args["initialLipSync"].(bool))
+			return ec.resolvers.Mutation().CreateProject(rctx, fc.Args["teamSlug"].(string), fc.Args["title"].(string), fc.Args["sourceMedia"].(*graphql.Upload), fc.Args["youtubeLink"].(*string), fc.Args["uploadOption"].(model.UploadOption), fc.Args["initialTargetLanguage"].(*string), fc.Args["initialLipSync"].(bool))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.LoggedIn == nil {
@@ -1112,7 +1110,7 @@ func (ec *executionContext) _Mutation_createTranslation(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateTranslation(rctx, fc.Args["projectId"].(int64), fc.Args["targetLanguage"].(model.SupportedLanguage), fc.Args["lipSync"].(bool))
+			return ec.resolvers.Mutation().CreateTranslation(rctx, fc.Args["projectId"].(int64), fc.Args["targetLanguage"].(string), fc.Args["lipSync"].(bool))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.LoggedIn == nil {
@@ -2217,7 +2215,7 @@ func (ec *executionContext) _Transformation_targetLanguage(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Transformation().TargetLanguage(rctx, obj)
+		return obj.TargetLanguage, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2229,19 +2227,19 @@ func (ec *executionContext) _Transformation_targetLanguage(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.SupportedLanguage)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNSupportedLanguage2planetcastdevᚋgraphᚋmodelᚐSupportedLanguage(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Transformation_targetLanguage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Transformation",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type SupportedLanguage does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4789,41 +4787,10 @@ func (ec *executionContext) _Transformation(ctx context.Context, sel ast.Selecti
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "targetLanguage":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Transformation_targetLanguage(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Transformation_targetLanguage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "targetMedia":
 			out.Values[i] = ec._Transformation_targetMedia(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5401,16 +5368,6 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNSupportedLanguage2planetcastdevᚋgraphᚋmodelᚐSupportedLanguage(ctx context.Context, v interface{}) (model.SupportedLanguage, error) {
-	var res model.SupportedLanguage
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNSupportedLanguage2planetcastdevᚋgraphᚋmodelᚐSupportedLanguage(ctx context.Context, sel ast.SelectionSet, v model.SupportedLanguage) graphql.Marshaler {
-	return v
-}
-
 func (ec *executionContext) marshalNTeam2planetcastdevᚋdatabaseᚐTeam(ctx context.Context, sel ast.SelectionSet, v database.Team) graphql.Marshaler {
 	return ec._Team(ctx, sel, &v)
 }
@@ -5842,22 +5799,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	}
 	res := graphql.MarshalString(*v)
 	return res
-}
-
-func (ec *executionContext) unmarshalOSupportedLanguage2ᚖplanetcastdevᚋgraphᚋmodelᚐSupportedLanguage(ctx context.Context, v interface{}) (*model.SupportedLanguage, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var res = new(model.SupportedLanguage)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOSupportedLanguage2ᚖplanetcastdevᚋgraphᚋmodelᚐSupportedLanguage(ctx context.Context, sel ast.SelectionSet, v *model.SupportedLanguage) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
 }
 
 func (ec *executionContext) unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (*graphql.Upload, error) {

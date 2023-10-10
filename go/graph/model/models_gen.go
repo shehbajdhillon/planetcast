@@ -8,57 +8,6 @@ import (
 	"strconv"
 )
 
-type SupportedLanguage string
-
-const (
-	SupportedLanguageEnglish    SupportedLanguage = "ENGLISH"
-	SupportedLanguageGerman     SupportedLanguage = "GERMAN"
-	SupportedLanguageFrench     SupportedLanguage = "FRENCH"
-	SupportedLanguageSpanish    SupportedLanguage = "SPANISH"
-	SupportedLanguageItalian    SupportedLanguage = "ITALIAN"
-	SupportedLanguagePortuguese SupportedLanguage = "PORTUGUESE"
-	SupportedLanguagePolish     SupportedLanguage = "POLISH"
-)
-
-var AllSupportedLanguage = []SupportedLanguage{
-	SupportedLanguageEnglish,
-	SupportedLanguageGerman,
-	SupportedLanguageFrench,
-	SupportedLanguageSpanish,
-	SupportedLanguageItalian,
-	SupportedLanguagePortuguese,
-	SupportedLanguagePolish,
-}
-
-func (e SupportedLanguage) IsValid() bool {
-	switch e {
-	case SupportedLanguageEnglish, SupportedLanguageGerman, SupportedLanguageFrench, SupportedLanguageSpanish, SupportedLanguageItalian, SupportedLanguagePortuguese, SupportedLanguagePolish:
-		return true
-	}
-	return false
-}
-
-func (e SupportedLanguage) String() string {
-	return string(e)
-}
-
-func (e *SupportedLanguage) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = SupportedLanguage(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid SupportedLanguage", str)
-	}
-	return nil
-}
-
-func (e SupportedLanguage) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
 type UploadOption string
 
 const (

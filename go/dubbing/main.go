@@ -12,7 +12,6 @@ import (
 	"planetcastdev/elevenlabsmiddleware"
 	"planetcastdev/email"
 	"planetcastdev/ffmpegmiddleware"
-	"planetcastdev/graph/model"
 	"planetcastdev/httpmiddleware"
 	"planetcastdev/openaimiddleware"
 	"planetcastdev/replicatemiddleware"
@@ -353,7 +352,7 @@ func (d *Dubbing) CreateTranslation(
 		segments:               sourceSegments,
 		projectId:              sourceTransformation.ProjectID,
 		identifier:             identifier,
-		targetLanguage:         model.SupportedLanguage(targetTransformation.TargetLanguage),
+		targetLanguage:         targetTransformation.TargetLanguage,
 		targetTransformationId: targetTransformation.ID,
 		lipSync:                args.LipSync,
 	}
@@ -454,7 +453,7 @@ type fetchAndDubProps struct {
 	segments               []Segment
 	projectId              int64
 	identifier             string
-	targetLanguage         model.SupportedLanguage
+	targetLanguage         string
 	targetTransformationId int64
 	lipSync                bool
 }
@@ -468,10 +467,12 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 		Status: "processing",
 	})
 
-	mappedLanguage, err := languageMap(args.targetLanguage.String())
-	if err != nil {
-		return nil, fmt.Errorf("Invalid language provided: %s", err.Error())
-	}
+	/**
+		mappedLanguage, err := languageMap(args.targetLanguage)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid language provided: %s", err.Error())
+		}
+	  **/
 
 	for idx, segment := range args.segments {
 
@@ -524,7 +525,7 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 		}
 		logProgress("Clip Extration")
 
-		err = d.fetchDubbedClip(ctx, *translatedSegment, args.identifier, mappedLanguage)
+		err = d.fetchDubbedClip(ctx, *translatedSegment, args.identifier, args.targetLanguage)
 		if err != nil {
 			return nil, fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(args.segments), err.Error())
 		}
@@ -651,7 +652,7 @@ func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifi
 
 	originalAudioSegmentName := originalVideoSegmentName + ".mp3"
 
-	audioContent, err := d.elevenlabs.ElevenLabsMakeRequest(ctx, elevenlabsmiddleware.ElevenLabsRequestArgs{AudioFileName: originalAudioSegmentName, Text: segment.Text, Language: language})
+	audioContent, err := d.elevenlabs.ElevenLabsMakeRequest(ctx, elevenlabsmiddleware.ElevenLabsRequestArgs{AudioFileName: originalAudioSegmentName, Text: segment.Text})
 
 	if err != nil {
 		return fmt.Errorf("Error reading response from ElevenLabs: %s", err.Error())
@@ -954,7 +955,7 @@ func (d *Dubbing) concatBatch(ctx context.Context, batch []string, batchIdentifi
 func (d *Dubbing) translateSegment(
 	ctx context.Context,
 	segment Segment,
-	targetLang model.SupportedLanguage,
+	targetLang string,
 	beforeTranslatedSentences []string,
 	afterOriginalSentences []string,
 ) (*Segment, error) {

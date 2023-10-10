@@ -42,7 +42,7 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name str
 }
 
 // CreateProject is the resolver for the createProject field.
-func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *model.SupportedLanguage, initialLipSync bool) (database.Project, error) {
+func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *string, initialLipSync bool) (database.Project, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 
 	// check if file upload or youtube
@@ -129,7 +129,7 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (
 }
 
 // CreateTranslation is the resolver for the createTranslation field.
-func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int64, targetLanguage model.SupportedLanguage, lipSync bool) (database.Transformation, error) {
+func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int64, targetLanguage string, lipSync bool) (database.Transformation, error) {
 	// fetch source transcript for the project
 	sourceTransformation, err := r.DB.GetSourceTransformationByProjectId(ctx, projectID)
 	if err != nil {
@@ -139,7 +139,7 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 	// if target transformation already exists, return that
 	existingTransformation, err := r.DB.GetTransformationByProjectIdTargetLanguage(ctx, database.GetTransformationByProjectIdTargetLanguageParams{
 		ProjectID:      projectID,
-		TargetLanguage: targetLanguage.String(),
+		TargetLanguage: targetLanguage,
 	})
 	if err == nil {
 		return existingTransformation, nil
@@ -151,7 +151,7 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 	// create empty transformation in target language, if target transformation already exists, return that
 	newTransformation, _ := r.DB.CreateTransformation(ctx, database.CreateTransformationParams{
 		ProjectID:      projectID,
-		TargetLanguage: targetLanguage.String(),
+		TargetLanguage: targetLanguage,
 		TargetMedia:    newFileName,
 		Transcript:     pqtype.NullRawMessage{Valid: false, RawMessage: nil},
 		IsSource:       false,
@@ -275,11 +275,6 @@ func (r *teamResolver) Projects(ctx context.Context, obj *database.Team, project
 	}
 
 	return filteredProject, nil
-}
-
-// TargetLanguage is the resolver for the targetLanguage field.
-func (r *transformationResolver) TargetLanguage(ctx context.Context, obj *database.Transformation) (model.SupportedLanguage, error) {
-	return model.SupportedLanguage(obj.TargetLanguage), nil
 }
 
 // Transcript is the resolver for the transcript field.

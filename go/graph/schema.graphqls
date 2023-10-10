@@ -31,7 +31,7 @@ type Project {
 type Transformation {
   id: Int64!
   projectId: Int64!
-  targetLanguage: SupportedLanguage!
+  targetLanguage: String!
   targetMedia: String!
   transcript: String!
   isSource: Boolean!
@@ -52,9 +52,9 @@ type Query {
 
 type Mutation {
   createTeam(slug: String!, name: String!, teamType: TeamType!): Team! @loggedIn
-  createProject(teamSlug: String! @memberTeam, title: String!, sourceMedia: Upload, youtubeLink: String, uploadOption: UploadOption!, initialTargetLanguage: SupportedLanguage, initialLipSync: Boolean!): Project! @loggedIn
+  createProject(teamSlug: String! @memberTeam, title: String!, sourceMedia: Upload, youtubeLink: String, uploadOption: UploadOption!, initialTargetLanguage: String, initialLipSync: Boolean!): Project! @loggedIn
   deleteProject(projectId: Int64! @ownsProject): Project! @loggedIn
-  createTranslation(projectId: Int64! @ownsProject, targetLanguage: SupportedLanguage!, lipSync: Boolean!): Transformation! @loggedIn
+  createTranslation(projectId: Int64! @ownsProject, targetLanguage: String!, lipSync: Boolean!): Transformation! @loggedIn
   deleteTransformation(transformationId: Int64! @ownsTransformation): Transformation! @loggedIn
 }
 
@@ -68,12 +68,3 @@ enum UploadOption {
   YOUTUBE_LINK
 }
 
-enum SupportedLanguage {
-  ENGLISH
-  GERMAN
-  FRENCH
-  SPANISH
-  ITALIAN
-  PORTUGUESE
-  POLISH
-}

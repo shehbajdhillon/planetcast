@@ -28,7 +28,6 @@ type VoiceRequest struct {
 
 type ElevenLabsRequestArgs struct {
 	AudioFileName string
-	Language      string
 	Text          string
 }
 
