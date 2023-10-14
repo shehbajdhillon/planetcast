@@ -25,6 +25,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tabbed/pqtype"
 	"go.uber.org/zap"
+	"golang.org/x/sync/semaphore"
 )
 
 func getAudioFileName(identifier string, id int64) string {
@@ -401,7 +402,13 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 
 	wg.Add(len(args.segments))
 
+	maxWorkers := 4
+	sem := semaphore.NewWeighted(int64(maxWorkers))
+
 	for idx := range args.segments {
+
+		sem.Acquire(ctx, 1)
+
 		go func(idx int) {
 			translatedSeg, _ := d.processSegment(ctx, idx, args)
 			mutex.Lock()
@@ -417,7 +424,10 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 			})
 
 			mutex.Unlock()
+
+			sem.Release(1)
 			wg.Done()
+
 		}(idx)
 	}
 
