@@ -394,104 +394,10 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 		Status: "processing",
 	})
 
-	for idx, segment := range args.segments {
+	for idx := range args.segments {
 
-		logProgress := func(stage string) {
-			d.logger.Info(
-				stage,
-				zap.Int("project_id", int(args.projectId)),
-				zap.Int("transformation_id", int(args.targetTransformationId)),
-				zap.String("target_language", string(args.targetLanguage)),
-				zap.Int("segments_processed", idx+1),
-				zap.Int("total_segments", len(args.segments)),
-			)
-		}
-
-		beforeOriginalSegments := args.segments[utils.MaxOf(0, idx-2):idx]
-		afterOriginalSegments := args.segments[idx+1 : utils.MinOf(idx+3, len(args.segments))]
-
-		beforeOriginalSentences := []string{}
-		for _, seg := range beforeOriginalSegments {
-			beforeOriginalSentences = append(beforeOriginalSentences, seg.Text)
-		}
-
-		afterOriginalSentences := []string{}
-		for _, seg := range afterOriginalSegments {
-			afterOriginalSentences = append(afterOriginalSentences, seg.Text)
-		}
-
-		translatedSegment, err := d.translateSegment(ctx, segment, args.targetLanguage, beforeOriginalSentences, afterOriginalSentences)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to translated segment %d/%d: %s", idx+1, len(args.segments), err.Error())
-		}
-		logProgress("Translation Progress")
-
-		videoSegmentName := getVideoSegmentName(args.identifier, translatedSegment.Id)
-		originalVideoSegmentName := "original_" + videoSegmentName
-		originalAudioSegmentName := originalVideoSegmentName + ".mp3"
-
-		generateVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s.mp4' -ss %f -to %f file:'%s'", args.identifier, translatedSegment.Start, translatedSegment.End, originalVideoSegmentName)
-		_, err = d.ffmpeg.Run(ctx, generateVideoClip)
-
-		generateAudioClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -vn -acodec libmp3lame -q:a 4 file:'%s'", originalVideoSegmentName, originalAudioSegmentName)
-		_, err = d.ffmpeg.Run(ctx, generateAudioClip)
-
-		if err != nil {
-			return nil, fmt.Errorf("Clip %d/%d extraction failed: %s\n%s\n", idx+1, len(args.segments), err.Error(), generateVideoClip)
-		}
-		logProgress("Clip Extration")
-
-		err = d.fetchDubbedClip(ctx, *translatedSegment, args.identifier, args.targetLanguage)
-		if err != nil {
-			return nil, fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(args.segments), err.Error())
-		}
-		logProgress("Audio Generation Progress")
-
-		err = d.dubVideoClip(ctx, *translatedSegment, args.identifier)
-		if err != nil {
-			return nil, fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(args.segments), err.Error())
-		}
-		logProgress("Dubbing Progress")
-
-		if args.lipSync {
-			err = d.lipSyncClip(ctx, *translatedSegment, args.identifier)
-			if err != nil {
-				return nil, fmt.Errorf("Could not lip sync clip %d/%d: %s\n", idx+1, len(args.segments), err.Error())
-			}
-			logProgress("Lip Syncing Progress")
-		} else {
-			videoSegmentName := getVideoSegmentName(args.identifier, segment.Id)
-			dubbedVideoSegmentName := "dubbed_" + videoSegmentName
-			syncedVideoSegmentName := "synced_" + videoSegmentName
-			copyFileCmd := fmt.Sprintf("cp %s %s", dubbedVideoSegmentName, syncedVideoSegmentName)
-			utils.ExecCommand(copyFileCmd)
-			utils.DeleteFiles([]string{dubbedVideoSegmentName})
-		}
-
-		var beforeSegment *Segment = nil
-		if idx > 0 {
-			beforeSegment = &args.segments[idx-1]
-		} else if idx == 0 {
-			beforeSegment = &Segment{End: 0}
-		}
-
-		err = d.addMissingInfo(ctx, addMissingInfoProps{identifier: args.identifier, currentSegment: *translatedSegment, beforeSegment: beforeSegment})
-		if err != nil {
-			return nil, fmt.Errorf("Could not add missing info %d/%d: %s\n", idx+1, len(args.segments), err.Error())
-		}
-		logProgress("Added Missing Info")
-
-		videoDuration, err := utils.GetAudioFileDuration(args.identifier + ".mp4")
-		if err == nil && idx == len(args.segments)-1 && videoDuration-translatedSegment.End <= 0.5 {
-			flip := true
-			err = d.addMissingInfo(ctx, addMissingInfoProps{identifier: args.identifier, currentSegment: Segment{Id: translatedSegment.Id, Start: videoDuration - 0.1}, beforeSegment: translatedSegment, flip: &flip})
-			if err != nil {
-				return nil, fmt.Errorf("Could not add missing info %d/%d: %s\n", idx+1, len(args.segments), err.Error())
-			}
-			logProgress("Added Missing Info")
-		}
-
-		translatedSegments = append(translatedSegments, *translatedSegment)
+		translatedSeg, _ := d.processSegment(ctx, idx, args)
+		translatedSegments = append(translatedSegments, *translatedSeg)
 
 		percentage := 100 * (float64(len(translatedSegments)) / float64(len(args.segments)))
 		percentage = math.Round(percentage*100) / 100
@@ -500,9 +406,114 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 			ID:       args.targetTransformationId,
 			Progress: percentage,
 		})
+
 	}
 
 	return &translatedSegments, nil
+}
+
+func (d *Dubbing) processSegment(ctx context.Context, idx int, args fetchAndDubProps) (*Segment, error) {
+
+	segments := args.segments
+	identifier := args.identifier
+	segment := segments[idx]
+
+	logProgress := func(stage string) {
+		d.logger.Info(
+			stage,
+			zap.Int("project_id", int(args.projectId)),
+			zap.Int("transformation_id", int(args.targetTransformationId)),
+			zap.String("target_language", string(args.targetLanguage)),
+			zap.Int("segments_processed", idx+1),
+			zap.Int("total_segments", len(segments)),
+		)
+	}
+
+	beforeOriginalSegments := segments[utils.MaxOf(0, idx-2):idx]
+	afterOriginalSegments := segments[idx+1 : utils.MinOf(idx+3, len(segments))]
+
+	beforeOriginalSentences := []string{}
+	for _, seg := range beforeOriginalSegments {
+		beforeOriginalSentences = append(beforeOriginalSentences, seg.Text)
+	}
+
+	afterOriginalSentences := []string{}
+	for _, seg := range afterOriginalSegments {
+		afterOriginalSentences = append(afterOriginalSentences, seg.Text)
+	}
+
+	translatedSegment, err := d.translateSegment(ctx, segment, args.targetLanguage, beforeOriginalSentences, afterOriginalSentences)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to translated segment %d/%d: %s", idx+1, len(segments), err.Error())
+	}
+	logProgress("Translation Progress")
+
+	videoSegmentName := getVideoSegmentName(identifier, translatedSegment.Id)
+	originalVideoSegmentName := "original_" + videoSegmentName
+	originalAudioSegmentName := originalVideoSegmentName + ".mp3"
+
+	generateVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s.mp4' -ss %f -to %f file:'%s'", identifier, translatedSegment.Start, translatedSegment.End, originalVideoSegmentName)
+	_, err = d.ffmpeg.Run(ctx, generateVideoClip)
+
+	generateAudioClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -vn -acodec libmp3lame -q:a 4 file:'%s'", originalVideoSegmentName, originalAudioSegmentName)
+	_, err = d.ffmpeg.Run(ctx, generateAudioClip)
+
+	if err != nil {
+		return nil, fmt.Errorf("Clip %d/%d extraction failed: %s\n%s\n", idx+1, len(segments), err.Error(), generateVideoClip)
+	}
+	logProgress("Clip Extration")
+
+	err = d.fetchDubbedClip(ctx, *translatedSegment, identifier, args.targetLanguage)
+	if err != nil {
+		return nil, fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(segments), err.Error())
+	}
+	logProgress("Audio Generation Progress")
+
+	err = d.dubVideoClip(ctx, *translatedSegment, identifier)
+	if err != nil {
+		return nil, fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(segments), err.Error())
+	}
+	logProgress("Dubbing Progress")
+
+	if args.lipSync {
+		err = d.lipSyncClip(ctx, *translatedSegment, identifier)
+		if err != nil {
+			return nil, fmt.Errorf("Could not lip sync clip %d/%d: %s\n", idx+1, len(segments), err.Error())
+		}
+		logProgress("Lip Syncing Progress")
+	} else {
+		videoSegmentName := getVideoSegmentName(identifier, segment.Id)
+		dubbedVideoSegmentName := "dubbed_" + videoSegmentName
+		syncedVideoSegmentName := "synced_" + videoSegmentName
+		copyFileCmd := fmt.Sprintf("cp %s %s", dubbedVideoSegmentName, syncedVideoSegmentName)
+		utils.ExecCommand(copyFileCmd)
+		utils.DeleteFiles([]string{dubbedVideoSegmentName})
+	}
+
+	var beforeSegment *Segment = nil
+	if idx > 0 {
+		beforeSegment = &segments[idx-1]
+	} else if idx == 0 {
+		beforeSegment = &Segment{End: 0}
+	}
+
+	err = d.addMissingInfo(ctx, addMissingInfoProps{identifier: identifier, currentSegment: *translatedSegment, beforeSegment: beforeSegment})
+	if err != nil {
+		return nil, fmt.Errorf("Could not add missing info %d/%d: %s\n", idx+1, len(segments), err.Error())
+	}
+	logProgress("Added Missing Info")
+
+	videoDuration, err := utils.GetAudioFileDuration(identifier + ".mp4")
+	if err == nil && idx == len(segments)-1 && videoDuration-translatedSegment.End <= 0.5 {
+		flip := true
+		err = d.addMissingInfo(ctx, addMissingInfoProps{identifier: identifier, currentSegment: Segment{Id: translatedSegment.Id, Start: videoDuration - 0.1}, beforeSegment: translatedSegment, flip: &flip})
+		if err != nil {
+			return nil, fmt.Errorf("Could not add missing info %d/%d: %s\n", idx+1, len(segments), err.Error())
+		}
+		logProgress("Added Missing Info")
+	}
+
+	return translatedSegment, nil
 }
 
 type addMissingInfoProps struct {
