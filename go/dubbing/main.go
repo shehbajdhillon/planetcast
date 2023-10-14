@@ -17,7 +17,9 @@ import (
 	"planetcastdev/replicatemiddleware"
 	"planetcastdev/storage"
 	"planetcastdev/utils"
+	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -394,20 +396,37 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 		Status: "processing",
 	})
 
+	var wg sync.WaitGroup
+	mutex := &sync.Mutex{}
+
+	wg.Add(len(args.segments))
+
 	for idx := range args.segments {
+		go func(idx int) {
+			translatedSeg, _ := d.processSegment(ctx, idx, args)
+			mutex.Lock()
 
-		translatedSeg, _ := d.processSegment(ctx, idx, args)
-		translatedSegments = append(translatedSegments, *translatedSeg)
+			translatedSegments = append(translatedSegments, *translatedSeg)
 
-		percentage := 100 * (float64(len(translatedSegments)) / float64(len(args.segments)))
-		percentage = math.Round(percentage*100) / 100
+			percentage := 100 * (float64(len(translatedSegments)) / float64(len(args.segments)))
+			percentage = math.Round(percentage*100) / 100
 
-		d.database.UpdateTransformationProgressById(ctx, database.UpdateTransformationProgressByIdParams{
-			ID:       args.targetTransformationId,
-			Progress: percentage,
-		})
+			d.database.UpdateTransformationProgressById(ctx, database.UpdateTransformationProgressByIdParams{
+				ID:       args.targetTransformationId,
+				Progress: percentage,
+			})
 
+			mutex.Unlock()
+			wg.Done()
+		}(idx)
 	}
+
+	wg.Wait()
+
+	// Sort the array by the Id of the segment
+	sort.Slice(translatedSegments, func(i, j int) bool {
+		return translatedSegments[i].Id < translatedSegments[j].Id
+	})
 
 	return &translatedSegments, nil
 }
