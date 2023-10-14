@@ -467,13 +467,6 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 		Status: "processing",
 	})
 
-	/**
-		mappedLanguage, err := languageMap(args.targetLanguage)
-		if err != nil {
-			return nil, fmt.Errorf("Invalid language provided: %s", err.Error())
-		}
-	  **/
-
 	for idx, segment := range args.segments {
 
 		logProgress := func(stage string) {
@@ -505,10 +498,6 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 			return nil, fmt.Errorf("Failed to translated segment %d/%d: %s", idx+1, len(args.segments), err.Error())
 		}
 		logProgress("Translation Progress")
-
-		/**
-		  Extract the video clip
-		**/
 
 		videoSegmentName := getVideoSegmentName(args.identifier, translatedSegment.Id)
 		originalVideoSegmentName := "original_" + videoSegmentName
@@ -663,33 +652,6 @@ func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifi
 	}
 	return nil
 
-}
-
-func languageMap(currLanguage string) (string, error) {
-
-	languageMap := map[string]string{
-		"ENGLISH":    "en",
-		"GERMAN":     "de",
-		"FRENCH":     "fr",
-		"SPANISH":    "es",
-		"ITALIAN":    "it",
-		"PORTUGUESE": "pt",
-		"POLISH":     "pl",
-
-		"CZECH":   "cs",
-		"RUSSIAN": "ru",
-		"DUTCH":   "nl",
-		"TURKISH": "tr",
-		"ARABIC":  "ar",
-		"CHINESE": "zh-cn",
-	}
-
-	val, ok := languageMap[currLanguage]
-
-	if ok {
-		return val, nil
-	}
-	return "", fmt.Errorf("Invalid language")
 }
 
 func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier string) error {
