@@ -487,12 +487,12 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 			)
 		}
 
-		beforeTranslatedSegments := translatedSegments[utils.MaxOf(0, idx-2):idx]
+		beforeOriginalSegments := args.segments[utils.MaxOf(0, idx-2):idx]
 		afterOriginalSegments := args.segments[idx+1 : utils.MinOf(idx+3, len(args.segments))]
 
-		beforeTranslatedSentences := []string{}
-		for _, seg := range beforeTranslatedSegments {
-			beforeTranslatedSentences = append(beforeTranslatedSentences, seg.Text)
+		beforeOriginalSentences := []string{}
+		for _, seg := range beforeOriginalSegments {
+			beforeOriginalSentences = append(beforeOriginalSentences, seg.Text)
 		}
 
 		afterOriginalSentences := []string{}
@@ -500,7 +500,7 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 			afterOriginalSentences = append(afterOriginalSentences, seg.Text)
 		}
 
-		translatedSegment, err := d.translateSegment(ctx, segment, args.targetLanguage, beforeTranslatedSentences, afterOriginalSentences)
+		translatedSegment, err := d.translateSegment(ctx, segment, args.targetLanguage, beforeOriginalSentences, afterOriginalSentences)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to translated segment %d/%d: %s", idx+1, len(args.segments), err.Error())
 		}
@@ -985,7 +985,7 @@ func generateTranslationPrompt(targetLanguage string, targetSentence string, bef
 
 	if len(beforeTranslatedSentences) > 0 {
 		beforeSentence = fmt.Sprintf(
-			"This sentence will come after the following translated sentences:\n'%s'\nPlease make sure that the translation flows naturally after these sentences and maintains the original meaning and conversational tone.",
+			"This sentence will come after the following sentences:\n'%s'\nPlease make sure that the translation flows naturally after these sentences and maintains the original meaning and conversational tone.",
 			strings.Join(beforeTranslatedSentences, "\n"),
 		)
 	}
