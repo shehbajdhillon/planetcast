@@ -10,11 +10,15 @@ import {
   Grid,
   GridItem,
   HStack,
+  Heading,
   IconButton,
   Progress,
   Skeleton,
   SkeletonText,
+  Spacer,
   Spinner,
+  Stack,
+  TabIndicator,
   Text,
   VStack,
   useClipboard,
@@ -69,6 +73,23 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ projectId, teamSlug }) => {
 
   const { isOpen, onClose, onOpen } = useDisclosure();
 
+  const [tabIdx, setTabIdx] = useState(0);
+
+  const borderColor = useColorModeValue("black", "white");
+
+
+  const RenderTabButtons = () => (
+    <VStack w="max" alignItems={"flex-start"} px="10px">
+      <Button
+        variant={"ghost"}
+        onClick={() => setTabIdx(0)}
+        borderWidth={tabIdx === 0 ? '1px' : ''}
+      >
+        General
+      </Button>
+    </VStack>
+  )
+
   return (
     <Box
       display={"flex"}
@@ -76,20 +97,59 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ projectId, teamSlug }) => {
       justifyContent={"center"}
       w={"full"}
     >
-      <Box w="full" maxW={"1920px"}>
-        <Center>
-          <SingleActionModal
-            heading={"Delete Project"}
-            body={`Are you sure you want to delete this Project? This will delete the original video and all the dubbings generated. This action is irreversible.`}
-            action={() => deleteProject()}
-            loading={loading}
-            isOpen={isOpen}
-            onClose={onClose}
-          />
-          <Button colorScheme="red" onClick={onOpen}>
-            Delete Project
-          </Button>
-        </Center>
+      <Box w="full" maxW={"1200px"}>
+        <Grid
+          templateAreas={{
+            base: `
+              "main"
+            `,
+            lg: `"sidebar main"`
+          }}
+          gridTemplateColumns={{ base: "1fr", lg: "1fr 4fr"}}
+          w="full"
+          h="full"
+          gap="10px"
+        >
+          <GridItem area={"sidebar"} display={{ base: "none", lg: "block" }}>
+            <RenderTabButtons />
+          </GridItem>
+          <GridItem area={"main"} maxW={"912px"}>
+            {tabIdx === 0 &&
+              <VStack alignItems={{ lg: "flex-start" }}>
+                <Heading>Danger Zone</Heading>
+                <Stack
+                  direction={"column"}
+                  w="full"
+                  borderColor={"red.200"}
+                  borderWidth={"1px"}
+                  padding={"25px"}
+                  rounded={"lg"}
+                >
+                  <HStack>
+                    <Box>
+                      <Text>Delete this Project</Text>
+                      <Text>The original video and all the dubbings will be deleted. This action is not reversible.</Text>
+                    </Box>
+                    <Spacer />
+                    <Box>
+                      <SingleActionModal
+                        heading={"Delete Project"}
+                        body={`Are you sure you want to delete this Project? This will delete the original video and all the dubbings generated. This action is irreversible.`}
+                        action={() => deleteProject()}
+                        loading={loading}
+                        isOpen={isOpen}
+                        onClose={onClose}
+                      />
+                      <Button colorScheme="red" onClick={onOpen}>
+                        Delete Project
+                      </Button>
+                    </Box>
+                  </HStack>
+                </Stack>
+              </VStack>
+            }
+          </GridItem>
+        </Grid>
       </Box>
     </Box>
   );
@@ -499,9 +559,9 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
 
       { (!loading && currentTeamsData) ?
 
-        <Box pt={"70px"}>
+        <Box pt={"85px"}>
           <Tabs
-            variant="line"
+            variant="enclosed"
             colorScheme="gray"
             isLazy
             onChange={(index) => {
