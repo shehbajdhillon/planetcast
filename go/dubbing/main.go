@@ -405,6 +405,12 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 	maxWorkers := 4
 	sem := semaphore.NewWeighted(int64(maxWorkers))
 
+	frameRate, err := utils.GetVideoFileFrameRate(args.identifier + ".mp4")
+
+	if err != nil {
+		frameRate = 0
+	}
+
 	for idx := range args.segments {
 
 		sem.Acquire(ctx, 1)
@@ -418,7 +424,7 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 			for segmentRetires > 0 {
 				sleepTime := utils.GetExponentialDelaySeconds(6 - segmentRetires)
 
-				translatedSeg, err = d.processSegment(ctx, idx, args)
+				translatedSeg, err = d.processSegment(ctx, idx, frameRate, args)
 				if err == nil {
 					break
 				} else {
@@ -463,7 +469,7 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 	return &translatedSegments, nil
 }
 
-func (d *Dubbing) processSegment(ctx context.Context, idx int, args fetchAndDubProps) (*Segment, error) {
+func (d *Dubbing) processSegment(ctx context.Context, idx int, frameRate float64, args fetchAndDubProps) (*Segment, error) {
 
 	segments := args.segments
 	identifier := args.identifier
@@ -520,7 +526,7 @@ func (d *Dubbing) processSegment(ctx context.Context, idx int, args fetchAndDubP
 	}
 	logProgress("Audio Generation Progress")
 
-	err = d.dubVideoClip(ctx, *translatedSegment, identifier)
+	err = d.dubVideoClip(ctx, *translatedSegment, identifier, frameRate)
 	if err != nil {
 		return nil, fmt.Errorf("Could not process clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 	}
@@ -643,7 +649,7 @@ func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifi
 
 }
 
-func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier string) error {
+func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier string, frameRate float64) error {
 
 	id := segment.Id
 
@@ -684,7 +690,23 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 		audioStretchRatio = 1
 	}
 
-	stretchVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -vf 'setpts=%f*PTS' file:'%s'", originalVideoSegmentName, videoStretchRatio, videoSegmentName)
+	stretchVideoClip := fmt.Sprintf(
+		"ffmpeg -threads 1 -i file:'%s' -vf 'setpts=%f*PTS' file:'%s'",
+		originalVideoSegmentName,
+		videoStretchRatio,
+		videoSegmentName,
+	)
+
+	if frameRate > 0 {
+		stretchVideoClip = fmt.Sprintf(
+			"ffmpeg -threads 1 -i file:'%s' -vf 'setpts=%f*PTS,minterpolate='mi_mode=mci:mc_mode=aobmc:vsbmc=1:fps=%f'' file:'%s'",
+			originalVideoSegmentName,
+			videoStretchRatio,
+			frameRate,
+			videoSegmentName,
+		)
+	}
+
 	_, err = d.ffmpeg.Run(ctx, stretchVideoClip)
 
 	if err != nil {
