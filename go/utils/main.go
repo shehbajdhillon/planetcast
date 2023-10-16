@@ -35,6 +35,50 @@ func GetAudioFileDuration(fileName string) (float64, error) {
 
 }
 
+func GetVideoFileFrameRate(fileName string) (float64, error) {
+	cmdString := fmt.Sprintf("ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate -of default=noprint_wrappers=1:nokey=1 file:'%s'", fileName)
+
+	output, err := ExecCommand(cmdString)
+	if err != nil {
+		return 0, fmt.Errorf("Could not run ffprobe to get frame rate: %s", err.Error())
+	}
+	frameRateString := strings.TrimSpace(output)
+	frameRate, err := parseFrameRateString(frameRateString)
+
+	if err != nil {
+		return 0, fmt.Errorf("Could not get the frame rate: %s, %s", frameRateString, err.Error())
+	}
+
+	return frameRate, nil
+}
+
+func parseFrameRateString(frameRateString string) (float64, error) {
+	if !strings.Contains(frameRateString, "/") {
+		return strconv.ParseFloat(frameRateString, 64)
+	}
+
+	parts := strings.Split(frameRateString, "/")
+	if len(parts) != 2 {
+		return 0, fmt.Errorf("Unexpected frame rate string: %s", frameRateString)
+	}
+
+	numerator, err := strconv.ParseFloat(parts[0], 64)
+	if err != nil {
+		return 0, fmt.Errorf("Could not parse numerator: %s", err.Error())
+	}
+
+	denominator, err := strconv.ParseFloat(parts[1], 64)
+	if err != nil {
+		return 0, fmt.Errorf("Could not parse denominator: %s", err.Error())
+	}
+
+	if denominator == 0 {
+		return 0, fmt.Errorf("Denominator in frame rate fraction is 0")
+	}
+
+	return numerator / denominator, nil
+}
+
 func DeleteFiles(fileNames []string) (string, error) {
 	fileNameString := strings.Join(fileNames, " ")
 	removeCmd := fmt.Sprintf("rm -rf %s", fileNameString)
