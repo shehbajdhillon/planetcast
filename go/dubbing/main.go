@@ -410,7 +410,29 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 		sem.Acquire(ctx, 1)
 
 		go func(idx int) {
-			translatedSeg, _ := d.processSegment(ctx, idx, args)
+
+			segmentRetires := 6
+			var translatedSeg *Segment
+			var err error
+
+			for segmentRetires > 0 {
+				sleepTime := utils.GetExponentialDelaySeconds(6 - segmentRetires)
+
+				translatedSeg, err = d.processSegment(ctx, idx, args)
+				if err == nil {
+					break
+				} else {
+					segmentRetires -= 1
+					d.logger.Error(
+						"Could not process segment, retrying again after sleeping",
+						zap.Int("retries_left", segmentRetires),
+						zap.Error(err),
+						zap.Int("sleep_time", sleepTime),
+					)
+					time.Sleep(time.Duration(sleepTime) * time.Second)
+				}
+			}
+
 			mutex.Lock()
 
 			translatedSegments = append(translatedSegments, *translatedSeg)
