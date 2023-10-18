@@ -66,11 +66,6 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
           >
             PlanetCast
           </Heading>
-          <Badge
-            ml="5px"
-          >
-            Beta
-          </Badge>
         </Box>
         <HStack>
           <IconButton
