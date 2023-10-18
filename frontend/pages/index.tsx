@@ -7,15 +7,24 @@ import {
   Button,
   Text,
   useColorModeValue,
-  Center,
   VStack,
+  useBreakpointValue,
+  Grid,
+  GridItem,
 } from '@chakra-ui/react';
 import Head from 'next/head'
 
-import useWindowDimensions from '@/hooks/useWindowDimensions';
 import Image from 'next/image';
 import Link from 'next/link';
-import WaitlistModal from '@/components/waitlist_request_modal';
+import {
+  ArrowUpFromDot,
+  DollarSign,
+  GlobeIcon,
+  TrendingDownIcon,
+} from 'lucide-react';
+import VideoPlayer from '@/components/video_player';
+import { useState } from 'react';
+import Marquee from '@/components/Marquee';
 
 const HeroSection: React.FC = () => {
   return (
@@ -23,10 +32,12 @@ const HeroSection: React.FC = () => {
       display={"flex"}
       alignItems={{ base: "center" }}
       direction={{ base: "column-reverse", md: "row" }}
-      maxW={"1920px"}
-      mx={"10px"}
+      maxW={"1400px"}
+      mt={{ base:"100px", md: "250px" }}
+      w="full"
     >
       <Box
+        mb={{ base: "auto", md: "0px" }}
         w="full"
         maxW={{ md: "75%" }}
         alignItems={{ base: "center", md: "left" }}
@@ -105,7 +116,7 @@ const HeroSection: React.FC = () => {
           </Button>
         </HStack>
       </Box>
-      <Box maxW={{ base: "200px", md: "25%" }}>
+      <Box maxW={{ base: "200px", md: "25%" }} mt={{ base:"auto", md: "0px" }}>
         <Image
           height={1000}
           width={400}
@@ -118,70 +129,190 @@ const HeroSection: React.FC = () => {
 };
 
 const BenefitsSection: React.FC = () => {
+
+  const iconSize = useBreakpointValue({ base: '40px', md: '60px' })
+
+  const buttonBg = useColorModeValue("black", "white");
+  const buttonColor = useColorModeValue("white", "black");
+  const [tfnIdx, setTfnIdx] = useState(0);
+
+  const transformations = [
+    {
+      language: "ENGLISH",
+      link: "",
+    },
+    {
+      language: "SPANISH",
+      link: "",
+    },
+    {
+      language: "HINDI",
+      link: "",
+    },
+    {
+      language: "FRENCH",
+      link: "",
+    },
+  ]
+
   return (
     <Stack
-      w="full"
-      direction={{ base: "column", md: "row" }}
-      h="full"
-      spacing={0}
+      display={"flex"}
+      alignItems={{ base: "center" }}
+      maxW={"1400px"}
+      mt={{ base:"110px", md: "250px" }}
+      w={"full"}
     >
-      <VStack w="full" h="full">
-        <Center h="full">
-
-          <Heading>Reach 100m+ People</Heading>
-
-        </Center>
-      </VStack>
-
-      <VStack w="full" h="full">
-        <Center h="full">
-          Reach 10x platforms easily
-        </Center>
-      </VStack>
-
-      <VStack w="full" h="full">
-        <Center h="full">
-          Reach 10x platforms easily
-        </Center>
-      </VStack>
-
+      <Grid
+        templateAreas={{
+          base: `
+            "info"
+            "video"
+          `,
+          lg: `"info video"`
+        }}
+        gridTemplateColumns={{ base: "1fr", lg: "3fr 2fr" }}
+        h="full"
+        gap={{ base: "15px", lg: "50px" }}
+        w={{ lg: "full" }}
+      >
+        <GridItem
+          area={"info"}
+          placeItems={"center"}
+          display={"grid"}
+        >
+          <Box
+            mb={{ base: "auto", md: "0px" }}
+            w="full"
+            alignItems={{ base: "center", md: "left" }}
+            justifyContent={{ base: "center", md: "left" }}
+            display={"flex"}
+            flexDir={"column"}
+          >
+            <Heading
+              size={{ base: '2xl', md: '3xl' }}
+              fontWeight={'semibold'}
+              textAlign={{ base: "center", md: "left" }}
+              w={{ md: "full" }}
+            >
+              <HStack>
+                <Text>10x your {' '}
+                  <Text
+                    as={"span"}
+                    bgGradient={'linear(to-tr, #007CF0, #01DFD8)'}
+                    bgClip='text'
+                  >
+                    reach
+                  </Text>
+                </Text>
+                <ArrowUpFromDot size={iconSize} />
+                <GlobeIcon size={iconSize} />
+              </HStack>
+              <HStack mt={{ md: "8px" }}>
+                <Text>1/10th the {' '}
+                  <Text
+                    as={"span"}
+                    bgGradient={'linear(to-tr, #01CF00, #90DD00)'}
+                    bgClip='text'
+                  >
+                    cost
+                  </Text>
+                </Text>
+                <TrendingDownIcon size={iconSize} />
+                <DollarSign size={iconSize} />
+              </HStack>
+            </Heading>
+            <Heading
+              w={{ md: "full" }}
+              fontWeight={'semibold'}
+              textAlign={{ base: "center", md: "left" }}
+              size={{ base: "sm", sm: "lg" }}
+              mt={{ md: "10px" }}
+            >
+              Engage listeners from every corner of the globe
+            </Heading>
+            <Heading
+              w={{ md: "full" }}
+              textAlign={{ base: "center", md: "left" }}
+              fontWeight={'semibold'}
+              size={{ base: "sm", sm: "lg" }}
+            >
+              Save time and money over traditional dubbing
+            </Heading>
+            <Heading
+              w={{ md: "full" }}
+              textAlign={{ base: "center", md: "left" }}
+              fontWeight={'semibold'}
+              size={{ base: "sm", sm: "lg" }}
+            >
+              Replicate authentic voices in every translation
+            </Heading>
+          </Box>
+        </GridItem>
+        <GridItem area={"video"} display={"grid"} placeItems={"center"}>
+          <Box display={"flex"} h="full" w="full" px={{ base: "16px", sm: "0px" }}>
+            <VideoPlayer src={transformations[tfnIdx].link} />
+          </Box>
+          <HStack pt="10px" w="full">
+            {transformations.map((tfn, idx) => (
+              <Button
+                key={idx}
+                onClick={() => setTfnIdx(idx)}
+                variant={idx == tfnIdx ? "solid" : "outline"}
+                pointerEvents={idx === tfnIdx ? "none" : "auto"}
+                background={idx === tfnIdx ? buttonBg : '' }
+                color={idx === tfnIdx ? buttonColor : '' }
+              >
+                {tfn.language}
+              </Button>
+            ))}
+          </HStack>
+        </GridItem>
+      </Grid>
     </Stack>
   );
 };
 
 export default function Home() {
 
-  const { height } = useWindowDimensions();
-
   const bgColor = useColorModeValue("white", "black");
 
   return (
     <VStack>
-
       <Head>
         <title>PlanetCast</title>
         <meta name="description" content="Cast your Content Across the Planet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
       <Box position={"fixed"} top={0} left={0} w="full" p="10px" backgroundColor={bgColor} zIndex={100}>
         <Navbar marketing />
       </Box>
-
-      <VStack
-        w="full"
-        height={height}
-      >
-
-        <Center
-          h="full"
-          maxW={"1920px"}
+      <VStack w="full">
+        <HeroSection />
+        <BenefitsSection />
+        <Heading
+          mt={{ base:"110px", md: "250px" }}
+          size={{ base: 'xl', md: "2xl" }}
+          textAlign={{ base: "center" }}
+          fontWeight={"semibold"}
+          w={{ md: "full" }}
+          backgroundColor={"red"}
+          py="30px"
+          bgGradient={'linear(to-tr, #007CF0, #01DFD8)'}
+          textColor={bgColor}
         >
-          <HeroSection />
-        </Center>
+          <Marquee>
+            {new Array(8).fill(0).map((_, idx) => (
+              <HStack px="100px" spacing={5} key={idx}>
+                <Text h="60px">
+                  Welcome to efficient broadcasting
+                </Text>
+              </HStack>
+            ))}
+          </Marquee>
+        </Heading>
       </VStack>
-
     </VStack>
   )
 }
