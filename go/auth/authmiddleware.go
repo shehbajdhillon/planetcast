@@ -91,17 +91,3 @@ func FullnameFromContext(ctx context.Context) (string, error) {
 	}
 	return fmt.Sprintf("%s %s", *user.FirstName, *user.LastName), nil
 }
-
-func authorizedUser(user *clerk.User) bool {
-	email, _ := getEmail(user)
-	allowedEmails := map[string]bool{
-		"shehbaj.dhillon@gmail.com": true,
-		"shehbaj@planetcast.ai":     true,
-		"jmn3lson@gmail.com":        true,
-		"aarsala@calpoly.edu":       true,
-		"shdhillo@calpoly.edu":      true,
-		"me@dawidjk.me":             true,
-	}
-	_, ok := allowedEmails[email]
-	return ok
-}

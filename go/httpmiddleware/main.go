@@ -3,7 +3,6 @@ package httpmiddleware
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -36,7 +35,7 @@ func HttpRequest(args HttpRequestStruct) ([]byte, error) {
 
 	defer res.Body.Close()
 
-	responseBody, err := ioutil.ReadAll(res.Body)
+	responseBody, err := io.ReadAll(res.Body)
 
 	// Error out if response code is not 200 or 202.
 	// But what if the response code is okay but not equal to 200 or 202?

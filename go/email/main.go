@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -104,7 +103,7 @@ func getHTMLTemplate(args interface{}, filePath string) (string, error) {
 	}
 
 	path := filepath.Join(dir)
-	htmlData, err := ioutil.ReadFile(path)
+	htmlData, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
