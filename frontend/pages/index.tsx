@@ -74,7 +74,6 @@ const HeroSection: React.FC = () => {
           </Text>
         </Heading>
         <HStack w={{ md: "full" }} pt="10px">
-          {/**
           <Link
             href={'/dashboard'}
           >
@@ -82,18 +81,28 @@ const HeroSection: React.FC = () => {
               size={"lg"}
               backgroundColor={useColorModeValue("black", "white")}
               textColor={useColorModeValue("white", "black")}
-              borderColor={useColorModeValue("black", "white")}
+              borderColor={useColorModeValue("white", "black")}
               borderWidth={"1px"}
               _hover={{
                 backgroundColor: useColorModeValue("white", "black"),
-                textColor: useColorModeValue("black", "white")
+                textColor: useColorModeValue("white", "black"),
+                bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
               }}
             >
-              Try for Free
+              Start for Free
             </Button>
           </Link>
-          **/}
-          <WaitlistModal />
+          <Button
+            size={"lg"}
+            variant={"outline"}
+            _hover={{
+              backgroundColor: useColorModeValue("black", "white:"),
+              textColor: useColorModeValue("white", "black"),
+              bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
+            }}
+          >
+            Read More
+          </Button>
         </HStack>
       </Box>
       <Box maxW={{ base: "200px", md: "25%" }}>
