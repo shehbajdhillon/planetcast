@@ -11,6 +11,8 @@ import {
   useBreakpointValue,
   Grid,
   GridItem,
+  Avatar,
+  Center,
 } from '@chakra-ui/react';
 import Head from 'next/head'
 
@@ -19,12 +21,12 @@ import Link from 'next/link';
 import {
   ArrowUpFromDot,
   DollarSign,
+  ExternalLink,
   GlobeIcon,
   TrendingDownIcon,
 } from 'lucide-react';
 import VideoPlayer from '@/components/video_player';
 import { useState } from 'react';
-import Marquee from '@/components/Marquee';
 
 const HeroSection: React.FC = () => {
   return (
@@ -33,7 +35,6 @@ const HeroSection: React.FC = () => {
       alignItems={{ base: "center" }}
       direction={{ base: "column-reverse", md: "row" }}
       maxW={"1400px"}
-      mt={{ base:"100px", md: "250px" }}
       w="full"
     >
       <Box
@@ -48,7 +49,7 @@ const HeroSection: React.FC = () => {
         <Heading
           size={{ base: '3xl', md: "4xl" }}
           textAlign={{ base: "center", md: "left" }}
-          fontWeight={"semibold"}
+          fontWeight={"medium"}
           w={{ md: "full" }}
         >
           Dub
@@ -56,7 +57,7 @@ const HeroSection: React.FC = () => {
         <Heading
           size={{ base: '3xl', md: "4xl" }}
           textAlign={{ base: "center", md: "left" }}
-          fontWeight={"semibold"}
+          fontWeight={"medium"}
           w={{ md: "full" }}
         >
           Translate
@@ -64,7 +65,7 @@ const HeroSection: React.FC = () => {
         <Heading
           size={{ base: '3xl', md: "4xl" }}
           textAlign={{ base: "center", md: "left" }}
-          fontWeight={"semibold"}
+          fontWeight={"medium"}
           w={{ md: "full" }}
         >
           Broadcast
@@ -72,7 +73,7 @@ const HeroSection: React.FC = () => {
         <Heading
           size={{ base: '3xl', md: "4xl" }}
           textAlign={{ base: "center", md: "left" }}
-          fontWeight={"semibold"}
+          fontWeight={"medium"}
           w={{ md: "full" }}
         >
           Content Across the {' '}
@@ -85,9 +86,7 @@ const HeroSection: React.FC = () => {
           </Text>
         </Heading>
         <HStack w={{ md: "full" }} pt="10px">
-          <Link
-            href={'/dashboard'}
-          >
+          <Link href={'/dashboard'}>
             <Button
               size={"lg"}
               backgroundColor={useColorModeValue("black", "white")}
@@ -160,7 +159,6 @@ const BenefitsSection: React.FC = () => {
       display={"flex"}
       alignItems={{ base: "center" }}
       maxW={"1400px"}
-      mt={{ base:"110px", md: "250px" }}
       w={"full"}
     >
       <Grid
@@ -191,7 +189,7 @@ const BenefitsSection: React.FC = () => {
           >
             <Heading
               size={{ base: '2xl', md: '3xl' }}
-              fontWeight={'semibold'}
+              fontWeight={'medium'}
               textAlign={{ base: "center", md: "left" }}
               w={{ md: "full" }}
             >
@@ -224,7 +222,7 @@ const BenefitsSection: React.FC = () => {
             </Heading>
             <Heading
               w={{ md: "full" }}
-              fontWeight={'semibold'}
+              fontWeight={'normal'}
               textAlign={{ base: "center", md: "left" }}
               size={{ base: "sm", sm: "lg" }}
               mt={{ md: "10px" }}
@@ -234,7 +232,7 @@ const BenefitsSection: React.FC = () => {
             <Heading
               w={{ md: "full" }}
               textAlign={{ base: "center", md: "left" }}
-              fontWeight={'semibold'}
+              fontWeight={'normal'}
               size={{ base: "sm", sm: "lg" }}
             >
               Save time and money over traditional dubbing
@@ -242,10 +240,10 @@ const BenefitsSection: React.FC = () => {
             <Heading
               w={{ md: "full" }}
               textAlign={{ base: "center", md: "left" }}
-              fontWeight={'semibold'}
+              fontWeight={'normal'}
               size={{ base: "sm", sm: "lg" }}
             >
-              Replicate authentic voices in every translation
+              Preserve original voices in every translation
             </Heading>
           </Box>
         </GridItem>
@@ -273,9 +271,167 @@ const BenefitsSection: React.FC = () => {
   );
 };
 
+interface TestimonialCardProps {
+  name: string;
+  title: string;
+  src: string;
+  text: string[];
+  link: string;
+};
+
+const TestimonialCard: React.FC<TestimonialCardProps> = (props) => {
+  const { name, title, src, text, link } = props;
+
+  return (
+    <Box
+      w="full"
+      borderWidth={"1px"}
+      rounded={"lg"}
+      p="10px"
+      shadow="lg"
+      borderRadius={"md"}
+    >
+      <HStack mb="30px">
+        <Avatar src={src} />
+        <Stack spacing={1}>
+          <HStack>
+            <Heading
+              size={{ base: "md" }}
+              fontWeight={'medium'}
+            >
+              { name }
+            </Heading>
+            <Link href={link} target='_blank'>
+              <ExternalLink />
+            </Link>
+          </HStack>
+          <Heading
+            size={{ base:"sm" }}
+            fontWeight={'normal'}
+          >
+            { title }
+          </Heading>
+        </Stack>
+      </HStack>
+      <Heading
+        fontSize={"md"}
+        fontWeight={"normal"}
+        as={"em"}
+      >
+        {text.map((txt, idx) => (
+          <Text pt="10px" key={idx}>{'"'}{txt}{'"'}</Text>
+        ))}
+      </Heading>
+    </Box>
+  );
+};
+
+const TestimonialSection = () => {
+  return (
+    <Stack
+      display={"flex"}
+      alignItems={{ base: "center" }}
+      maxW={"1400px"}
+      w={"full"}
+    >
+      <Heading
+        fontWeight={"medium"}
+        size={{ base: '2xl', md: "3xl" }}
+        textAlign={{ base: "center", md: "left" }}
+        w={{ md: "full" }}
+      >
+        Welcome to efficient {' '}
+        <Text
+          as={"span"}
+          bgGradient={'linear(to-tr, #007CF0, #01DFD8)'}
+          bgClip='text'
+        >
+          broadcasting
+        </Text>
+      </Heading>
+      <Heading
+        fontWeight={'normal'}
+        size={{ base: "sm", sm: "lg" }}
+        textAlign={{ base: "center", md: "left" }}
+        w={{ md: "full" }}
+      >
+        Discover how our users are revolutionizing their content reach
+      </Heading>
+
+      <Stack
+        direction={{ base: "column", md: "row" }}
+        justifyContent={{ md: "space-between" }}
+        w="full"
+        mt="45px"
+        px="16px"
+        spacing={"80px"}
+      >
+        <TestimonialCard
+          name='Rahul Pandey'
+          title='Educator'
+          src={'/rahulimg.jpeg'}
+          text={['Amazed by this 🤯😮', 'The next few years for creators are going to be wild.']}
+          link='https://www.youtube.com/@RahulInHindi'
+        />
+        <TestimonialCard
+          name='Devin Estopinal'
+          title='Social Media Content Strategist'
+          src={'/devnimg.jpeg'}
+          text={["I can't wait to see the results", "Just got done downloading the video after dubbing in spanish and it is absolutely flawless"]}
+          link='https://x.com/NotDevn'
+        />
+        <TestimonialCard
+          name='Dallon Asnes'
+          title='Travel Content Creator'
+          src={'/dallonimg.jpeg'}
+          text={['first vid in progress', 'the hindi dubbing is excellent']}
+          link='https://www.youtube.com/@dallonearth'
+        />
+      </Stack>
+    </Stack>
+  );
+};
+
+
+const PricingSection = () => {
+  return (
+    <Stack
+      display={"flex"}
+      alignItems={{ base: "center" }}
+      maxW={"1400px"}
+      w={"full"}
+    >
+      <Heading
+        fontWeight={"medium"}
+        size={{ base: '2xl', md: "3xl" }}
+        textAlign={{ base: "center", md: "left" }}
+        w={{ md: "full" }}
+      >
+        Start dubbing {' '}
+        <Text
+          as={"span"}
+          bgGradient={'linear(to-tr, #007CF0, #01DFD8)'}
+          bgClip='text'
+        >
+          today
+        </Text>
+      </Heading>
+      <Heading
+        fontWeight={'normal'}
+        size={{ base: "sm", sm: "lg" }}
+        textAlign={{ base: "center", md: "left" }}
+        w={{ md: "full" }}
+      >
+        Select the perfect plan tailored to your needs
+      </Heading>
+    </Stack>
+  );
+};
+
 export default function Home() {
 
   const bgColor = useColorModeValue("white", "black");
+  const alternateBgColor = useColorModeValue("blackAlpha.50", "whiteAlpha.50");
 
   return (
     <VStack>
@@ -289,29 +445,37 @@ export default function Home() {
         <Navbar marketing />
       </Box>
       <VStack w="full">
-        <HeroSection />
-        <BenefitsSection />
-        <Heading
-          mt={{ base:"110px", md: "250px" }}
-          size={{ base: 'xl', md: "2xl" }}
-          textAlign={{ base: "center" }}
-          fontWeight={"semibold"}
-          w={{ md: "full" }}
-          backgroundColor={"red"}
-          py="30px"
-          bgGradient={'linear(to-tr, #007CF0, #01DFD8)'}
-          textColor={bgColor}
+
+        <Center
+          w="full"
+          py={{ base:"110px", md: "250px" }}
         >
-          <Marquee>
-            {new Array(8).fill(0).map((_, idx) => (
-              <HStack px="100px" spacing={5} key={idx}>
-                <Text h="60px">
-                  Welcome to efficient broadcasting
-                </Text>
-              </HStack>
-            ))}
-          </Marquee>
-        </Heading>
+          <HeroSection />
+        </Center>
+
+        <Center
+          w="full"
+          backgroundColor={alternateBgColor}
+          py={{ base:"110px", md: "250px" }}
+        >
+          <BenefitsSection />
+        </Center>
+
+        <Center
+          w="full"
+          py={{ base:"110px", md: "250px" }}
+        >
+          <TestimonialSection />
+        </Center>
+
+        <Center
+          w="full"
+          backgroundColor={alternateBgColor}
+          py={{ base:"110px", md: "250px" }}
+        >
+          <PricingSection />
+        </Center>
+
       </VStack>
     </VStack>
   )
