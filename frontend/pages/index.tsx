@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import VideoPlayer from '@/components/video_player';
 import { useState } from 'react';
+import PricingComponent from '@/components/pricing_component';
 
 const HeroSection: React.FC = () => {
   return (
@@ -421,9 +422,11 @@ const PricingSection = () => {
         size={{ base: "sm", sm: "lg" }}
         textAlign={{ base: "center", md: "left" }}
         w={{ md: "full" }}
+        mb="45px"
       >
         Select the perfect plan tailored to your needs
       </Heading>
+      <PricingComponent />
     </Stack>
   );
 };
