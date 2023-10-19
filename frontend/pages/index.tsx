@@ -28,6 +28,7 @@ import {
 import VideoPlayer from '@/components/video_player';
 import { useState } from 'react';
 import PricingComponent from '@/components/pricing_component';
+import FooterComponent from '@/components/footer_component';
 
 const HeroSection: React.FC = () => {
   return (
@@ -445,7 +446,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Box position={"fixed"} top={0} left={0} w="full" p="10px" backgroundColor={bgColor} zIndex={100}>
+      <Box position={"fixed"} top={0} left={0} w="full" px="10px" backgroundColor={bgColor} zIndex={100} borderBottomWidth={"1px"}>
         <Navbar marketing />
       </Box>
       <VStack w="full">
@@ -460,7 +461,7 @@ export default function Home() {
         <Center
           w="full"
           py={{ base:"110px", md: "250px" }}
-          bgGradient={bgGradient}
+          borderTopWidth={"1px"}
         >
           <BenefitsSection />
         </Center>
@@ -468,6 +469,7 @@ export default function Home() {
         <Center
           w="full"
           py={{ base:"110px", md: "250px" }}
+          borderTopWidth={"1px"}
         >
           <TestimonialSection />
         </Center>
@@ -475,10 +477,12 @@ export default function Home() {
         <Center
           w="full"
           py={{ base:"110px", md: "250px" }}
-          bgGradient={bgGradient}
+          borderTopWidth={"1px"}
         >
           <PricingSection />
         </Center>
+
+        <FooterComponent />
 
       </VStack>
     </VStack>

@@ -62,7 +62,7 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
           <Heading
             fontSize={"30px"}
             display={{ base: "none", md:"flex" }}
-            fontWeight={"semibold"}
+            fontWeight={"medium"}
           >
             PlanetCast
           </Heading>
