@@ -249,7 +249,7 @@ const BenefitsSection: React.FC = () => {
           </Box>
         </GridItem>
         <GridItem area={"video"} display={"grid"} placeItems={"center"}>
-          <Box display={"flex"} h="full" w="full" px={{ base: "16px", sm: "0px" }}>
+          <Box display={"flex"} h="full" w="full" px={{ base: "16px", sm: "0px" }} borderWidth="1px" rounded={"sm"}>
             <VideoPlayer src={transformations[tfnIdx].link} />
           </Box>
           <HStack pt="10px" w="full">
@@ -259,7 +259,7 @@ const BenefitsSection: React.FC = () => {
                 onClick={() => setTfnIdx(idx)}
                 variant={idx == tfnIdx ? "solid" : "outline"}
                 pointerEvents={idx === tfnIdx ? "none" : "auto"}
-                background={idx === tfnIdx ? buttonBg : '' }
+                background={idx === tfnIdx ? buttonBg : buttonColor }
                 color={idx === tfnIdx ? buttonColor : '' }
               >
                 {tfn.language}
@@ -435,6 +435,7 @@ export default function Home() {
 
   const bgColor = useColorModeValue("white", "black");
   const alternateBgColor = useColorModeValue("blackAlpha.50", "whiteAlpha.50");
+  const bgGradient = useColorModeValue('radial(blackAlpha.200, white, white)', 'radial(whiteAlpha.200, black, black)')
 
   return (
     <VStack>
@@ -458,8 +459,8 @@ export default function Home() {
 
         <Center
           w="full"
-          backgroundColor={alternateBgColor}
           py={{ base:"110px", md: "250px" }}
+          bgGradient={bgGradient}
         >
           <BenefitsSection />
         </Center>
@@ -473,8 +474,8 @@ export default function Home() {
 
         <Center
           w="full"
-          backgroundColor={alternateBgColor}
           py={{ base:"110px", md: "250px" }}
+          bgGradient={bgGradient}
         >
           <PricingSection />
         </Center>
