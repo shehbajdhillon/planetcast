@@ -82,14 +82,14 @@ const FooterComponent = () => {
           <Box as="a" href={'#'}>
             Home
           </Box>
-          <Box as="a" href={'#'}>
-            About
+          <Box as="a" href={'#benefits'}>
+            Benefits
           </Box>
-          <Box as="a" href={'#'}>
-            Blog
+          <Box as="a" href={'#testimonials'}>
+            Testimonials
           </Box>
-          <Box as="a" href={'#'}>
-            Contact
+          <Box as="a" href={'#pricing'}>
+            Pricing
           </Box>
         </Stack>
       </Container>

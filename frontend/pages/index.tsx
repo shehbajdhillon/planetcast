@@ -104,17 +104,19 @@ const HeroSection: React.FC = () => {
               Start for Free
             </Button>
           </Link>
-          <Button
-            size={"lg"}
-            variant={"outline"}
-            _hover={{
-              backgroundColor: useColorModeValue("black", "white:"),
-              textColor: useColorModeValue("white", "black"),
-              bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
-            }}
-          >
-            Read More
-          </Button>
+          <Link href={"#benefits"}>
+            <Button
+              size={"lg"}
+              variant={"outline"}
+              _hover={{
+                backgroundColor: useColorModeValue("black", "white:"),
+                textColor: useColorModeValue("white", "black"),
+                bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
+              }}
+            >
+              Read More
+            </Button>
+          </Link>
         </HStack>
       </Box>
       <Box maxW={{ base: "200px", md: "25%" }} mt={{ base:"auto", md: "0px" }}>
@@ -462,6 +464,7 @@ export default function Home() {
           w="full"
           py={{ base:"110px", md: "250px" }}
           borderTopWidth={"1px"}
+          id="benefits"
         >
           <BenefitsSection />
         </Center>
@@ -470,6 +473,7 @@ export default function Home() {
           w="full"
           py={{ base:"110px", md: "250px" }}
           borderTopWidth={"1px"}
+          id="testimonials"
         >
           <TestimonialSection />
         </Center>
@@ -478,6 +482,7 @@ export default function Home() {
           w="full"
           py={{ base:"110px", md: "250px" }}
           borderTopWidth={"1px"}
+          id="pricing"
         >
           <PricingSection />
         </Center>
