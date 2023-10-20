@@ -140,19 +140,19 @@ const BenefitsSection: React.FC = () => {
   const transformations = [
     {
       language: "ENGLISH",
-      link: "",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/english.mp4",
     },
     {
       language: "SPANISH",
-      link: "",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/spanish.mp4",
     },
     {
       language: "HINDI",
-      link: "",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/hindi.mp4",
     },
     {
       language: "FRENCH",
-      link: "",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/french.mp4",
     },
   ]
 
@@ -250,7 +250,7 @@ const BenefitsSection: React.FC = () => {
           </Box>
         </GridItem>
         <GridItem area={"video"} display={"grid"} placeItems={"center"}>
-          <Box display={"flex"} h="full" w="full" px={{ base: "16px", sm: "0px" }} borderWidth="1px" rounded={"sm"}>
+          <Box display={"flex"} h="full" w="full" px={{ base: "16px", sm: "0px" }} rounded={"sm"}>
             <VideoPlayer src={transformations[tfnIdx].link} />
           </Box>
           <HStack pt="10px" w="full">
