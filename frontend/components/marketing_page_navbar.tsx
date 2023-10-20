@@ -48,9 +48,8 @@ export const NavLink = ({ children }: { children: React.ReactNode }) => (
     rounded={'md'}
     variant={"ghost"}
     _hover={{
-      backgroundColor: useColorModeValue("black", "white:"),
+      backgroundColor: useColorModeValue("black", "white"),
       textColor: useColorModeValue("white", "black"),
-      bgGradient: 'linear(to-tl, #007CF0, #01DFD8)',
     }}
   >
     {children}
