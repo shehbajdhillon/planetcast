@@ -506,13 +506,12 @@ func (d *Dubbing) processSegment(ctx context.Context, idx int, frameRate float64
 	logProgress("Translation Progress")
 
 	videoSegmentName := getVideoSegmentName(identifier, translatedSegment.Id)
-	originalVideoSegmentName := "original_" + videoSegmentName
-	originalAudioSegmentName := originalVideoSegmentName + ".mp3"
+	originalAudioSegmentName := videoSegmentName + ".mp3"
 
-	generateVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s.mp4' -ss %f -to %f file:'%s'", identifier, translatedSegment.Start, translatedSegment.End, originalVideoSegmentName)
+	generateVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s.mp4' -ss %f -to %f file:'%s'", identifier, translatedSegment.Start, translatedSegment.End, videoSegmentName)
 	_, err = d.ffmpeg.Run(ctx, generateVideoClip)
 
-	generateAudioClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -vn -acodec libmp3lame -q:a 4 file:'%s'", originalVideoSegmentName, originalAudioSegmentName)
+	generateAudioClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -vn -acodec libmp3lame -q:a 4 file:'%s'", videoSegmentName, originalAudioSegmentName)
 	_, err = d.ffmpeg.Run(ctx, generateAudioClip)
 
 	if err != nil {
@@ -632,9 +631,8 @@ func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifi
 	audioFileName := getAudioFileName(identifier, id)
 
 	videoSegmentName := getVideoSegmentName(identifier, id)
-	originalVideoSegmentName := "original_" + videoSegmentName
 
-	originalAudioSegmentName := originalVideoSegmentName + ".mp3"
+	originalAudioSegmentName := videoSegmentName + ".mp3"
 
 	audioContent, err := d.elevenlabs.ElevenLabsMakeRequest(ctx, elevenlabsmiddleware.ElevenLabsRequestArgs{AudioFileName: originalAudioSegmentName, Text: segment.Text})
 
@@ -657,10 +655,9 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 	stretchAudioFileName := "stretched_" + audioFileName
 
 	videoSegmentName := getVideoSegmentName(identifier, id)
-	originalVideoSegmentName := "original_" + videoSegmentName
 	dubbedVideoSegmentName := "dubbed_" + videoSegmentName
 
-	originalAudioSegmentName := originalVideoSegmentName + ".mp3"
+	originalAudioSegmentName := videoSegmentName + ".mp3"
 
 	start := segment.Start
 	end := segment.End
@@ -668,46 +665,13 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 	videoFileDuration := end - start
 	audioFileDuarion, err := utils.GetAudioFileDuration(audioFileName)
 
-	videoStretchRatio := audioFileDuarion / videoFileDuration
 	audioStretchRatio := videoFileDuration / audioFileDuarion
-
-	if videoStretchRatio > 1 {
-
-		averageDuration := (videoFileDuration + audioFileDuarion) / 2
-		videoStretchRatio = averageDuration / videoFileDuration
-		audioStretchRatio = averageDuration / audioFileDuarion
-
-	} else {
-		videoStretchRatio = math.Max(videoStretchRatio, 1.0)
-		audioStretchRatio = math.Max(audioStretchRatio, 1.0)
-	}
-
 	audioStretchRatio = math.Max(1/audioStretchRatio, 0.5)
 
 	if err != nil {
 		d.logger.Error("Could not get audio file duration", zap.Error(err))
-		videoStretchRatio = 1
 		audioStretchRatio = 1
 	}
-
-	stretchVideoClip := fmt.Sprintf(
-		"ffmpeg -threads 1 -i file:'%s' -vf 'setpts=%f*PTS' file:'%s'",
-		originalVideoSegmentName,
-		videoStretchRatio,
-		videoSegmentName,
-	)
-
-	if frameRate > 0 {
-		stretchVideoClip = fmt.Sprintf(
-			"ffmpeg -threads 1 -i file:'%s' -vf 'setpts=%f*PTS,minterpolate='mi_mode=mci:mc_mode=aobmc:vsbmc=1:fps=%f'' file:'%s'",
-			originalVideoSegmentName,
-			videoStretchRatio,
-			frameRate,
-			videoSegmentName,
-		)
-	}
-
-	_, err = d.ffmpeg.Run(ctx, stretchVideoClip)
 
 	if err != nil {
 		return fmt.Errorf("Clip stretching failed: %s\n%s\n", err.Error(), stretchAudioFileName)
@@ -724,7 +688,7 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 		return fmt.Errorf("Clip dubbing failed: %s\n%s\n", err.Error(), dubVideoClip)
 	}
 
-	utils.DeleteFiles([]string{videoSegmentName, originalVideoSegmentName, audioFileName, stretchAudioFileName, originalAudioSegmentName})
+	utils.DeleteFiles([]string{videoSegmentName, audioFileName, stretchAudioFileName, originalAudioSegmentName})
 
 	return nil
 }
