@@ -473,15 +473,6 @@ export default function Home() {
           w="full"
           py={{ base:"110px", md: "250px" }}
           borderTopWidth={"1px"}
-          id="testimonials"
-        >
-          <TestimonialSection />
-        </Center>
-
-        <Center
-          w="full"
-          py={{ base:"110px", md: "250px" }}
-          borderTopWidth={"1px"}
           id="pricing"
         >
           <PricingSection />

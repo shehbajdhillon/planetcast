@@ -26,10 +26,12 @@ const Links = [
     title: 'Benefits',
     link: '/#usecases',
   },
+  /**
   {
     title: 'Testimonials',
     link: '/#testimonials',
   },
+  **/
   {
     title: 'Pricing',
     link: '/#pricing',
