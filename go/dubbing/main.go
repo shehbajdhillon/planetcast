@@ -161,18 +161,29 @@ func cleanSegments(whisperOutput *WhisperOutput) []Segment {
 	var newSegmentArray []Segment
 	var idx int64 = 0
 
+	THRESHOLD_SECONDS := 0.20
+
 	for _, seg := range segments {
+
 		if seg.Start >= seg.End {
 			continue
 		}
 		if len(seg.Text) <= 0 {
 			continue
 		}
-		newSegmentArray = append(
-			newSegmentArray,
-			Segment{Id: idx, Start: seg.Start, End: seg.End, Text: seg.Text, Words: []Word{}},
-		)
-		idx += 1
+
+		segmentText := strings.Trim(seg.Text, " ")
+
+		if idx > 0 && (seg.Start-newSegmentArray[idx-1].End <= THRESHOLD_SECONDS) {
+			newSegmentArray[idx-1].End = seg.End
+			newSegmentArray[idx-1].Text += (" " + segmentText)
+		} else {
+			newSegmentArray = append(
+				newSegmentArray,
+				Segment{Id: idx, Start: seg.Start, End: seg.End, Text: segmentText, Words: []Word{}},
+			)
+			idx += 1
+		}
 	}
 
 	return newSegmentArray
