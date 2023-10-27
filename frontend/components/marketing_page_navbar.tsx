@@ -10,7 +10,7 @@ import {
   useDisclosure,
 } from '@chakra-ui/react';
 import { useUser } from '@clerk/nextjs';
-import { Moon, Sun, X, Menu, XIcon } from 'lucide-react';
+import { Moon, Sun, X, Menu } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -24,7 +24,7 @@ const Links = [
   },
   {
     title: 'Benefits',
-    link: '/#usecases',
+    link: '/#benefits',
   },
   /**
   {
@@ -87,7 +87,8 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const navLinkColor = useColorModeValue('black', 'white');
+  const blackWhite = useColorModeValue('black', 'white');
+  const whiteBlack = useColorModeValue('white', 'black');
 
 
   return (
@@ -152,22 +153,25 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
             variant={"ghost"}
           />
 
-          <Link
-            href={'/dashboard'}
-            hidden={!(marketing && isLoaded)}
-          >
-            <Button
-              backgroundColor={useColorModeValue("black", "white")}
-              textColor={useColorModeValue("white", "black")}
-              borderWidth={"1px"}
-              _hover={{
-                backgroundColor: useColorModeValue("white", "black"),
-                textColor: useColorModeValue("black", "white")
-              }}
+          { isSignedIn &&
+            <Link
+              href={'/dashboard'}
+              hidden={!(marketing && isLoaded)}
             >
-              { isSignedIn ? 'Dashboard' : 'Log In' }
-            </Button>
-          </Link>
+              <Button
+                backgroundColor={blackWhite}
+                textColor={whiteBlack}
+                borderWidth={"1px"}
+                _hover={{
+                  backgroundColor: whiteBlack,
+                  textColor: blackWhite,
+                }}
+              >
+                Dashboard
+              </Button>
+            </Link>
+          }
+
         </HStack>
       </Box>
 
@@ -176,7 +180,7 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
           <VStack
             as={'nav'}
             spacing={4}
-            textColor={navLinkColor}
+            textColor={blackWhite}
             fontWeight="600"
             alignItems={'left'}
             marginLeft={'25px'}
