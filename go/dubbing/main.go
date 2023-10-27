@@ -499,7 +499,7 @@ func (d *Dubbing) processSegment(ctx context.Context, idx int, frameRate float64
 		afterOriginalSentences = append(afterOriginalSentences, seg.Text)
 	}
 
-	translatedSegment, err := d.translateSegment(ctx, segment, args.targetLanguage, beforeOriginalSentences, afterOriginalSentences)
+	translatedSegment, err := d.translateSegment(ctx, segment, args.targetLanguage)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to translated segment %d/%d: %s", idx+1, len(segments), err.Error())
 	}
@@ -893,16 +893,30 @@ func (d *Dubbing) translateSegment(
 	ctx context.Context,
 	segment Segment,
 	targetLang string,
-	beforeTranslatedSentences []string,
-	afterOriginalSentences []string,
 ) (*Segment, error) {
 
+	timeTaken := segment.End - segment.Start
+
+	systemPrompt := fmt.Sprintf(
+		` You are an expert translator that can translate any text to the %s language.
+    You will only use vocabulary that is simple, common and even a new learner to %s language would know.
+    You will not use any advanced words, or formal vocabulary.
+    You will focus more on clarity and simplicity over complexity of the vocabulary.
+    You may simplify the meaning of the sentence first if it means the translation will also use simple, common vocabulary.
+    You will translate the input text and will only output the translation.
+    Everytime you do a translation, you will first take a deep breath and work on it step-by-step.
+  `, targetLang, targetLang)
+
+	userPrompt := fmt.Sprintf(
+		` Take a deep breath, and translate the following sentence to %s: '%s'. The original sentence was said in %f seconds, make sure that the translation can also be said in this time.`,
+		targetLang, segment.Text, timeTaken)
+
 	retries := 5
-	prompt := generateTranslationPrompt(string(targetLang), segment.Text, beforeTranslatedSentences, afterOriginalSentences)
 	chatGptInput := openaimiddleware.ChatRequestInput{
 		Model: "gpt-4",
 		Messages: []openaimiddleware.ChatCompletionMessage{
-			{Role: "user", Content: prompt},
+			{Role: "system", Content: systemPrompt},
+			{Role: "user", Content: userPrompt},
 		},
 	}
 
@@ -913,32 +927,4 @@ func (d *Dubbing) translateSegment(
 
 	segment.Text = chatResponse.Choices[0].Message.Content
 	return &segment, nil
-}
-
-func generateTranslationPrompt(targetLanguage string, targetSentence string, beforeTranslatedSentences []string, afterOriginalSentences []string) string {
-
-	beforeSentence := ""
-	afterSentence := ""
-
-	if len(beforeTranslatedSentences) > 0 {
-		beforeSentence = fmt.Sprintf(
-			"This sentence will come after the following sentences:\n'%s'\nPlease make sure that the translation flows naturally after these sentences and maintains the original meaning and conversational tone.",
-			strings.Join(beforeTranslatedSentences, "\n"),
-		)
-	}
-
-	if len(afterOriginalSentences) > 0 {
-		afterSentence = fmt.Sprintf(
-			"For additional context, these are the sentences that will come after the sentence that you will be translating:\n'%s'\n",
-			strings.Join(afterOriginalSentences, "\n"),
-		)
-	}
-
-	disclaimer := fmt.Sprintf("Please use vocabulary that is simple, common and even a learner new to %s language would know, please do not use any advanced words, or formal vocabulary. Focus on clarity and simplicity over complex vocabulary", targetLanguage)
-
-	prompt := fmt.Sprintf(
-		"Please simplify the meaning following sentence. Then after you simplify it, translate it to everyday, informal, conversational %s, and provide the output in %s Alphabet:\n'%s'\n%s\n%s\n%s\nAgain the sentence that you are supposed to translate is this:\n'%s'\nProvide the output in %s Alphabet.  Simplify the sentence before any translation. Make sure the translation is everyday, conversational, informal, and understandable by a learner of %s. ONLY PROVIDE THE TRANSLATED OUTPUT AND NOTHING ELSE.  Do not surround the output with any quotation marks.",
-		targetLanguage, targetLanguage, targetSentence, disclaimer, beforeSentence, afterSentence, targetSentence, targetLanguage, targetLanguage,
-	)
-	return prompt
 }
