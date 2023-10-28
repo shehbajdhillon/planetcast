@@ -86,11 +86,9 @@ const FooterComponent = () => {
           <Box as="a" href={'#benefits'}>
             Benefits
           </Box>
-          {/**
           <Box as="a" href={'#testimonials'}>
             Testimonials
           </Box>
-          **/}
           <Box as="a" href={'#pricing'}>
             Pricing
           </Box>

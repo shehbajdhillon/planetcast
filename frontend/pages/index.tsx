@@ -288,12 +288,12 @@ const TestimonialCard: React.FC<TestimonialCardProps> = (props) => {
 
   return (
     <Box
-      w="full"
-      borderWidth={"1px"}
-      rounded={"lg"}
-      p="10px"
+      flex="1"
+      p={6}
       shadow="lg"
-      borderRadius={"md"}
+      borderRadius="md"
+      borderWidth={1}
+      position="relative"
     >
       <HStack mb="30px">
         <Avatar src={src} />
@@ -317,6 +317,7 @@ const TestimonialCard: React.FC<TestimonialCardProps> = (props) => {
           </Heading>
         </Stack>
       </HStack>
+
       <Heading
         fontSize={"md"}
         fontWeight={"normal"}
@@ -467,6 +468,15 @@ export default function Home() {
           id="benefits"
         >
           <BenefitsSection />
+        </Center>
+
+        <Center
+          w="full"
+          py={{ base:"110px", md: "250px" }}
+          borderTopWidth={"1px"}
+          id="testimonials"
+        >
+          <TestimonialSection />
         </Center>
 
         <Center
