@@ -105,7 +105,7 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
         justifyContent={"space-between"}
         w="full"
         background={useColorModeValue("white", "black")}
-        maxW={"1920px"}
+        maxW={"1400px"}
       >
 
         <Box display={"flex"} alignItems={"center"} justifyContent={"center"}>
