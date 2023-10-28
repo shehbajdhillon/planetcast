@@ -6,8 +6,8 @@ import {
   Skeleton,
   useColorModeValue,
 } from "@chakra-ui/react";
-import ProjectCard from "./project_card";
-import NewProjectModal from "../new_project_modal";
+import ProjectCard from "@/components/dashboard/project_card";
+import NewProjectModal from "@/components/dashboard/new_project_modal";
 import { Project } from "@/types";
 
 interface DashboardTabProps {

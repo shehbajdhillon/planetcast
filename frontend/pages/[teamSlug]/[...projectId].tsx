@@ -18,7 +18,6 @@ import {
   Spacer,
   Spinner,
   Stack,
-  TabIndicator,
   Text,
   VStack,
   useClipboard,
@@ -41,7 +40,7 @@ import VideoPlayer from "@/components/video_player";
 import { useEffect, useState } from "react";
 import { useVideoSeekStore } from "@/stores/video_seek_store";
 import { formatTime } from "@/utils";
-import NewTransformationModel from "@/components/new_transformation_modal";
+import NewTransformationModel from "@/components/dashboard/new_transformation_modal";
 import { Clipboard, DownloadIcon, TrashIcon } from "lucide-react";
 import SingleActionModal from "@/components/single_action_modal";
 import Link from "next/link";
