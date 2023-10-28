@@ -13,6 +13,7 @@ import {
 import { ReactNode } from 'react'
 
 import Image from 'next/image';
+import { Linkedin, Twitter } from 'lucide-react';
 
 const Logo = (props: any) => {
   return (
@@ -110,11 +111,11 @@ const FooterComponent = () => {
           align={{ base: 'center', md: 'center' }}>
           <Text>© {new Date().getFullYear()} PlanetCast. All rights reserved</Text>
           <Stack direction={'row'} spacing={6}>
-            <SocialButton label={'Twitter'} href={'#'}>
+            <SocialButton label={'LinkedIn'} href={'https://www.linkedin.com/company/PlanetCastAI/'}>
+              <Linkedin />
             </SocialButton>
-            <SocialButton label={'YouTube'} href={'#'}>
-            </SocialButton>
-            <SocialButton label={'Instagram'} href={'#'}>
+            <SocialButton label={'Twitter'} href={'https://twitter.com/PlanetCastAI'}>
+              <Twitter />
             </SocialButton>
           </Stack>
         </Container>
