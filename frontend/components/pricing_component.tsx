@@ -1,5 +1,6 @@
 import { Box, Text, Button, VStack, HStack, Icon, useColorModeValue, Badge, Stack, Circle, Spacer, Heading } from "@chakra-ui/react";
 import { CheckIcon } from "lucide-react";
+import Link from "next/link";
 
 const PricingComponent = () => {
   const priceColor= useColorModeValue("zinc.600", "zinc.400");
@@ -81,21 +82,24 @@ const PricingComponent = () => {
               ))}
             </VStack>
             <Spacer />
-            <Button
-              size={"lg"}
-              backgroundColor={bgColor}
-              textColor={textColor}
-              borderColor={textColor}
-              borderWidth={"1px"}
-              bgGradient={tier === "Pro" ? 'linear(to-tl, #007CF0, #01DFD8)' : ''}
-              _hover={{
-                backgroundColor: tier === "Pro" ? bgColor : textColor,
-                textColor: textColor,
-                bgGradient: tier === "Pro" ? '' : 'linear(to-tl, #007CF0, #01DFD8)'
-              }}
-            >
-              Get Started
-            </Button>
+
+            <Link href={'/dashboard'}>
+              <Button
+                size={"lg"}
+                backgroundColor={bgColor}
+                textColor={textColor}
+                borderColor={textColor}
+                borderWidth={"1px"}
+                bgGradient={tier === "Pro" ? 'linear(to-tl, #007CF0, #01DFD8)' : ''}
+                _hover={{
+                  backgroundColor: tier === "Pro" ? bgColor : textColor,
+                  textColor: textColor,
+                  bgGradient: tier === "Pro" ? '' : 'linear(to-tl, #007CF0, #01DFD8)'
+                }}
+              >
+                Get Started
+              </Button>
+            </Link>
           </VStack>
         </Box>
       ))}
