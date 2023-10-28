@@ -27,6 +27,10 @@ const Links = [
     link: '/#benefits',
   },
   {
+    title: 'Use Cases',
+    link: '/#usecases',
+  },
+  {
     title: 'Testimonials',
     link: '/#testimonials',
   },

@@ -1,4 +1,4 @@
-import Navbar from '@/components/marketing_page_navbar'
+import Navbar from '@/components/marketing_page/marketing_page_navbar'
 import {
   Box,
   HStack,
@@ -27,8 +27,9 @@ import {
 } from 'lucide-react';
 import VideoPlayer from '@/components/video_player';
 import { useState } from 'react';
-import PricingComponent from '@/components/pricing_component';
-import FooterComponent from '@/components/footer_component';
+import PricingComponent from '@/components/marketing_page/pricing_component';
+import FooterComponent from '@/components/marketing_page/footer_component';
+
 
 const HeroSection: React.FC = () => {
   return (
@@ -130,6 +131,7 @@ const HeroSection: React.FC = () => {
     </Stack>
   );
 };
+
 
 const BenefitsSection: React.FC = () => {
 
@@ -275,6 +277,7 @@ const BenefitsSection: React.FC = () => {
   );
 };
 
+
 interface TestimonialCardProps {
   name: string;
   title: string;
@@ -330,6 +333,7 @@ const TestimonialCard: React.FC<TestimonialCardProps> = (props) => {
     </Box>
   );
 };
+
 
 const TestimonialSection = () => {
   return (
@@ -398,6 +402,221 @@ const TestimonialSection = () => {
 };
 
 
+const UseCasesSection = () => {
+
+  const transformations = [
+    {
+      language: "ENGLISH",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/english.mp4",
+    },
+    {
+      language: "SPANISH",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/spanish.mp4",
+    },
+    {
+      language: "HINDI",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/hindi.mp4",
+    },
+    {
+      language: "FRENCH",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/french.mp4",
+    },
+  ]
+
+  const headings = ["Training & Education"];
+  const subheadings = [
+    "Make your educational content more effective",
+    "Employees and students can now understand training materials in their own tongue",
+  ];
+
+  const headings2 = ["Journalism"];
+  const subheadings2 = [
+    "Increase the reach of your breaking news stories",
+    "Ensure every household stays informed with the most current events"
+  ];
+
+  const headings3 = ["Postcasts"];
+  const subheadings3 = [
+    "Amplify your podcast's resonance",
+    "Connect with listeners worldwide by sharing episodes in their preferred language"
+  ];
+
+  return (
+    <Stack
+      display={"flex"}
+      alignItems={{ base: "center" }}
+      maxW={"1400px"}
+      w={"full"}
+    >
+      <Heading
+        fontWeight={"medium"}
+        size={{ base: '2xl', md: "3xl" }}
+        textAlign={{ base: "center", md: "left" }}
+        w={{ md: "full" }}
+      >
+        Tailored for your {' '}
+        <Text
+          as={"span"}
+          bgGradient={'linear(to-tr, #007CF0, #01DFD8)'}
+          bgClip='text'
+        >
+          use cases
+        </Text>
+      </Heading>
+      <Heading
+        fontWeight={'normal'}
+        size={{ base: "sm", sm: "lg" }}
+        textAlign={{ base: "center", md: "left" }}
+        w={{ md: "full" }}
+      >
+        Whether you produce training & educational content, podcasts, or journalism media
+      </Heading>
+
+      <Stack w="full" spacing={{ base: "100px", md: "150px" }} pt={{ base:"50px", md: "100px" }}>
+
+        <InfoGridView
+          headings={headings}
+          subheadings={subheadings}
+          transformations={transformations}
+        />
+
+        <InfoGridView
+          headings={headings2}
+          subheadings={subheadings2}
+          transformations={transformations}
+          flip
+        />
+
+        <InfoGridView
+          headings={headings3}
+          subheadings={subheadings3}
+          transformations={transformations}
+        />
+      </Stack>
+
+    </Stack>
+  );
+};
+
+
+interface InfoGridViewProps extends InfoViewProps, VideoViewProps {
+  flip?: boolean;
+}
+
+const InfoGridView: React.FC<InfoGridViewProps> = (props) => {
+
+  const { flip, headings, subheadings, transformations } = props;
+
+  return (
+    <Grid
+      templateAreas={{
+        base: `
+          "info"
+          "video"
+        `,
+        lg: !flip ? `"info video"` : `"video info"`
+      }}
+      gridTemplateColumns={{ base: "1fr", lg: !flip ? "3fr 2fr" : "2fr 3fr" }}
+      h="full"
+      gap={{ base: "15px", lg: "50px" }}
+      w={{ lg: "full" }}
+    >
+      <GridItem
+        area={"info"}
+        placeItems={"center"}
+        display={"grid"}
+      >
+        <InfoView
+          headings={headings}
+          subheadings={subheadings}
+        />
+      </GridItem>
+      <GridItem area={"video"} display={"grid"} placeItems={"center"}>
+        <VideoView transformations={transformations} />
+      </GridItem>
+    </Grid>
+  );
+};
+
+
+interface InfoViewProps {
+  headings: string[];
+  subheadings: string[];
+};
+
+const InfoView: React.FC<InfoViewProps> = ({ headings, subheadings }) => {
+  return (
+    <Box
+      mb={{ base: "auto", md: "0px" }}
+      w="full"
+      alignItems={{ base: "center", md: "left" }}
+      justifyContent={{ base: "center", md: "left" }}
+      display={"flex"}
+      flexDir={"column"}
+    >
+      <Heading
+        size={{ base: '2xl', md: '3xl' }}
+        fontWeight={'medium'}
+        textAlign={{ base: "center", md: "left" }}
+        w={{ md: "full" }}
+        mb={{ md: "10px" }}
+      >
+        {headings.map((heading, idx) => (
+          <HStack key={idx}>
+            <Text key={idx}>{heading}</Text>
+          </HStack>
+        ))}
+      </Heading>
+      {subheadings.map((heading, idx) => (
+        <Heading
+          w={{ md: "full" }}
+          fontWeight={'normal'}
+          textAlign={{ base: "center", md: "left" }}
+          size={{ base: "sm", sm: "lg" }}
+          key={idx}
+        >
+          {heading}
+        </Heading>
+      ))}
+    </Box>
+  );
+};
+
+
+interface VideoViewProps {
+  transformations: Record<string, any>[];
+};
+
+const VideoView: React.FC<VideoViewProps> = ({ transformations }) => {
+
+  const buttonBg = useColorModeValue("black", "white");
+  const buttonColor = useColorModeValue("white", "black");
+  const [tfnIdx, setTfnIdx] = useState(0);
+
+  return (
+    <Box w="full">
+      <Box display={"flex"} h="full" w="full" px={{ base: "16px", sm: "0px" }} rounded={"sm"}>
+        <VideoPlayer src={transformations[tfnIdx].link} />
+      </Box>
+      <HStack pt="10px" w="full">
+        {transformations.map((tfn, idx) => (
+          <Button
+            key={idx}
+            onClick={() => setTfnIdx(idx)}
+            variant={idx == tfnIdx ? "solid" : "outline"}
+            pointerEvents={idx === tfnIdx ? "none" : "auto"}
+            background={idx === tfnIdx ? buttonBg : buttonColor }
+            color={idx === tfnIdx ? buttonColor : '' }
+          >
+            {tfn.language}
+          </Button>
+        ))}
+      </HStack>
+    </Box>
+  );
+};
+
+
 const PricingSection = () => {
   return (
     <Stack
@@ -435,12 +654,9 @@ const PricingSection = () => {
   );
 };
 
+
 export default function Home() {
-
   const bgColor = useColorModeValue("white", "black");
-  const alternateBgColor = useColorModeValue("blackAlpha.50", "whiteAlpha.50");
-  const bgGradient = useColorModeValue('radial(blackAlpha.200, white, white)', 'radial(whiteAlpha.200, black, black)')
-
   return (
     <VStack>
       <Head>
@@ -468,6 +684,15 @@ export default function Home() {
           id="benefits"
         >
           <BenefitsSection />
+        </Center>
+
+        <Center
+          w="full"
+          py={{ base:"110px", md: "250px" }}
+          borderTopWidth={"1px"}
+          id="usecases"
+        >
+          <UseCasesSection />
         </Center>
 
         <Center
