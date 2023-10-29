@@ -489,34 +489,21 @@ const InfoGridView: React.FC<InfoGridViewProps> = (props) => {
   const { flip, headings, subheadings, transformations } = props;
 
   return (
-    <Grid
-      templateAreas={{
-        base: `
-          "info"
-          "video"
-        `,
-        lg: !flip ? `"info video"` : `"video info"`
-      }}
-      gridTemplateColumns={{ base: "1fr", lg: !flip ? "3fr 2fr" : "2fr 3fr" }}
-      h="full"
-      gap={{ base: "15px", lg: "50px" }}
-      w={{ lg: "full" }}
+    <Stack
+      direction={{ base: "column", md: !flip ? "row" : "row-reverse" }}
+      alignItems={"center"}
+      spacing="25px"
     >
-      <GridItem
-        area={"info"}
-        placeItems={"center"}
-        display={"grid"}
-        w="full"
-      >
+      <Box w="full" px={{ base: "15px", md: "0px" }} maxW={{ md: "60%" }}>
         <InfoView
           headings={headings}
           subheadings={subheadings}
         />
-      </GridItem>
-      <GridItem area={"video"} display={"grid"} placeItems={"center"}>
+      </Box>
+      <Box w="full" px={{ base: "15px", md: "0px" }} maxW={{ md: "40%" }}>
         <VideoView transformations={transformations} />
-      </GridItem>
-    </Grid>
+      </Box>
+    </Stack>
   );
 };
 
@@ -542,7 +529,6 @@ const InfoView: React.FC<InfoViewProps> = ({ headings, subheadings }) => {
         mb={{ md: "10px" }}
         textAlign={"left"}
         w={"full"}
-        px={{ base: "15px", md: "0px" }}
       >
         {headings.map((heading, idx) => (
           <HStack key={idx}>
@@ -557,7 +543,6 @@ const InfoView: React.FC<InfoViewProps> = ({ headings, subheadings }) => {
           key={idx}
           textAlign={"left"}
           w={"full"}
-          px={{ base: "15px", md: "0px" }}
         >
           {heading}
         </Heading>
@@ -579,10 +564,10 @@ const VideoView: React.FC<VideoViewProps> = ({ transformations }) => {
 
   return (
     <Box w="full">
-      <Box display={"flex"} h="full" w="full" px={{ base: "0px", sm: "15px", md: "0px" }} rounded={"sm"}>
+      <Box display={"flex"} h="full" w="full" rounded={"sm"}>
         <VideoPlayer src={transformations[tfnIdx].link} />
       </Box>
-      <HStack pt="10px" px={{ base: "0px", sm: "15px", md: "0px" }}>
+      <HStack pt="10px">
         {transformations.map((tfn, idx) => (
           <Button
             key={idx}
