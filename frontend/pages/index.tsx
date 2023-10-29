@@ -105,7 +105,7 @@ const HeroSection: React.FC = () => {
               Start for Free
             </Button>
           </Link>
-          <Link href={"#benefits"}>
+          <Link href={"#usecases"}>
             <Button
               size={"lg"}
               variant={"outline"}
@@ -167,112 +167,75 @@ const BenefitsSection: React.FC = () => {
       maxW={"1400px"}
       w={"full"}
     >
-      <Grid
-        templateAreas={{
-          base: `
-            "info"
-            "video"
-          `,
-          lg: `"info video"`
-        }}
-        gridTemplateColumns={{ base: "1fr", lg: "3fr 2fr" }}
-        h="full"
-        gap={{ base: "15px", lg: "50px" }}
-        w={{ lg: "full" }}
+
+      <Heading
+        size={{ base: '2xl', md: '3xl' }}
+        fontWeight={'medium'}
+        textAlign={{ base: "center", md: "left" }}
+        w={{ md: "full" }}
       >
-        <GridItem
-          area={"info"}
-          placeItems={"center"}
-          display={"grid"}
+        <HStack>
+          <Text>10x your {' '}
+            <Text
+              as={"span"}
+              bgGradient={'linear(to-tr, #007CF0, #01DFD8)'}
+              bgClip='text'
+            >
+              reach
+            </Text>
+          </Text>
+          <ArrowUpFromDot size={iconSize} />
+          <GlobeIcon size={iconSize} />
+        </HStack>
+        <HStack mt={{ md: "8px" }}>
+          <Text>1/10th the {' '}
+            <Text
+              as={"span"}
+              bgGradient={'linear(to-tr, #01CF00, #90DD00)'}
+              bgClip='text'
+            >
+              cost
+            </Text>
+          </Text>
+          <TrendingDownIcon size={iconSize} />
+          <DollarSign size={iconSize} />
+        </HStack>
+      </Heading>
+
+      <Box
+        mb={{ base: "auto", md: "0px" }}
+        w="full"
+        alignItems={{ base: "center", md: "left" }}
+        justifyContent={{ base: "center", md: "left" }}
+        display={"flex"}
+        flexDir={"column"}
+      >
+        <Heading
+          w={{ md: "full" }}
+          fontWeight={'normal'}
+          textAlign={{ base: "center", md: "left" }}
+          size={{ base: "sm", sm: "lg" }}
+          mt={{ md: "10px" }}
         >
-          <Box
-            mb={{ base: "auto", md: "0px" }}
-            w="full"
-            alignItems={{ base: "center", md: "left" }}
-            justifyContent={{ base: "center", md: "left" }}
-            display={"flex"}
-            flexDir={"column"}
-          >
-            <Heading
-              size={{ base: '2xl', md: '3xl' }}
-              fontWeight={'medium'}
-              textAlign={{ base: "center", md: "left" }}
-              w={{ md: "full" }}
-            >
-              <HStack>
-                <Text>10x your {' '}
-                  <Text
-                    as={"span"}
-                    bgGradient={'linear(to-tr, #007CF0, #01DFD8)'}
-                    bgClip='text'
-                  >
-                    reach
-                  </Text>
-                </Text>
-                <ArrowUpFromDot size={iconSize} />
-                <GlobeIcon size={iconSize} />
-              </HStack>
-              <HStack mt={{ md: "8px" }}>
-                <Text>1/10th the {' '}
-                  <Text
-                    as={"span"}
-                    bgGradient={'linear(to-tr, #01CF00, #90DD00)'}
-                    bgClip='text'
-                  >
-                    cost
-                  </Text>
-                </Text>
-                <TrendingDownIcon size={iconSize} />
-                <DollarSign size={iconSize} />
-              </HStack>
-            </Heading>
-            <Heading
-              w={{ md: "full" }}
-              fontWeight={'normal'}
-              textAlign={{ base: "center", md: "left" }}
-              size={{ base: "sm", sm: "lg" }}
-              mt={{ md: "10px" }}
-            >
-              Engage listeners from every corner of the globe
-            </Heading>
-            <Heading
-              w={{ md: "full" }}
-              textAlign={{ base: "center", md: "left" }}
-              fontWeight={'normal'}
-              size={{ base: "sm", sm: "lg" }}
-            >
-              Save time and money over traditional dubbing
-            </Heading>
-            <Heading
-              w={{ md: "full" }}
-              textAlign={{ base: "center", md: "left" }}
-              fontWeight={'normal'}
-              size={{ base: "sm", sm: "lg" }}
-            >
-              Preserve original voices in every translation
-            </Heading>
-          </Box>
-        </GridItem>
-        <GridItem area={"video"} display={"grid"} placeItems={"center"}>
-          <Box display={"flex"} h="full" w="full" px={{ base: "16px", sm: "0px" }} rounded={"sm"}>
-            <VideoPlayer src={transformations[tfnIdx].link} />
-          </Box>
-          <HStack pt="10px" w="full">
-            {transformations.map((tfn, idx) => (
-              <Button
-                key={idx}
-                onClick={() => setTfnIdx(idx)}
-                variant={idx == tfnIdx ? "solid" : "outline"}
-                pointerEvents={idx === tfnIdx ? "none" : "auto"}
-                background={idx === tfnIdx ? buttonBg : buttonColor }
-                color={idx === tfnIdx ? buttonColor : '' }
-              >
-                {tfn.language}
-              </Button>
-            ))}
-          </HStack>
-        </GridItem>
-      </Grid>
+          Engage listeners from every corner of the globe
+        </Heading>
+        <Heading
+          w={{ md: "full" }}
+          textAlign={{ base: "center", md: "left" }}
+          fontWeight={'normal'}
+          size={{ base: "sm", sm: "lg" }}
+        >
+          Save time and money over traditional dubbing
+        </Heading>
+        <Heading
+          w={{ md: "full" }}
+          textAlign={{ base: "center", md: "left" }}
+          fontWeight={'normal'}
+          size={{ base: "sm", sm: "lg" }}
+        >
+          Preserve original voices in every translation
+        </Heading>
+      </Box>
     </Stack>
   );
 };
@@ -683,16 +646,7 @@ export default function Home() {
 
         <Center
           w="full"
-          py={{ base:"110px", md: "250px" }}
-          borderTopWidth={"1px"}
-          id="benefits"
-        >
-          <BenefitsSection />
-        </Center>
-
-        <Center
-          w="full"
-          py={{ base:"110px", md: "250px" }}
+          py={{ base:"60px", md: "200px" }}
           borderTopWidth={"1px"}
           id="usecases"
         >
@@ -701,7 +655,16 @@ export default function Home() {
 
         <Center
           w="full"
-          py={{ base:"110px", md: "250px" }}
+          py={{ base:"60px", md: "200px" }}
+          borderTopWidth={"1px"}
+          id="benefits"
+        >
+          <BenefitsSection />
+        </Center>
+
+        <Center
+          w="full"
+          py={{ base:"60px", md: "200px" }}
           borderTopWidth={"1px"}
           id="testimonials"
         >
@@ -710,7 +673,7 @@ export default function Home() {
 
         <Center
           w="full"
-          py={{ base:"110px", md: "250px" }}
+          py={{ base:"60px", md: "200px" }}
           borderTopWidth={"1px"}
           id="pricing"
         >

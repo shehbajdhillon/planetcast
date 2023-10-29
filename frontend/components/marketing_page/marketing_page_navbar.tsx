@@ -23,12 +23,12 @@ const Links = [
     link: '/#',
   },
   {
-    title: 'Benefits',
-    link: '/#benefits',
-  },
-  {
     title: 'Use Cases',
     link: '/#usecases',
+  },
+  {
+    title: 'Benefits',
+    link: '/#benefits',
   },
   {
     title: 'Testimonials',
@@ -37,12 +37,7 @@ const Links = [
   {
     title: 'Pricing',
     link: '/#pricing',
-   },
-  // {
-  //   title: 'Blog',
-  //   link: '/blog',
-  // },
-  //
+  },
 ];
 
 export const NavLink = ({ children }: { children: React.ReactNode }) => (
