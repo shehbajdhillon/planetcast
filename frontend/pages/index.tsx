@@ -141,7 +141,7 @@ const HeroSection: React.FC = () => {
 
 const BenefitsSection: React.FC = () => {
   const iconSize = useBreakpointValue({ base: '40px', md: '60px' })
-  const iconSizeBig = useBreakpointValue({ base: "120px", md: "140px" });
+  const iconSizeBig = useBreakpointValue({ base: "75px", sm: "120px", md: "140px" });
 
   return (
     <Stack
@@ -154,8 +154,9 @@ const BenefitsSection: React.FC = () => {
       <Heading
         size={{ base: '2xl', md: '3xl' }}
         fontWeight={'medium'}
-        textAlign={{ base: "center", md: "left" }}
-        w={{ md: "full" }}
+        textAlign={"left"}
+        w={"full"}
+        px={{ base: "15px", md: "0px" }}
       >
         <HStack>
           <Text>10x your {' '}
@@ -188,53 +189,56 @@ const BenefitsSection: React.FC = () => {
       <Box
         mb={{ base: "auto", md: "0px" }}
         w="full"
-        alignItems={{ base: "center", md: "left" }}
-        justifyContent={{ base: "center", md: "left" }}
+        alignItems={"left"}
+        justifyContent={"left"}
         display={"flex"}
         flexDir={"column"}
       >
-        <Stack direction={{ base: "column", md: "row" }} mt={{ md: "25px" }}>
+        <Stack direction={{ base: "column", md: "row" }} mt={{ base: "25px" }} spacing={{ base: "25px", md: "0px" }}>
 
-          <Stack w="full" alignItems={{ base: "center", md: "flex-start" }}>
+          <Stack w="full" direction={{ base: "row", md: "column" }}>
             <Heading
-              w={{ md: "full" }}
               fontWeight={'normal'}
-              textAlign={{ base: "center", md: "left" }}
+              textAlign={"left"}
+              w={"full"}
               size={{ base: "sm", sm: "lg" }}
+              px={{ base: "15px", md: "0px" }}
             >
-              Engage listeners from every corner of the globe
+              Engage listeners everywhere around the globe
             </Heading>
-            <HStack>
+            <HStack w="full" px={{ base: "15px", md: "0px"}}>
               <Globe2Icon size={iconSizeBig} strokeWidth={"0.75px"}/>
               <LanguagesIcon size={iconSizeBig} strokeWidth={"0.75px"} />
             </HStack>
           </Stack>
 
-          <Stack w="full" alignItems={{ base: "center", md: "flex-start" }}>
+          <Stack w="full" direction={{ base: "row-reverse", md: "column" }}>
             <Heading
-              w={{ md: "full" }}
-              textAlign={{ base: "center", md: "left" }}
+              textAlign={"left"}
+              w={"full"}
               fontWeight={'normal'}
               size={{ base: "sm", sm: "lg" }}
+              px={{ base: "15px", md: "0px" }}
             >
               Save time and money over traditional dubbing
             </Heading>
-            <HStack>
+            <HStack w="full" px={{ base: "15px", md: "0px"}}>
               <CircleDollarSign size={iconSizeBig} strokeWidth={"0.75px"} />
               <TimerReset size={iconSizeBig} strokeWidth={"0.75px"} />
             </HStack>
           </Stack>
 
-          <Stack w="full" alignItems={{ base: "center", md: "flex-start" }}>
+          <Stack w="full" direction={{ base: "row", md: "column" }}>
             <Heading
-              w={{ md: "full" }}
-              textAlign={{ base: "center", md: "left" }}
+              textAlign={"left"}
+              w={"full"}
               fontWeight={'normal'}
               size={{ base: "sm", sm: "lg" }}
+              px={{ base: "15px", md: "0px" }}
             >
               Preserve original voices in every translation
             </Heading>
-            <HStack>
+            <HStack w="full" px={{ base: "15px", md: "0px"}}>
               <Volume2Icon size={iconSizeBig} strokeWidth={"0.75px"} />
               <ImportIcon size={iconSizeBig} strokeWidth={"0.75px"} />
             </HStack>
@@ -319,8 +323,9 @@ const TestimonialSection = () => {
       <Heading
         fontWeight={"medium"}
         size={{ base: '2xl', md: "3xl" }}
-        textAlign={{ base: "center", md: "left" }}
-        w={{ md: "full" }}
+        textAlign={"left"}
+        w={"full"}
+        px={{ base: "15px", md: "0px" }}
       >
         Welcome to efficient {' '}
         <Text
@@ -334,8 +339,9 @@ const TestimonialSection = () => {
       <Heading
         fontWeight={'normal'}
         size={{ base: "sm", sm: "lg" }}
-        textAlign={{ base: "center", md: "left" }}
-        w={{ md: "full" }}
+        textAlign={"left"}
+        w={"full"}
+        px={{ base: "15px", md: "0px" }}
       >
         Discover how our users are revolutionizing their content reach
       </Heading>
@@ -424,8 +430,9 @@ const UseCasesSection = () => {
       <Heading
         fontWeight={"medium"}
         size={{ base: '2xl', md: "3xl" }}
-        textAlign={{ base: "center", md: "left" }}
-        w={{ md: "full" }}
+        textAlign={"left"}
+        w={"full"}
+        px={{ base: "15px", md: "0px" }}
       >
         Tailored for your {' '}
         <Text
@@ -439,8 +446,9 @@ const UseCasesSection = () => {
       <Heading
         fontWeight={'normal'}
         size={{ base: "sm", sm: "lg" }}
-        textAlign={{ base: "center", md: "left" }}
-        w={{ md: "full" }}
+        textAlign={"left"}
+        w={"full"}
+        px={{ base: "15px", md: "0px" }}
       >
         Whether you produce training & educational content, podcasts, or journalism media
       </Heading>
@@ -498,6 +506,7 @@ const InfoGridView: React.FC<InfoGridViewProps> = (props) => {
         area={"info"}
         placeItems={"center"}
         display={"grid"}
+        w="full"
       >
         <InfoView
           headings={headings}
@@ -530,9 +539,10 @@ const InfoView: React.FC<InfoViewProps> = ({ headings, subheadings }) => {
       <Heading
         size={{ base: '2xl', md: '3xl' }}
         fontWeight={'medium'}
-        textAlign={{ base: "center", md: "left" }}
-        w={{ md: "full" }}
         mb={{ md: "10px" }}
+        textAlign={"left"}
+        w={"full"}
+        px={{ base: "15px", md: "0px" }}
       >
         {headings.map((heading, idx) => (
           <HStack key={idx}>
@@ -542,11 +552,12 @@ const InfoView: React.FC<InfoViewProps> = ({ headings, subheadings }) => {
       </Heading>
       {subheadings.map((heading, idx) => (
         <Heading
-          w={{ md: "full" }}
           fontWeight={'normal'}
-          textAlign={{ base: "center", md: "left" }}
           size={{ base: "sm", sm: "lg" }}
           key={idx}
+          textAlign={"left"}
+          w={"full"}
+          px={{ base: "15px", md: "0px" }}
         >
           {heading}
         </Heading>
@@ -568,10 +579,10 @@ const VideoView: React.FC<VideoViewProps> = ({ transformations }) => {
 
   return (
     <Box w="full">
-      <Box display={"flex"} h="full" w="full" px={{ base: "16px", sm: "0px" }} rounded={"sm"}>
+      <Box display={"flex"} h="full" w="full" px={{ base: "0px", sm: "15px", md: "0px" }} rounded={"sm"}>
         <VideoPlayer src={transformations[tfnIdx].link} />
       </Box>
-      <HStack pt="10px" w="full">
+      <HStack pt="10px" px={{ base: "0px", sm: "15px", md: "0px" }}>
         {transformations.map((tfn, idx) => (
           <Button
             key={idx}
@@ -601,8 +612,9 @@ const PricingSection = () => {
       <Heading
         fontWeight={"medium"}
         size={{ base: '2xl', md: "3xl" }}
-        textAlign={{ base: "center", md: "left" }}
-        w={{ md: "full" }}
+        textAlign={"left"}
+        w={"full"}
+        px={{ base: "15px", md: "0px" }}
       >
         Start dubbing {' '}
         <Text
@@ -616,9 +628,10 @@ const PricingSection = () => {
       <Heading
         fontWeight={'normal'}
         size={{ base: "sm", sm: "lg" }}
-        textAlign={{ base: "center", md: "left" }}
-        w={{ md: "full" }}
         mb="45px"
+        textAlign={"left"}
+        w={"full"}
+        px={{ base: "15px", md: "0px" }}
       >
         Select the perfect plan tailored to your needs
       </Heading>
