@@ -20,10 +20,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   ArrowUpFromDot,
+  CircleDollarSign,
   DollarSign,
   ExternalLink,
+  Globe2Icon,
   GlobeIcon,
+  LanguagesIcon,
+  TimerReset,
   TrendingDownIcon,
+  Volume2Icon,
+  ImportIcon,
 } from 'lucide-react';
 import VideoPlayer from '@/components/video_player';
 import { useState } from 'react';
@@ -134,31 +140,8 @@ const HeroSection: React.FC = () => {
 
 
 const BenefitsSection: React.FC = () => {
-
   const iconSize = useBreakpointValue({ base: '40px', md: '60px' })
-
-  const buttonBg = useColorModeValue("black", "white");
-  const buttonColor = useColorModeValue("white", "black");
-  const [tfnIdx, setTfnIdx] = useState(0);
-
-  const transformations = [
-    {
-      language: "ENGLISH",
-      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/english.mp4",
-    },
-    {
-      language: "SPANISH",
-      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/spanish.mp4",
-    },
-    {
-      language: "HINDI",
-      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/hindi.mp4",
-    },
-    {
-      language: "FRENCH",
-      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/french.mp4",
-    },
-  ]
+  const iconSizeBig = useBreakpointValue({ base: "120px", md: "140px" });
 
   return (
     <Stack
@@ -210,31 +193,54 @@ const BenefitsSection: React.FC = () => {
         display={"flex"}
         flexDir={"column"}
       >
-        <Heading
-          w={{ md: "full" }}
-          fontWeight={'normal'}
-          textAlign={{ base: "center", md: "left" }}
-          size={{ base: "sm", sm: "lg" }}
-          mt={{ md: "10px" }}
-        >
-          Engage listeners from every corner of the globe
-        </Heading>
-        <Heading
-          w={{ md: "full" }}
-          textAlign={{ base: "center", md: "left" }}
-          fontWeight={'normal'}
-          size={{ base: "sm", sm: "lg" }}
-        >
-          Save time and money over traditional dubbing
-        </Heading>
-        <Heading
-          w={{ md: "full" }}
-          textAlign={{ base: "center", md: "left" }}
-          fontWeight={'normal'}
-          size={{ base: "sm", sm: "lg" }}
-        >
-          Preserve original voices in every translation
-        </Heading>
+        <Stack direction={{ base: "column", md: "row" }} mt={{ md: "25px" }}>
+
+          <Stack w="full" alignItems={{ base: "center", md: "flex-start" }}>
+            <Heading
+              w={{ md: "full" }}
+              fontWeight={'normal'}
+              textAlign={{ base: "center", md: "left" }}
+              size={{ base: "sm", sm: "lg" }}
+            >
+              Engage listeners from every corner of the globe
+            </Heading>
+            <HStack>
+              <Globe2Icon size={iconSizeBig} strokeWidth={"0.75px"}/>
+              <LanguagesIcon size={iconSizeBig} strokeWidth={"0.75px"} />
+            </HStack>
+          </Stack>
+
+          <Stack w="full" alignItems={{ base: "center", md: "flex-start" }}>
+            <Heading
+              w={{ md: "full" }}
+              textAlign={{ base: "center", md: "left" }}
+              fontWeight={'normal'}
+              size={{ base: "sm", sm: "lg" }}
+            >
+              Save time and money over traditional dubbing
+            </Heading>
+            <HStack>
+              <CircleDollarSign size={iconSizeBig} strokeWidth={"0.75px"} />
+              <TimerReset size={iconSizeBig} strokeWidth={"0.75px"} />
+            </HStack>
+          </Stack>
+
+          <Stack w="full" alignItems={{ base: "center", md: "flex-start" }}>
+            <Heading
+              w={{ md: "full" }}
+              textAlign={{ base: "center", md: "left" }}
+              fontWeight={'normal'}
+              size={{ base: "sm", sm: "lg" }}
+            >
+              Preserve original voices in every translation
+            </Heading>
+            <HStack>
+              <Volume2Icon size={iconSizeBig} strokeWidth={"0.75px"} />
+              <ImportIcon size={iconSizeBig} strokeWidth={"0.75px"} />
+            </HStack>
+          </Stack>
+
+        </Stack>
       </Box>
     </Stack>
   );
