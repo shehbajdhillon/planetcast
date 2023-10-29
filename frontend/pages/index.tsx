@@ -299,7 +299,7 @@ const TestimonialCard: React.FC<TestimonialCardProps> = (props) => {
       position="relative"
     >
       <HStack mb="30px">
-        <Avatar src={src} />
+        <Avatar src={src} name={name} />
         <Stack spacing={1}>
           <HStack>
             <Heading
@@ -308,7 +308,11 @@ const TestimonialCard: React.FC<TestimonialCardProps> = (props) => {
             >
               { name }
             </Heading>
-            <Link href={link} target='_blank'>
+            <Link
+              href={link}
+              target='_blank'
+              aria-label={`Read more about ${name}`}
+            >
               <ExternalLink />
             </Link>
           </HStack>
