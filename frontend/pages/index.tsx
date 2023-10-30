@@ -383,42 +383,77 @@ const TestimonialSection = () => {
 
 const UseCasesSection = () => {
 
-  const transformations = [
-    {
-      language: "ENGLISH",
-      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/english.mp4",
-    },
-    {
-      language: "SPANISH",
-      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/spanish.mp4",
-    },
-    {
-      language: "HINDI",
-      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/hindi.mp4",
-    },
-    {
-      language: "FRENCH",
-      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/french.mp4",
-    },
-  ]
-
-  const headings = ["Training & Education"];
-  const subheadings = [
+  const headings1 = ["Training & Education"];
+  const subheadings1 = [
     "Make your educational content more effective",
     "Employees and students can now understand training materials in their own tongue",
   ];
+  const transformations1 = [
+    {
+      language: "ENGLISH",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/training_video_english.mp4",
+    },
+    {
+      language: "SPANISH",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/training_video_spanish.mp4",
+    },
+    {
+      language: "HINDI",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/training_video_hindi.mp4",
+    },
+    {
+      language: "FRENCH",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/training_video_french.mp4",
+    },
+  ]
 
   const headings2 = ["Journalism"];
   const subheadings2 = [
     "Increase the reach of your breaking news stories",
     "Ensure every household stays informed with the most current events"
   ];
+  const transformations2 = [
+    {
+      language: "ENGLISH",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/journalism_english.mp4",
+    },
+    {
+      language: "SPANISH",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/journalism_spanish.mp4",
+    },
+    {
+      language: "HINDI",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/journalism_hindi.mp4",
+    },
+    {
+      language: "FRENCH",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/journalism_french.mp4",
+    },
+  ]
 
   const headings3 = ["Postcasts"];
   const subheadings3 = [
     "Amplify your podcast's resonance",
     "Connect with listeners worldwide by sharing episodes in their preferred language"
   ];
+  const transformations3 = [
+    {
+      language: "ENGLISH",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/podcast_english.mp4",
+    },
+    {
+      language: "SPANISH",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/podcast_spanish.mp4",
+    },
+    {
+      language: "HINDI",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/podcast_hindi.mp4",
+    },
+    {
+      language: "FRENCH",
+      link: "https://planetcastpublic.s3.us-west-1.amazonaws.com/podcast_french.mp4",
+    },
+  ]
 
   return (
     <Stack
@@ -456,22 +491,22 @@ const UseCasesSection = () => {
       <Stack w="full" spacing={{ base: "100px", md: "150px" }} pt={{ base:"50px", md: "100px" }}>
 
         <InfoGridView
-          headings={headings}
-          subheadings={subheadings}
-          transformations={transformations}
+          headings={headings1}
+          subheadings={subheadings1}
+          transformations={transformations1}
         />
 
         <InfoGridView
           headings={headings2}
           subheadings={subheadings2}
-          transformations={transformations}
+          transformations={transformations2}
           flip
         />
 
         <InfoGridView
           headings={headings3}
           subheadings={subheadings3}
-          transformations={transformations}
+          transformations={transformations3}
         />
       </Stack>
 
