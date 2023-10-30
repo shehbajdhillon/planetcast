@@ -40,7 +40,7 @@ const components = {
 };
 
 const config = {
-  initialColorMode: 'dark',
+  initialColorMode: 'light',
 };
 
 const theme = extendTheme({
