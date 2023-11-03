@@ -407,10 +407,10 @@ const UseCasesSection = () => {
     },
   ]
 
-  const headings2 = ["Journalism"];
+  const headings2 = ["Marketing & Journalism"];
   const subheadings2 = [
-    "Increase the reach of your breaking news stories",
-    "Ensure every household stays informed with the most current events"
+    "Increase the reach of your breaking stories",
+    "Ensure everyone stays informed with the latest trends"
   ];
   const transformations2 = [
     {
@@ -469,7 +469,7 @@ const UseCasesSection = () => {
         w={"full"}
         px={{ base: "15px", md: "0px" }}
       >
-        Tailored for your {' '}
+        Dubbing for your {' '}
         <Text
           as={"span"}
           bgGradient={'linear(to-tr, #007CF0, #01DFD8)'}
@@ -485,7 +485,7 @@ const UseCasesSection = () => {
         w={"full"}
         px={{ base: "15px", md: "0px" }}
       >
-        Whether you produce training & educational content, podcasts, or journalism media
+        Whether you produce training & educational content, podcasts, marketing content, or journalism media
       </Heading>
 
       <Stack w="full" spacing={{ base: "100px", md: "150px" }} pt={{ base:"50px", md: "100px" }}>
