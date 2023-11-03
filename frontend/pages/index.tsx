@@ -204,7 +204,7 @@ const BenefitsSection: React.FC = () => {
               size={{ base: "sm", sm: "lg" }}
               px={{ base: "15px", md: "0px" }}
             >
-              Engage listeners everywhere around the globe
+              Engage listeners everywhere around the globe. Over 80% of the world's population does not speak English.
             </Heading>
             <HStack w="full" px={{ base: "15px", md: "0px"}}>
               <Globe2Icon size={iconSizeBig} strokeWidth={"0.75px"}/>
@@ -220,7 +220,8 @@ const BenefitsSection: React.FC = () => {
               size={{ base: "sm", sm: "lg" }}
               px={{ base: "15px", md: "0px" }}
             >
-              Save time and money over traditional dubbing
+              Professional dubbing takes longer and breaks your bank.
+              Our AI powered tools help you save time and money.
             </Heading>
             <HStack w="full" px={{ base: "15px", md: "0px"}}>
               <CircleDollarSign size={iconSizeBig} strokeWidth={"0.75px"} />
@@ -236,7 +237,8 @@ const BenefitsSection: React.FC = () => {
               size={{ base: "sm", sm: "lg" }}
               px={{ base: "15px", md: "0px" }}
             >
-              Preserve original voices in every translation
+              Preserve original voices in every translation.
+              Our AI powered tools preserve the original voice of the speaker in all the dubbings.
             </Heading>
             <HStack w="full" px={{ base: "15px", md: "0px"}}>
               <Volume2Icon size={iconSizeBig} strokeWidth={"0.75px"} />
