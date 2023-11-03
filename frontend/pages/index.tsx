@@ -204,7 +204,7 @@ const BenefitsSection: React.FC = () => {
               size={{ base: "sm", sm: "lg" }}
               px={{ base: "15px", md: "0px" }}
             >
-              Engage listeners everywhere around the globe. Over 80% of the world's population does not speak English.
+              {"Engage listeners everywhere around the globe. Over 80% of the world's population does not speak English."}
             </Heading>
             <HStack w="full" px={{ base: "15px", md: "0px"}}>
               <Globe2Icon size={iconSizeBig} strokeWidth={"0.75px"}/>
@@ -487,7 +487,7 @@ const UseCasesSection = () => {
         w={"full"}
         px={{ base: "15px", md: "0px" }}
       >
-        Whether you produce training & educational content, podcasts, marketing content, or journalism media
+        We help dub your podcasts, training & educational videos, marketing content, and journalism media
       </Heading>
 
       <Stack w="full" spacing={{ base: "100px", md: "150px" }} pt={{ base:"50px", md: "100px" }}>
