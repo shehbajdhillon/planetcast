@@ -126,7 +126,6 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
             as={'nav'}
             spacing={4}
             display={{ base: 'none', lg: 'flex' }}
-            marginRight={'15px'}
           >
             {Links.map((link) => (
               <Link href={link.link} key={link.title}>
@@ -150,24 +149,22 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
             variant={"ghost"}
           />
 
-          { isSignedIn &&
-            <Link
-              href={'/dashboard'}
-              hidden={!(marketing && isLoaded)}
+          <Link
+            href={'/dashboard'}
+            hidden={!(marketing && isLoaded)}
+          >
+            <Button
+              backgroundColor={blackWhite}
+              textColor={whiteBlack}
+              borderWidth={"1px"}
+              _hover={{
+                backgroundColor: whiteBlack,
+                textColor: blackWhite,
+              }}
             >
-              <Button
-                backgroundColor={blackWhite}
-                textColor={whiteBlack}
-                borderWidth={"1px"}
-                _hover={{
-                  backgroundColor: whiteBlack,
-                  textColor: blackWhite,
-                }}
-              >
-                Dashboard
-              </Button>
-            </Link>
-          }
+              { isSignedIn ? 'Dashboard' : 'Start for Free' }
+            </Button>
+          </Link>
 
         </HStack>
       </Box>

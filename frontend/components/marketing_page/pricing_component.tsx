@@ -97,7 +97,7 @@ const PricingComponent = () => {
                   bgGradient: tier === "Pro" ? '' : 'linear(to-tl, #007CF0, #01DFD8)'
                 }}
               >
-                Get Started
+                Start for Free
               </Button>
             </Link>
           </VStack>
