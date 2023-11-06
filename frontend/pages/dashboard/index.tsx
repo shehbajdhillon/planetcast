@@ -1,8 +1,7 @@
 import { GetApolloClient } from "@/apollo-client";
 import { GetServerSideProps, NextPage } from "next";
 
-import { v4 } from 'uuid';
-import { clerkClient, getAuth } from "@clerk/nextjs/server";
+import { getAuth } from "@clerk/nextjs/server";
 import { gql } from "@apollo/client";
 
 const Index: NextPage = () => {
@@ -18,8 +17,8 @@ const GET_TEAMS = gql`
 `;
 
 const CREATE_TEAM = gql`
-  mutation CreateTeam($name: String!, $slug: String!, $teamType: TeamType!) {
-    createTeam(slug: $slug, name: $name, teamType: $teamType) {
+  mutation CreateTeam($teamType: TeamType!) {
+    createTeam(teamType: $teamType) {
       slug
     }
   }
@@ -38,12 +37,9 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   teams = data.getTeams;
 
   if (userId && data?.getTeams?.length === 0) {
-    const user = await clerkClient.users.getUser(userId);
     const { data } = await apolloClient.mutate({
       mutation: CREATE_TEAM,
       variables: {
-        slug: v4(),
-        name: `${user.firstName}'s Personal Workspace`,
         teamType: 'PERSONAL',
       }
     });
