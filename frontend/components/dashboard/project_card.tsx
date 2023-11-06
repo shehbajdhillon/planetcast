@@ -145,7 +145,7 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
           project.sourceMedia === "" ? <VideoProcessingBox /> : <VideoPlayer src={transformations.length ? transformations?.[transformationIdx].targetMedia : project.sourceMedia } style={{ borderRadius: "100px" }}/>
         }
       </HStack>
-      <Box p="5px" onClick={() => router.push(`/${teamSlug}/${project.id}`)}>
+      <Box p="5px" onClick={() => router.push(`/dashboard/${teamSlug}/${project.id}`)}>
         <HStack p="5px">
           <Text
             textTransform="capitalize"

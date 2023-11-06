@@ -67,15 +67,12 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ projectId, teamSlug }) => {
 
   const deleteProject = async () => {
     const res = await deleteProjectMutation({ variables: { projectId } });
-    if (res) router.push(`/${teamSlug}`);
+    if (res) router.push(`/dashboard/${teamSlug}`);
   };
 
   const { isOpen, onClose, onOpen } = useDisclosure();
 
   const [tabIdx, setTabIdx] = useState(0);
-
-  const borderColor = useColorModeValue("black", "white");
-
 
   const RenderTabButtons = () => (
     <VStack w="max" alignItems={"flex-start"} px="10px">
