@@ -13,9 +13,6 @@ import { useUser } from '@clerk/nextjs';
 import { Moon, Sun, X, Menu } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { useEffect } from 'react';
-import NProgress from 'nprogress';
 
 const Links = [
   {
@@ -64,29 +61,10 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
   const { toggleColorMode } = useColorMode();
   const { isSignedIn, isLoaded } = useUser();
 
-  const router = useRouter();
-
-  useEffect(() => {
-    const handleRouteStart = () => NProgress.start();
-    const handleRouteDone = () => NProgress.done();
-
-    router.events.on('routeChangeStart', handleRouteStart);
-    router.events.on('routeChangeComplete', handleRouteDone);
-    router.events.on('routeChangeError', handleRouteDone);
-
-    return () => {
-      handleRouteDone();
-      router.events.off('routeChangeStart', handleRouteStart);
-      router.events.off('routeChangeComplete', handleRouteDone);
-      router.events.off('routeChangeError', handleRouteDone);
-    };
-  }, [router.events]);
-
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const blackWhite = useColorModeValue('black', 'white');
   const whiteBlack = useColorModeValue('white', 'black');
-
 
   return (
     <Box

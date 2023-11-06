@@ -20,9 +20,6 @@ import { ChevronsUpDown } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
-
-import NProgress from 'nprogress';
 import { Project, Team } from '@/types';
 
 export const MenuBar: React.FC = () => {
@@ -112,22 +109,6 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
   const hoverColor = useColorModeValue("blackAlpha.200", "whiteAlpha.200");
 
   const router = useRouter();
-
-  useEffect(() => {
-    const handleRouteStart = () => NProgress.start();
-    const handleRouteDone = () => NProgress.done();
-
-    router.events.on('routeChangeStart', handleRouteStart);
-    router.events.on('routeChangeComplete', handleRouteDone);
-    router.events.on('routeChangeError', handleRouteDone);
-
-    return () => {
-      handleRouteDone();
-      router.events.off('routeChangeStart', handleRouteStart);
-      router.events.off('routeChangeComplete', handleRouteDone);
-      router.events.off('routeChangeError', handleRouteDone);
-    };
-  }, [router.events]);
 
   return (
     <Box w="full" display={"flex"} alignItems={"center"} justifyContent={"center"}>
