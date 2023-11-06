@@ -22,15 +22,38 @@ import (
 )
 
 // CreateTeam is the resolver for the createTeam field.
-func (r *mutationResolver) CreateTeam(ctx context.Context, slug string, name string, teamType database.TeamType) (database.Team, error) {
+func (r *mutationResolver) CreateTeam(ctx context.Context, teamType database.TeamType) (database.Team, error) {
 	email, _ := auth.EmailFromContext(ctx)
 	user, _ := r.DB.GetUserByEmail(ctx, email)
 
-	team, _ := r.DB.CreateTeam(ctx, database.CreateTeamParams{
-		Slug:     slug,
-		Name:     name,
+	firstName := strings.ToLower(strings.Split(user.FullName, " ")[0])
+
+	var teamName string
+	if teamType == database.TeamTypePERSONAL {
+		teamName = fmt.Sprintf("%s's Personal Workspace", strings.Title(firstName))
+	} else {
+		teamName = fmt.Sprintf("%s's Team", firstName)
+	}
+
+	shortUuid := uuid.NewString()[:8]
+	teamSlug := fmt.Sprintf("%s-%s", firstName, shortUuid)
+	team, err := r.DB.CreateTeam(ctx, database.CreateTeamParams{
+		Slug:     teamSlug,
+		Name:     teamName,
 		TeamType: teamType,
 	})
+
+	// Error will likely probably happen if teamSlug is not unique.
+	// Although this will obviously not be true all the time
+	if err != nil {
+		shortUuid = uuid.NewString()[:8]
+		teamSlug = fmt.Sprintf("%s-%s", firstName, shortUuid)
+		team, err = r.DB.CreateTeam(ctx, database.CreateTeamParams{
+			Slug:     teamSlug,
+			Name:     teamName,
+			TeamType: teamType,
+		})
+	}
 
 	r.DB.AddTeamMembership(ctx, database.AddTeamMembershipParams{
 		TeamID:         team.ID,

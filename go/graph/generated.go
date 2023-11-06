@@ -55,7 +55,7 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Mutation struct {
 		CreateProject        func(childComplexity int, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *string, initialLipSync bool) int
-		CreateTeam           func(childComplexity int, slug string, name string, teamType database.TeamType) int
+		CreateTeam           func(childComplexity int, teamType database.TeamType) int
 		CreateTranslation    func(childComplexity int, projectID int64, targetLanguage string, lipSync bool) int
 		DeleteProject        func(childComplexity int, projectID int64) int
 		DeleteTransformation func(childComplexity int, transformationID int64) int
@@ -102,7 +102,7 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateTeam(ctx context.Context, slug string, name string, teamType database.TeamType) (database.Team, error)
+	CreateTeam(ctx context.Context, teamType database.TeamType) (database.Team, error)
 	CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *string, initialLipSync bool) (database.Project, error)
 	DeleteProject(ctx context.Context, projectID int64) (database.Project, error)
 	CreateTranslation(ctx context.Context, projectID int64, targetLanguage string, lipSync bool) (database.Transformation, error)
@@ -160,7 +160,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateTeam(childComplexity, args["slug"].(string), args["name"].(string), args["teamType"].(database.TeamType)), true
+		return e.complexity.Mutation.CreateTeam(childComplexity, args["teamType"].(database.TeamType)), true
 
 	case "Mutation.createTranslation":
 		if e.complexity.Mutation.CreateTranslation == nil {
@@ -589,33 +589,15 @@ func (ec *executionContext) field_Mutation_createProject_args(ctx context.Contex
 func (ec *executionContext) field_Mutation_createTeam_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["slug"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["slug"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg1
-	var arg2 database.TeamType
+	var arg0 database.TeamType
 	if tmp, ok := rawArgs["teamType"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("teamType"))
-		arg2, err = ec.unmarshalNTeamType2planetcastdevᚋdatabaseᚐTeamType(ctx, tmp)
+		arg0, err = ec.unmarshalNTeamType2planetcastdevᚋdatabaseᚐTeamType(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["teamType"] = arg2
+	args["teamType"] = arg0
 	return args, nil
 }
 
@@ -847,7 +829,7 @@ func (ec *executionContext) _Mutation_createTeam(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateTeam(rctx, fc.Args["slug"].(string), fc.Args["name"].(string), fc.Args["teamType"].(database.TeamType))
+			return ec.resolvers.Mutation().CreateTeam(rctx, fc.Args["teamType"].(database.TeamType))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.LoggedIn == nil {
