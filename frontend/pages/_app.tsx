@@ -14,6 +14,14 @@ import { Analytics } from '@vercel/analytics/react';
 
 import '../styles/nprogress.css';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+import posthog from 'posthog-js';
+import { PostHogProvider } from 'posthog-js/react';
+
+import NProgress from 'nprogress';
+import { GetServerSideProps } from 'next';
+
 const inter = Inter({ subsets: ['latin'] });
 
 const components = {
@@ -60,6 +68,17 @@ const theme = extendTheme({
   },
 });
 
+if (typeof window !== 'undefined') {
+  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY || '', {
+    api_host: 'https://app.posthog.com',
+    // Enable debug mode in development
+    loaded: (posthog) => {
+      if (process.env.NODE_ENV === 'development') posthog.debug()
+    },
+    capture_pageview: true,
+  })
+}
+
 const ApolloProviderWrapper = ({ children }: PropsWithChildren) => {
   const { getToken } = useAuth();
 
@@ -71,14 +90,47 @@ const ApolloProviderWrapper = ({ children }: PropsWithChildren) => {
 };
 
 export default function App({ Component, pageProps }: AppProps) {
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleRouteChange = () => posthog?.capture('$pageview');
+    router.events.on('routeChangeComplete', handleRouteChange);
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    }
+  }, [router.events]);
+
+
+  useEffect(() => {
+    const handleRouteStart = () => NProgress.start();
+    const handleRouteChange = () => {
+      NProgress.done();
+    }
+    const handleRouteError = () => NProgress.done();
+
+    router.events.on('routeChangeStart', handleRouteStart);
+    router.events.on('routeChangeComplete', handleRouteChange);
+    router.events.on('routeChangeError', handleRouteError);
+
+    return () => {
+      NProgress.done();
+      router.events.off('routeChangeStart', handleRouteStart);
+      router.events.off('routeChangeComplete', handleRouteChange);
+      router.events.off('routeChangeError', handleRouteError);
+    };
+  }, [router.events]);
+
   return (
     <ChakraProvider theme={theme}>
       <ClerkProvider>
         <ApolloProviderWrapper>
-          <main className={inter.className}>
-            <Component {...pageProps} />
-            <Analytics />
-          </main>
+          <PostHogProvider client={posthog}>
+            <main className={inter.className}>
+              <Component {...pageProps} />
+              <Analytics />
+            </main>
+          </PostHogProvider>
         </ApolloProviderWrapper>
       </ClerkProvider>
     </ChakraProvider>
