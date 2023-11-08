@@ -10,13 +10,13 @@ const PricingComponent = () => {
     'Starter': {
       'price': 57,
       'features': [
-        '60 minutes of dubbing included',
+        '30 minutes of dubbing included',
         '$1.97 per additional minute of dubbing',
         'Dub videos to 28+ Languagues',
       ],
     },
     'Pro': {
-      'price': 97,
+      'price': 137,
       'features': [
         '100 minutes of dubbing included',
         '$1.47 per additional minute of dubbing',
@@ -24,11 +24,12 @@ const PricingComponent = () => {
       ],
     },
     'Business': {
-      'price': 297,
+      'price': 497,
       'features': [
-        '300 minutes of dubbing included',
+        '500 minutes of dubbing included',
         '$0.97 per additional minute of dubbing',
         'Dub videos to 28+ Languagues',
+        'Descript, Rumble, YouTube Integration',
         'API Access',
         "CEO's Phone number",
       ],
