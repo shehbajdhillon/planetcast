@@ -9,8 +9,6 @@ import {
   useColorModeValue,
   VStack,
   useBreakpointValue,
-  Grid,
-  GridItem,
   Avatar,
   Center,
 } from '@chakra-ui/react';
@@ -624,6 +622,12 @@ const VideoView: React.FC<VideoViewProps> = ({ transformations }) => {
 
 
 const PricingSection = () => {
+
+  const [annualPricing, setAnnualPricing] = useState(true);
+
+  const bgColor = useColorModeValue("black", "white");
+  const textColor = useColorModeValue("white", "black");
+
   return (
     <Stack
       display={"flex"}
@@ -650,14 +654,41 @@ const PricingSection = () => {
       <Heading
         fontWeight={'normal'}
         size={{ base: "sm", sm: "lg" }}
-        mb="45px"
         textAlign={"left"}
         w={"full"}
         px={{ base: "15px", md: "0px" }}
       >
         Select the perfect plan tailored to your needs
       </Heading>
-      <PricingComponent />
+
+      <HStack borderWidth={"1px"} p="5px" my="40px" rounded={"md"}>
+        <Button
+          onClick={() => setAnnualPricing(false)}
+          bgColor={!annualPricing ? bgColor : textColor}
+          textColor={!annualPricing ? textColor : bgColor}
+          bgGradient={!annualPricing ? 'linear(to-tl, #007CF0, #01DFD8)' : ''}
+          _hover={{
+            backgroundColor: !annualPricing ? bgColor : textColor,
+            textColor: annualPricing ? bgColor : textColor,
+          }}
+        >
+          Monthly
+        </Button>
+        <Button
+          onClick={() => setAnnualPricing(true)}
+          bgColor={annualPricing ? bgColor : textColor}
+          textColor={annualPricing ? textColor : bgColor}
+          bgGradient={annualPricing ? 'linear(to-tl, #007CF0, #01DFD8)' : ''}
+          _hover={{
+            backgroundColor: annualPricing ? bgColor : textColor,
+            textColor: !annualPricing ? bgColor : textColor,
+          }}
+        >
+          Annual
+        </Button>
+      </HStack>
+
+      <PricingComponent annualPricing={annualPricing} />
     </Stack>
   );
 };

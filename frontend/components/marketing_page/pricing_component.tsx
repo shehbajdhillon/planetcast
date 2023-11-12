@@ -2,13 +2,17 @@ import { Box, Text, Button, VStack, HStack, Icon, useColorModeValue, Badge, Stac
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 
-const PricingComponent = () => {
+interface PricingComponentProps {
+  annualPricing: boolean;
+};
+
+const PricingComponent: React.FC<PricingComponentProps> = ({ annualPricing }) => {
   const priceColor= useColorModeValue("zinc.600", "zinc.400");
   const cardBgColor = useColorModeValue("white", "black");
 
   const priceMap: Record<string, any> = {
     'Starter': {
-      'price': 57,
+      'price': annualPricing ? 47 : 57,
       'features': [
         '30 minutes of dubbing included',
         '$1.97 per additional minute of dubbing',
@@ -16,7 +20,7 @@ const PricingComponent = () => {
       ],
     },
     'Pro': {
-      'price': 137,
+      'price': annualPricing ? 117 : 137,
       'features': [
         '100 minutes of dubbing included',
         '$1.47 per additional minute of dubbing',
@@ -24,7 +28,7 @@ const PricingComponent = () => {
       ],
     },
     'Business': {
-      'price': 497,
+      'price': annualPricing ? 497 : 547,
       'features': [
         '500 minutes of dubbing included',
         '$0.97 per additional minute of dubbing',
@@ -38,6 +42,7 @@ const PricingComponent = () => {
 
   const bgColor = useColorModeValue("black", "white");
   const textColor = useColorModeValue("white", "black");
+
 
   return (
     <Stack direction={{ base: "column", md: "row" }} w="full" spacing={"80px"} px="16px">
@@ -69,9 +74,14 @@ const PricingComponent = () => {
           <VStack spacing={4} align="center" h="full">
 
             <Heading fontWeight={"semibold"}>{tier}</Heading>
-            <Text fontSize="4xl" fontWeight="normal" color={priceColor}>
-              ${priceMap[tier].price}/month
-            </Text>
+            <VStack>
+              <Text fontSize="4xl" fontWeight="normal" color={priceColor}>
+                ${priceMap[tier].price}/month
+              </Text>
+              <Text textColor={annualPricing ? bgColor : textColor}>
+                { 'Billed Annually' }
+              </Text>
+            </VStack>
             <VStack align="start" spacing={2}>
               {priceMap[tier].features.map((detail: string, idx: number) => (
                 <HStack key={idx}>
