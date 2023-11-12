@@ -485,7 +485,7 @@ const UseCasesSection = () => {
         w={"full"}
         px={{ base: "15px", md: "0px" }}
       >
-        We help dub your podcasts, training & educational videos, marketing content, and journalism media
+        Podcasts, training & educational videos, marketing content, and journalism media
       </Heading>
 
       <Stack w="full" spacing={{ base: "100px", md: "150px" }} pt={{ base:"50px", md: "100px" }}>
