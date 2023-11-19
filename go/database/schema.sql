@@ -4,6 +4,9 @@ CREATE TYPE team_type AS ENUM ('PERSONAL', 'TEAM');
 DROP TYPE IF EXISTS membership_type CASCADE;
 CREATE TYPE membership_type AS ENUM ('OWNER', 'ADMIN', 'MEMBER');
 
+DROP TYPE IF EXISTS subscription_interval CASCADE;
+CREATE TYPE subscription_interval AS ENUM ('MONTHLY', 'ANNUAL');
+
 DROP TABLE IF EXISTS userinfo CASCADE;
 CREATE TABLE userinfo (
   id BIGSERIAL PRIMARY KEY NOT NULL,
@@ -19,6 +22,24 @@ CREATE TABLE team (
   name TEXT NOT NULL,
   team_type TEAM_TYPE NOT NULL,
   created TIMESTAMP NOT NULL
+);
+
+DROP TABLE IF EXISTS subscription_plan CASCADE;
+CREATE TABLE subscription_plan (
+  id BIGSERIAL PRIMARY KEY NOT NULL,
+  team_id BIGINT REFERENCES team (id) ON DELETE CASCADE UNIQUE NOT NULL,
+
+  interval SUBSCRIPTION_INTERVAL NOT NULL,
+  subscription_price_in_usd_cents BIGINT NOT NULL,
+  included_credits BIGINT NOT NULL,
+
+  remaining_credits BIGINT NOT NULL,
+  usd_cents_per_credit BIGINT NOT NULL,
+  outstanding_balance_in_usd_cents BIGINT NOT NULL DEFAULT 0,
+  subscription_active BOOLEAN NOT NULL DEFAULT FALSE,
+
+  start_date TIMESTAMP NOT NULL,
+  end_date TIMESTAMP
 );
 
 DROP TABLE IF EXISTS team_membership CASCADE;

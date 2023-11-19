@@ -5,6 +5,7 @@
 package database
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"time"
@@ -55,6 +56,48 @@ func (ns NullMembershipType) Value() (driver.Value, error) {
 	return string(ns.MembershipType), nil
 }
 
+type SubscriptionInterval string
+
+const (
+	SubscriptionIntervalMONTHLY SubscriptionInterval = "MONTHLY"
+	SubscriptionIntervalANNUAL  SubscriptionInterval = "ANNUAL"
+)
+
+func (e *SubscriptionInterval) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = SubscriptionInterval(s)
+	case string:
+		*e = SubscriptionInterval(s)
+	default:
+		return fmt.Errorf("unsupported scan type for SubscriptionInterval: %T", src)
+	}
+	return nil
+}
+
+type NullSubscriptionInterval struct {
+	SubscriptionInterval SubscriptionInterval
+	Valid                bool // Valid is true if SubscriptionInterval is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullSubscriptionInterval) Scan(value interface{}) error {
+	if value == nil {
+		ns.SubscriptionInterval, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.SubscriptionInterval.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullSubscriptionInterval) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.SubscriptionInterval), nil
+}
+
 type TeamType string
 
 const (
@@ -103,6 +146,20 @@ type Project struct {
 	Title       string
 	SourceMedia string
 	Created     time.Time
+}
+
+type SubscriptionPlan struct {
+	ID                           int64
+	TeamID                       int64
+	Interval                     SubscriptionInterval
+	SubscriptionPriceInUsdCents  int64
+	IncludedCredits              int64
+	RemainingCredits             int64
+	UsdCentsPerCredit            int64
+	OutstandingBalanceInUsdCents int64
+	SubscriptionActive           bool
+	StartDate                    time.Time
+	EndDate                      sql.NullTime
 }
 
 type Team struct {

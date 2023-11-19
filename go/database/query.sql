@@ -79,3 +79,18 @@ SELECT * FROM transformation WHERE project_id = $1 AND target_language = $2 LIMI
 -- name: DeleteTransformationById :one
 DELETE FROM transformation WHERE id = $1 RETURNING *;
 
+
+-- name: CreateSubscription :one
+INSERT INTO subscription_plan
+(team_id, interval, subscription_price_in_usd_cents, included_credits, remaining_credits, usd_cents_per_credit, outstanding_balance_in_usd_cents, subscription_active, start_date)
+VALUES ($1, $2, $3, $4, $5, $6, 0, TRUE, clock_timestamp()) RETURNING *;
+
+
+-- name: GetSubscriptionsByTeamId :many
+SELECT * FROM subscription_plan WHERE team_id = $1 ORDER BY start_date;
+
+-- name: GetSubscriptionByTeamIdSubcriptionId :one
+SELECT * FROM subscription_plan WHERE team_id = $1 AND id = $2 LIMIT 1;
+
+-- name: GetSubscriptionById :one
+SELECT * FROM subscription_plan WHERE id = $1 LIMIT 1;
