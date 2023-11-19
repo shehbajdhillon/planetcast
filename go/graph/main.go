@@ -9,6 +9,7 @@ import (
 	"planetcastdev/dubbing"
 	"planetcastdev/email"
 	"planetcastdev/ffmpegmiddleware"
+	"planetcastdev/paymentsmiddleware"
 	"planetcastdev/storage"
 	"planetcastdev/youtubemiddleware"
 	"strings"
@@ -23,18 +24,28 @@ import (
 )
 
 type GraphConnectProps struct {
-	Queries *database.Queries
-	Storage *storage.Storage
-	Dubbing *dubbing.Dubbing
-	Logger  *zap.Logger
-	Email   *email.Email
-	Youtube *youtubemiddleware.Youtube
-	Ffmpeg  *ffmpegmiddleware.Ffmpeg
+	Queries  *database.Queries
+	Storage  *storage.Storage
+	Dubbing  *dubbing.Dubbing
+	Logger   *zap.Logger
+	Email    *email.Email
+	Youtube  *youtubemiddleware.Youtube
+	Ffmpeg   *ffmpegmiddleware.Ffmpeg
+	Payments *paymentsmiddleware.Payments
 }
 
 func Connect(args GraphConnectProps) *handler.Server {
 
-	gqlConfig := Config{Resolvers: &Resolver{DB: args.Queries, Storage: args.Storage, Dubbing: args.Dubbing, Logger: args.Logger, Email: args.Email, Youtube: args.Youtube, Ffmpeg: args.Ffmpeg}}
+	gqlConfig := Config{Resolvers: &Resolver{
+		DB:       args.Queries,
+		Storage:  args.Storage,
+		Dubbing:  args.Dubbing,
+		Logger:   args.Logger,
+		Email:    args.Email,
+		Youtube:  args.Youtube,
+		Ffmpeg:   args.Ffmpeg,
+		Payments: args.Payments,
+	}}
 
 	logger := args.Logger
 

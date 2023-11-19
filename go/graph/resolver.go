@@ -5,6 +5,7 @@ import (
 	"planetcastdev/dubbing"
 	"planetcastdev/email"
 	"planetcastdev/ffmpegmiddleware"
+	"planetcastdev/paymentsmiddleware"
 	"planetcastdev/storage"
 	"planetcastdev/youtubemiddleware"
 
@@ -18,11 +19,12 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	DB      *database.Queries
-	Storage *storage.Storage
-	Dubbing *dubbing.Dubbing
-	Logger  *zap.Logger
-	Email   *email.Email
-	Youtube *youtubemiddleware.Youtube
-	Ffmpeg  *ffmpegmiddleware.Ffmpeg
+	DB       *database.Queries
+	Storage  *storage.Storage
+	Dubbing  *dubbing.Dubbing
+	Logger   *zap.Logger
+	Email    *email.Email
+	Youtube  *youtubemiddleware.Youtube
+	Ffmpeg   *ffmpegmiddleware.Ffmpeg
+	Payments *paymentsmiddleware.Payments
 }
