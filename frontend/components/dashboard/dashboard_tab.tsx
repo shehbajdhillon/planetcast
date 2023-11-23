@@ -35,7 +35,7 @@ const LoadingBox: React.FC = () => {
 const LoadingGrid: React.FC = () => {
   return (
     <Grid
-      py={{ base: "100px" }}
+      py={{ base: "50px" }}
       px={{ base: "35px", lg: "70px" }}
       placeItems={'center'}
       rowGap={'60px'}
@@ -61,7 +61,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug, projects, refetch
       <Center>
       {!projects ? <LoadingGrid /> :
         <Grid
-          py={{ base: "100px" }}
+          py={{ base: "20px" }}
           px={{ base: "35px", lg: "70px" }}
           placeItems={'center'}
           rowGap={'60px'}

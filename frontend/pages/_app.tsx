@@ -20,7 +20,9 @@ import posthog from 'posthog-js';
 import { PostHogProvider } from 'posthog-js/react';
 
 import NProgress from 'nprogress';
-import { GetServerSideProps } from 'next';
+
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -89,6 +91,8 @@ const ApolloProviderWrapper = ({ children }: PropsWithChildren) => {
   return <ApolloProvider client={client}>{children}</ApolloProvider>;
 };
 
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "")
+
 export default function App({ Component, pageProps }: AppProps) {
 
   const router = useRouter();
@@ -126,10 +130,12 @@ export default function App({ Component, pageProps }: AppProps) {
       <ClerkProvider>
         <ApolloProviderWrapper>
           <PostHogProvider client={posthog}>
-            <main className={inter.className}>
-              <Component {...pageProps} />
-              <Analytics />
-            </main>
+            <Elements stripe={stripePromise}>
+              <main className={inter.className}>
+                <Component {...pageProps} />
+                <Analytics />
+              </main>
+            </Elements>
           </PostHogProvider>
         </ApolloProviderWrapper>
       </ClerkProvider>

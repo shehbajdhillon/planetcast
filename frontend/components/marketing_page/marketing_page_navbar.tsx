@@ -1,6 +1,5 @@
 import {
   Box,
-  Button,
   HStack,
   Heading,
   IconButton,
@@ -13,6 +12,8 @@ import { useUser } from '@clerk/nextjs';
 import { Moon, Sun, X, Menu } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+
+import Button from '../button';
 
 const Links = [
   {
@@ -38,16 +39,7 @@ const Links = [
 ];
 
 export const NavLink = ({ children }: { children: React.ReactNode }) => (
-  <Button
-    px={2}
-    py={1}
-    rounded={'md'}
-    variant={"ghost"}
-    _hover={{
-      backgroundColor: useColorModeValue("black", "white"),
-      textColor: useColorModeValue("white", "black"),
-    }}
-  >
+  <Button variant={"ghost"}>
     {children}
   </Button>
 );
@@ -64,7 +56,6 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const blackWhite = useColorModeValue('black', 'white');
-  const whiteBlack = useColorModeValue('white', 'black');
 
   return (
     <Box
@@ -131,15 +122,7 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
             href={'/dashboard'}
             hidden={!(marketing && isLoaded)}
           >
-            <Button
-              backgroundColor={blackWhite}
-              textColor={whiteBlack}
-              borderWidth={"1px"}
-              _hover={{
-                backgroundColor: whiteBlack,
-                textColor: blackWhite,
-              }}
-            >
+            <Button flip px="16px">
               { isSignedIn ? 'Dashboard' : 'Start for Free' }
             </Button>
           </Link>

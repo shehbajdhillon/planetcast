@@ -16,11 +16,13 @@ import {
   Skeleton,
 } from '@chakra-ui/react';
 import { useClerk, useUser } from '@clerk/nextjs';
-import { ChevronsUpDown } from 'lucide-react';
+import { ChevronsUpDown, Clock } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Project, Team } from '@/types';
+import Button from '../button';
+
 
 export const MenuBar: React.FC = () => {
 
@@ -98,7 +100,7 @@ export const MenuBar: React.FC = () => {
 
 interface NavbarProps {
   teams: Team[];
-  projects: Project[];
+  projects?: Project[];
   teamSlug: string;
   projectId?: number;
 };
@@ -120,24 +122,28 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
         maxW={"1920px"}
       >
         <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4}>
-          <Image
-            src={useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg')}
-            width={60}
-            height={100}
-            alt='planet cast logo'
-          />
+
+          <Link href={`/dashboard/${teamSlug}`}>
+            <Image
+              src={useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg')}
+              width={60}
+              height={100}
+              alt='planet cast logo'
+            />
+          </Link>
 
           <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
 
           { teamSlug && teams ?
-            <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4} h="full">
+            <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={2} h="full">
               {teams?.filter((team: Team) => team.slug === teamSlug).map((team: Team, idx: number) => (
                 <Link href={`/dashboard/${team.slug}`} key={idx}>
                   <Text
                     noOfLines={1}
+                    fontWeight={"medium"}
                     maxWidth={{
-                      base: projectId ? "33px" : "157px",
-                      sm: projectId ? "116px" : "232px",
+                      base: projectId ? "20px" : "127px",
+                      sm: projectId ? "68px" : "232px",
                       md: "500px",
                     }}
                   >
@@ -146,7 +152,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
                 </Link>
               ))}
               <Menu>
-                <MenuButton as={IconButton} variant={"ghost"} icon={<ChevronsUpDown />} />
+                <MenuButton as={IconButton} size={"sm"} variant={"ghost"} icon={<ChevronsUpDown />} />
                 <MenuList alignItems={'center'} backgroundColor={bgColor}>
                   {teams?.map((team: Team, idx: number) => (
                     <Box key={idx}>
@@ -171,15 +177,19 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
           }
 
           { projectId && projects &&
+            <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
+          }
+
+          { projectId && projects &&
             <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4} h="full">
-              <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
               {projects?.filter((project: Project) => project.id === projectId).map((project: Project, idx: number) => (
-                <Link href={`/dashboard/${teamSlug}/${projectId}`} key={idx}>
+                <Link href={`/dashboard/${teamSlug}/project/${projectId}`} key={idx}>
                   <Text
                     noOfLines={1}
+                    fontWeight={"medium"}
                     maxWidth={{
-                      base: "33px",
-                      sm: "116px",
+                      base: "20px",
+                      sm: "68px",
                       md: "500px",
                     }}
                   >
@@ -188,7 +198,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
                 </Link>
               ))}
               <Menu>
-                <MenuButton as={IconButton} variant={"ghost"} icon={<ChevronsUpDown />} />
+                <MenuButton as={IconButton} size={"sm"} variant={"ghost"} icon={<ChevronsUpDown />} />
                 <MenuList alignItems={'center'} backgroundColor={bgColor}>
                   {projects?.map((project: Project, idx: number) => (
                     <Box key={idx}>
@@ -198,7 +208,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
                           backgroundColor: hoverColor
                         }}
                         key={idx}
-                        onClick={() => router.push(`/dashboard/${teamSlug}/${project.id}`)}
+                        onClick={() => router.push(`/dashboard/${teamSlug}/project/${project.id}`)}
                       >
                         {project.title}
                       </MenuItem>
@@ -211,9 +221,22 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
           }
 
         </HStack>
-        <HStack>
-          <MenuBar />
-        </HStack>
+          { teams && teamSlug &&
+            <HStack spacing={3}>
+              <Button
+                onClick={() => router.push(`/dashboard/${teamSlug}/settings/subscription`)}
+                size="sm"
+              >
+                <Text display={{ md: "none" }}>28</Text>
+                <Box mr="5px" display={{ base: "none", md: "block" }}>
+                  <Clock size={"18px"} />
+                </Box>
+                <Text display={{ base: "none", md: "block" }}>28 Min</Text>
+              </Button>
+
+              <MenuBar />
+            </HStack>
+          }
       </Box>
     </Box>
   );
