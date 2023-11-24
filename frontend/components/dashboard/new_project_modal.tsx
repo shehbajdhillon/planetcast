@@ -100,7 +100,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = (props) => {
 
   useEffect(() => {
     if (data?.createProject) {
-      router.push(`/dashboard/${teamSlug}/${data?.createProject.id}`)
+      router.push(`/dashboard/${teamSlug}/project/${data?.createProject.id}`)
     };
   }, [data, router, teamSlug]);
 

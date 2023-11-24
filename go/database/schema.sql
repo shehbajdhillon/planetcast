@@ -21,6 +21,16 @@ CREATE TABLE team (
   created TIMESTAMP NOT NULL
 );
 
+DROP TABLE IF EXISTS subscription_plan CASCADE;
+CREATE TABLE subscription_plan (
+  id BIGSERIAL PRIMARY KEY NOT NULL,
+  team_id BIGINT REFERENCES team (id) ON DELETE CASCADE UNIQUE NOT NULL,
+  stripe_subscription_id TEXT UNIQUE,
+  subscription_active BOOLEAN NOT NULL DEFAULT FALSE,
+  remaining_credits BIGINT NOT NULL,
+  created TIMESTAMP NOT NULL
+);
+
 DROP TABLE IF EXISTS team_membership CASCADE;
 CREATE TABLE team_membership (
   id BIGSERIAL PRIMARY KEY NOT NULL,

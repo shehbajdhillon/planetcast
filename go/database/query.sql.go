@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/tabbed/pqtype"
 )
@@ -78,6 +79,38 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 	return i, err
 }
 
+const createSubscription = `-- name: CreateSubscription :one
+INSERT INTO subscription_plan
+(team_id, stripe_subscription_id, subscription_active, remaining_credits, created)
+VALUES ($1, $2, $3, $4, clock_timestamp()) RETURNING id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created
+`
+
+type CreateSubscriptionParams struct {
+	TeamID               int64
+	StripeSubscriptionID sql.NullString
+	SubscriptionActive   bool
+	RemainingCredits     int64
+}
+
+func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (SubscriptionPlan, error) {
+	row := q.db.QueryRowContext(ctx, createSubscription,
+		arg.TeamID,
+		arg.StripeSubscriptionID,
+		arg.SubscriptionActive,
+		arg.RemainingCredits,
+	)
+	var i SubscriptionPlan
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.StripeSubscriptionID,
+		&i.SubscriptionActive,
+		&i.RemainingCredits,
+		&i.Created,
+	)
+	return i, err
+}
+
 const createTeam = `-- name: CreateTeam :one
 INSERT INTO team (slug, name, team_type, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, slug, name, team_type, created
 `
@@ -102,7 +135,9 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 }
 
 const createTransformation = `-- name: CreateTransformation :one
-INSERT INTO transformation (project_id, target_language, target_media, transcript, is_source, status, progress, created) VALUES ($1, $2, $3, $4, $5, $6, $7, clock_timestamp()) RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress, created
+INSERT INTO transformation
+(project_id, target_language, target_media, transcript, is_source, status, progress, created)
+VALUES ($1, $2, $3, $4, $5, $6, $7, clock_timestamp()) RETURNING id, project_id, target_language, target_media, transcript, is_source, status, progress, created
 `
 
 type CreateTransformationParams struct {
@@ -269,6 +304,81 @@ func (q *Queries) GetSourceTransformationByProjectId(ctx context.Context, projec
 		&i.Created,
 	)
 	return i, err
+}
+
+const getSubscriptionById = `-- name: GetSubscriptionById :one
+SELECT id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created FROM subscription_plan WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetSubscriptionById(ctx context.Context, id int64) (SubscriptionPlan, error) {
+	row := q.db.QueryRowContext(ctx, getSubscriptionById, id)
+	var i SubscriptionPlan
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.StripeSubscriptionID,
+		&i.SubscriptionActive,
+		&i.RemainingCredits,
+		&i.Created,
+	)
+	return i, err
+}
+
+const getSubscriptionByTeamIdSubcriptionId = `-- name: GetSubscriptionByTeamIdSubcriptionId :one
+SELECT id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created FROM subscription_plan WHERE team_id = $1 AND id = $2 LIMIT 1
+`
+
+type GetSubscriptionByTeamIdSubcriptionIdParams struct {
+	TeamID int64
+	ID     int64
+}
+
+func (q *Queries) GetSubscriptionByTeamIdSubcriptionId(ctx context.Context, arg GetSubscriptionByTeamIdSubcriptionIdParams) (SubscriptionPlan, error) {
+	row := q.db.QueryRowContext(ctx, getSubscriptionByTeamIdSubcriptionId, arg.TeamID, arg.ID)
+	var i SubscriptionPlan
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.StripeSubscriptionID,
+		&i.SubscriptionActive,
+		&i.RemainingCredits,
+		&i.Created,
+	)
+	return i, err
+}
+
+const getSubscriptionsByTeamId = `-- name: GetSubscriptionsByTeamId :many
+SELECT id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created FROM subscription_plan WHERE team_id = $1 ORDER BY start_date
+`
+
+func (q *Queries) GetSubscriptionsByTeamId(ctx context.Context, teamID int64) ([]SubscriptionPlan, error) {
+	rows, err := q.db.QueryContext(ctx, getSubscriptionsByTeamId, teamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SubscriptionPlan
+	for rows.Next() {
+		var i SubscriptionPlan
+		if err := rows.Scan(
+			&i.ID,
+			&i.TeamID,
+			&i.StripeSubscriptionID,
+			&i.SubscriptionActive,
+			&i.RemainingCredits,
+			&i.Created,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getTeamById = `-- name: GetTeamById :one

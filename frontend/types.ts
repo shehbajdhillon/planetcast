@@ -5,6 +5,7 @@ export interface Team {
   teamType: 'PERSONAL' | 'TEAM';
   created: string;
   projects: Project[];
+  subcriptionPlans: SubscriptionPlan[];
 };
 
 export interface Project {
@@ -14,6 +15,18 @@ export interface Project {
   sourceMedia: string;
   transformations: Transformation[];
 };
+
+export interface SubscriptionPlan {
+  id: number;
+  teamId: number;
+  interval: string;
+  subscriptionPriceInUsdCents: number;
+  includedCredits: number;
+  remainingCredits: number;
+  usdCentsPerCredit: number;
+  outstandingBalanceInUsdCents: number;
+  subscriptionActive: boolean;
+}
 
 export interface Transformation {
   id: number;

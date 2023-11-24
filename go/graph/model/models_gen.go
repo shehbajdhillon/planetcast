@@ -8,6 +8,21 @@ import (
 	"strconv"
 )
 
+type CheckoutSessionResponse struct {
+	SessionID string `json:"sessionId"`
+}
+
+type LineItemInput struct {
+	PriceData PriceDataInput `json:"priceData"`
+	Quantity  int            `json:"quantity"`
+}
+
+type PriceDataInput struct {
+	Currency    string `json:"currency"`
+	UnitAmount  int    `json:"unitAmount"`
+	ProductName string `json:"productName"`
+}
+
 type UploadOption string
 
 const (

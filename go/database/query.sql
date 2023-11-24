@@ -47,7 +47,9 @@ DELETE FROM project WHERE id = $1 RETURNING *;
 
 
 -- name: CreateTransformation :one
-INSERT INTO transformation (project_id, target_language, target_media, transcript, is_source, status, progress, created) VALUES ($1, $2, $3, $4, $5, $6, $7, clock_timestamp()) RETURNING *;
+INSERT INTO transformation
+(project_id, target_language, target_media, transcript, is_source, status, progress, created)
+VALUES ($1, $2, $3, $4, $5, $6, $7, clock_timestamp()) RETURNING *;
 
 -- name: UpdateTranscriptById :one
 UPDATE transformation SET transcript = $2 WHERE id = $1 RETURNING *;
@@ -79,3 +81,18 @@ SELECT * FROM transformation WHERE project_id = $1 AND target_language = $2 LIMI
 -- name: DeleteTransformationById :one
 DELETE FROM transformation WHERE id = $1 RETURNING *;
 
+
+-- name: CreateSubscription :one
+INSERT INTO subscription_plan
+(team_id, stripe_subscription_id, subscription_active, remaining_credits, created)
+VALUES ($1, $2, $3, $4, clock_timestamp()) RETURNING *;
+
+
+-- name: GetSubscriptionsByTeamId :many
+SELECT * FROM subscription_plan WHERE team_id = $1 ORDER BY start_date;
+
+-- name: GetSubscriptionByTeamIdSubcriptionId :one
+SELECT * FROM subscription_plan WHERE team_id = $1 AND id = $2 LIMIT 1;
+
+-- name: GetSubscriptionById :one
+SELECT * FROM subscription_plan WHERE id = $1 LIMIT 1;

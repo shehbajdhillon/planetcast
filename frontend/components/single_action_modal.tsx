@@ -6,12 +6,12 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
-  Button,
   Center,
-  useColorModeValue,
 } from '@chakra-ui/react'
 import NProgress from 'nprogress';
 import { useEffect } from 'react';
+
+import Button from './button';
 
 
 interface SingleActionModalProps {
@@ -50,21 +50,15 @@ const SingleActionModal: React.FC<SingleActionModalProps> = (props) => {
         <ModalFooter w="full">
           <Center w={"full"}>
             <Button
+              px="16px"
               mr={3}
-              variant={"outline"}
-              backgroundColor={useColorModeValue("black", "white")}
-              textColor={useColorModeValue("white", "black")}
-              _hover={{
-                backgroundColor: useColorModeValue("black", "white:"),
-                textColor: useColorModeValue("white", "black"),
-                bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
-              }}
+              flip
               onClick={takeAction}
               isDisabled={loading}
             >
               Submit
             </Button>
-            <Button variant={"outline"} onClick={onClose}>
+            <Button onClick={onClose} px="16px">
               Close
             </Button>
           </Center>

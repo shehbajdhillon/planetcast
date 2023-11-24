@@ -2,7 +2,7 @@ import Navbar from "@/components/dashboard/navbar";
 import { Project, Segment, Team } from "@/types";
 import { gql, useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import {
-    AspectRatio,
+  AspectRatio,
   Box,
   Button,
   Center,
@@ -555,7 +555,7 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
 
       { (!loading && currentTeamsData) ?
 
-        <Box pt={"85px"}>
+        <Box pt={"80px"}>
           <Tabs
             variant="enclosed"
             colorScheme="gray"
@@ -633,7 +633,7 @@ const LoadingTabs = () => {
 
 export default ProjectDashboard;
 
-export const getServerSideProps: GetServerSideProps= async ({ params }) => {
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
 
   const teamSlug = params?.teamSlug;
   const projectId = params?.projectId?.[0];

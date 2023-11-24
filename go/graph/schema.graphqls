@@ -18,6 +18,7 @@ type Team {
   teamType: TeamType!
   created: DateTime!
   projects(projectId: Int64): [Project!]!
+  subscriptionPlans(subscriptionId: Int64): [SubscriptionPlan!]!
 }
 
 type Project {
@@ -45,6 +46,14 @@ type Userinfo {
   fullName: String!
 }
 
+type SubscriptionPlan {
+  id: Int64!
+  teamId: Int64!
+  stripeSubscriptionId: String!
+  subscriptionActive: Boolean!
+  remainingCredits: Int64!
+}
+
 type Query {
   getTeams: [Team!]! @loggedIn
   getTeamById(teamSlug: String! @memberTeam): Team! @loggedIn
@@ -56,6 +65,22 @@ type Mutation {
   deleteProject(projectId: Int64! @ownsProject): Project! @loggedIn
   createTranslation(projectId: Int64! @ownsProject, targetLanguage: String!, lipSync: Boolean!): Transformation! @loggedIn
   deleteTransformation(transformationId: Int64! @ownsTransformation): Transformation! @loggedIn
+  createCheckoutSession(teamSlug: String! @memberTeam, lineItems: [LineItemInput!]!): CheckoutSessionResponse! @loggedIn
+}
+
+type CheckoutSessionResponse {
+  sessionId: String!
+}
+
+input LineItemInput {
+  priceData: PriceDataInput!
+  quantity: Int!
+}
+
+input PriceDataInput {
+  currency: String!
+  unitAmount: Int!
+  productName: String!
 }
 
 enum TeamType {

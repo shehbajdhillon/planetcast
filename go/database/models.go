@@ -5,6 +5,7 @@
 package database
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"time"
@@ -103,6 +104,15 @@ type Project struct {
 	Title       string
 	SourceMedia string
 	Created     time.Time
+}
+
+type SubscriptionPlan struct {
+	ID                   int64
+	TeamID               int64
+	StripeSubscriptionID sql.NullString
+	SubscriptionActive   bool
+	RemainingCredits     int64
+	Created              time.Time
 }
 
 type Team struct {

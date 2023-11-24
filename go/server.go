@@ -13,6 +13,7 @@ import (
 	"planetcastdev/graph"
 	"planetcastdev/logmiddleware"
 	"planetcastdev/openaimiddleware"
+	"planetcastdev/paymentsmiddleware"
 	"planetcastdev/replicatemiddleware"
 	"planetcastdev/storage"
 	"planetcastdev/youtubemiddleware"
@@ -42,6 +43,7 @@ func main() {
 		Logger.Info(".env: Loaded environment variables")
 	}
 
+	Payments := paymentsmiddleware.Connect()
 	Replicate := replicatemiddleware.Connect(replicatemiddleware.ReplicateConnectProps{Logger: Logger})
 	ElevenLabs := elevenlabsmiddleware.Connect(elevenlabsmiddleware.ElevenLabsConnectProps{Logger: Logger})
 	OpenAI := openaimiddleware.Connect(openaimiddleware.OpenAIConnectProps{Logger: Logger})
@@ -62,7 +64,17 @@ func main() {
 			Replicate:  Replicate,
 			ElevenLabs: ElevenLabs,
 		})
-	GqlServer := graph.Connect(graph.GraphConnectProps{Dubbing: Dubbing, Storage: Storage, Queries: Database, Logger: Logger, Email: Email, Youtube: Youtube, Ffmpeg: Ffmpeg})
+
+	GqlServer := graph.Connect(graph.GraphConnectProps{
+		Dubbing:  Dubbing,
+		Storage:  Storage,
+		Queries:  Database,
+		Logger:   Logger,
+		Email:    Email,
+		Youtube:  Youtube,
+		Ffmpeg:   Ffmpeg,
+		Payments: Payments,
+	})
 
 	router := chi.NewRouter()
 	router.Use(auth.Middleware())
