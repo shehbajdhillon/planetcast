@@ -5,7 +5,7 @@ export interface Team {
   teamType: 'PERSONAL' | 'TEAM';
   created: string;
   projects: Project[];
-  subcriptionPlans: SubscriptionPlan[];
+  subscriptionPlans: SubscriptionPlan[];
 };
 
 export interface Project {
@@ -19,13 +19,9 @@ export interface Project {
 export interface SubscriptionPlan {
   id: number;
   teamId: number;
-  interval: string;
-  subscriptionPriceInUsdCents: number;
-  includedCredits: number;
-  remainingCredits: number;
-  usdCentsPerCredit: number;
-  outstandingBalanceInUsdCents: number;
+  stripeSubscriptionId: string;
   subscriptionActive: boolean;
+  remainingCredits: number;
 }
 
 export interface Transformation {

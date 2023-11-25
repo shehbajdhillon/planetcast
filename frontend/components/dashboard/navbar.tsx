@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Project, Team } from '@/types';
 import Button from '../button';
+import { useEffect } from 'react';
 
 
 export const MenuBar: React.FC = () => {
@@ -111,6 +112,12 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
   const hoverColor = useColorModeValue("blackAlpha.200", "whiteAlpha.200");
 
   const router = useRouter();
+
+  const currentTeam: Team = teams?.filter((team: Team) => team.slug === teamSlug)[0];
+
+  useEffect(() => {
+    console.log({ currentTeam });
+  }, [currentTeam]);
 
   return (
     <Box w="full" display={"flex"} alignItems={"center"} justifyContent={"center"}>
@@ -227,11 +234,15 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
                 onClick={() => router.push(`/dashboard/${teamSlug}/settings/subscription`)}
                 size="sm"
               >
-                <Text display={{ md: "none" }}>28</Text>
+                <Text display={{ md: "none" }}>
+                  { currentTeam?.subscriptionPlans?.[0].remainingCredits }
+                </Text>
                 <Box mr="5px" display={{ base: "none", md: "block" }}>
                   <Clock size={"18px"} />
                 </Box>
-                <Text display={{ base: "none", md: "block" }}>28 Min</Text>
+                <Text display={{ base: "none", md: "block" }}>
+                  { currentTeam?.subscriptionPlans?.[0].remainingCredits } Min
+                </Text>
               </Button>
 
               <MenuBar />

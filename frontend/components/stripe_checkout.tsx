@@ -1,6 +1,6 @@
 import { useMutation, gql } from '@apollo/client';
 import { useStripe } from '@stripe/react-stripe-js';
-import { HStack, Spacer, Stack } from '@chakra-ui/react';
+import { Spacer, Stack } from '@chakra-ui/react';
 import Button from './button';
 import { Button as ChakraButton } from '@chakra-ui/react';
 
@@ -14,9 +14,10 @@ const CREATE_STRIPE_CHECKOUT = gql`
 
 interface StripeCheckoutFormProps {
   teamSlug: string;
+  subscriptionActive?: boolean;
 };
 
-const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ teamSlug }) => {
+const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ teamSlug, subscriptionActive }) => {
 
   const [createCheckoutSession, { loading, error }] = useMutation(CREATE_STRIPE_CHECKOUT);
 
@@ -54,16 +55,16 @@ const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ teamSlug }) => 
       <Button isDisabled={loading} flip>
         Update Subscription
       </Button>
-      <Button isDisabled={loading} flip>
+      <Button isDisabled={loading} flip hidden={!subscriptionActive}>
         Buy Minutes
       </Button>
       <Button flip>
-        Manage Billing
+        Manage Invoices
       </Button>
 
       <Spacer />
 
-      <ChakraButton colorScheme='red'>
+      <ChakraButton colorScheme='red' hidden={!subscriptionActive}>
         Cancel Subscription
       </ChakraButton>
 

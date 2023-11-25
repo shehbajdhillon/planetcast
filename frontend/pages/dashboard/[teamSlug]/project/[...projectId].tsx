@@ -513,6 +513,9 @@ const GET_TEAMS = gql`
         id
         title
       }
+      subscriptionPlans {
+        remainingCredits
+      }
     }
   }
 `;

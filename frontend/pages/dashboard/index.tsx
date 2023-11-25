@@ -17,8 +17,8 @@ const GET_TEAMS = gql`
 `;
 
 const CREATE_TEAM = gql`
-  mutation CreateTeam($teamType: TeamType!) {
-    createTeam(teamType: $teamType) {
+  mutation CreateTeam($teamType: TeamType!, $addTrial: Boolean!) {
+    createTeam(teamType: $teamType, addTrial: $addTrial) {
       slug
     }
   }
@@ -41,6 +41,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       mutation: CREATE_TEAM,
       variables: {
         teamType: 'PERSONAL',
+        addTrial: true,
       }
     });
     teams = [data.createTeam];

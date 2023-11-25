@@ -19,7 +19,7 @@ import { Team } from "@/types";
 import { gql, useQuery } from "@apollo/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import SettingsTab, { getInitialTeamSettingTabIndex } from "@/components/dashboard/settings_tab";
+import SettingsTab from "@/components/dashboard/settings_tab";
 
 const GET_TEAMS = gql`
   query GetTeams {
@@ -29,14 +29,9 @@ const GET_TEAMS = gql`
       projects {
         id
         title
-        sourceMedia
-        transformations {
-          id
-          targetMedia
-          targetLanguage
-          status
-          progress
-        }
+      }
+      subscriptionPlans {
+        remainingCredits
       }
     }
   }
@@ -59,6 +54,12 @@ const GET_TEAM_BY_ID = gql`
           progress
         }
       }
+      subscriptionPlans {
+        id
+        remainingCredits
+        subscriptionActive
+        stripeSubscriptionId
+      }
     }
   }
 `;
@@ -71,11 +72,13 @@ export interface DashboardPageProps {
 const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug, tab }) => {
 
   const { data, refetch: getAllTeamsRefetch } = useQuery(GET_TEAMS, { fetchPolicy: 'no-cache' });
-  const { data: currentTeamProjectsData, refetch: currentTeamRefetch, loading } = useQuery(GET_TEAM_BY_ID, { fetchPolicy: 'no-cache', variables: { teamSlug } });
+  const { data: currentTeamData, refetch: currentTeamRefetch, loading } = useQuery(GET_TEAM_BY_ID, { fetchPolicy: 'no-cache', variables: { teamSlug } });
 
   const teams = data?.getTeams;
   const projects = data?.getTeams.find((team: Team) => team.slug === teamSlug)?.projects;
-  const currentTeamProjects = currentTeamProjectsData?.getTeamById?.projects;
+
+  const currentTeamProjects = currentTeamData?.getTeamById?.projects;
+  const currentTeam: Team = currentTeamData?.getTeamById;
 
   const [tabIdx, setTabIdx] = useState(tab);
   const router = useRouter();
@@ -164,7 +167,13 @@ const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug, tab }) => {
               <DashboardTab teamSlug={teamSlug} projects={currentTeamProjects} refetch={refetch} />
             </TabPanel>
             <TabPanel>
-              <SettingsTab teamSlug={teamSlug} params={router.query.team as string[]} refetch={refetch} loading={loading} />
+              <SettingsTab
+                teamSlug={teamSlug}
+                params={router.query.team as string[]}
+                refetch={refetch}
+                loading={loading}
+                team={currentTeam}
+              />
             </TabPanel>
           </TabPanels>
         </Tabs>

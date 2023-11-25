@@ -25,6 +25,7 @@ import { useEffect, useState } from "react";
 import StripeCheckoutForm from "../stripe_checkout";
 
 import { useSearchParams } from 'next/navigation';
+import { Team } from "@/types";
 
 interface TabButtonsProps {
   tabIdx: number;
@@ -62,9 +63,10 @@ interface SettingsTabProps {
   params: string[];
   refetch: () => void;
   loading: boolean;
+  team: Team
 };
 
-const SettingsTab: React.FC<SettingsTabProps> = ({ teamSlug, params, loading }) => {
+const SettingsTab: React.FC<SettingsTabProps> = ({ teamSlug, params, loading, team }) => {
 
   const [tabIdx, setTabIdx] = useState(getInitialTeamSettingTabIndex(params).defaultIndex);
 
@@ -134,7 +136,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ teamSlug, params, loading }) 
             </Drawer>
 
             {tabIdx === 0 && <GeneralSettingsTab drawerOpen={onOpen} />}
-            {tabIdx === 1 && <SubscriptionSettingsTab drawerOpen={onOpen} teamSlug={teamSlug} />}
+            {tabIdx === 1 && <SubscriptionSettingsTab drawerOpen={onOpen} teamSlug={teamSlug} team={team} />}
           </GridItem>
         </Grid>
       </Box>
@@ -145,14 +147,17 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ teamSlug, params, loading }) 
 interface SubscriptionSettingsTabProps {
   drawerOpen: () => void;
   teamSlug: string;
+  team: Team
 };
 
 const SubscriptionSettingsTab: React.FC<SubscriptionSettingsTabProps> = (props) => {
-  const { drawerOpen, teamSlug } = props;
+  const { drawerOpen, teamSlug, team } = props;
 
   const searchParams = useSearchParams();
   const router = useRouter();
   const toast = useToast();
+
+  const currentSubscription = team?.subscriptionPlans[0];
 
   useEffect(() => {
     const action = searchParams.get("action");
@@ -215,37 +220,52 @@ const SubscriptionSettingsTab: React.FC<SubscriptionSettingsTabProps> = (props) 
         rounded={"lg"}
       >
         <VStack h="full" w="full" spacing="15px">
-
-          <HStack w="full">
-            <Badge colorScheme="green" rounded={"md"} p={1}>
-              Active
-            </Badge>
+          {currentSubscription?.subscriptionActive ?
+            <HStack w="full">
+              <Badge colorScheme="green" rounded={"md"} p={1}>
+                Active
+              </Badge>
             <Text fontWeight={"semibold"}>Starter Monthly</Text>
-          </HStack>
+            </HStack>
+          :
+            <HStack w="full">
+              <Badge colorScheme="gray" rounded={"md"} p={1}>
+                Inactive
+              </Badge>
+            <Text fontWeight={"semibold"}>No Active Subscription</Text>
+            </HStack>
+          }
 
-          <Stack w="full" spacing={"2px"}>
-            <Text fontWeight={"semibold"}>Current Billing Cycle:</Text>
-            <Text fontWeight={"semibold"}>Nov 15 2023 to Dec 25 2023</Text>
-          </Stack>
 
-          <Stack w="full" spacing={"2px"}>
-            <Text fontWeight={"semibold"}>Next Billing Cycle:</Text>
-            <Text fontWeight={"semibold"}>Dec 25 2023 to Jan 25 2023</Text>
-          </Stack>
+          {currentSubscription?.subscriptionActive &&
+            <>
+              <Stack w="full" spacing={"2px"}>
+                <Text fontWeight={"semibold"}>Current Billing Cycle:</Text>
+                <Text fontWeight={"semibold"}>Nov 15 2023 to Dec 25 2023</Text>
+              </Stack>
+
+              <Stack w="full" spacing={"2px"}>
+                <Text fontWeight={"semibold"}>Next Billing Cycle:</Text>
+                <Text fontWeight={"semibold"}>Dec 25 2023 to Jan 25 2023</Text>
+              </Stack>
+            </>
+          }
 
           <Stack w="full" spacing={"2px"}>
             <Text fontWeight={"semibold"}>Remaining Minutes:</Text>
-            <Text fontWeight={"semibold"}>28</Text>
+            <Text fontWeight={"semibold"}>{currentSubscription?.remainingCredits}</Text>
           </Stack>
 
-          <Stack w="full" spacing={"2px"}>
-            <Text fontWeight={"semibold"}>Subscription automatically renews on Dec 25 2023</Text>
-            <Text>Card ending with 0045 will be charged $60</Text>
-            <Text>Click on Manage Billing to update payment information</Text>
-          </Stack>
+          {currentSubscription?.subscriptionActive &&
+            <Stack w="full" spacing={"2px"}>
+              <Text fontWeight={"semibold"}>Subscription automatically renews on Dec 25 2023</Text>
+              <Text>Card ending with 0045 will be charged $60</Text>
+              <Text>Click on Manage Billing to update payment information</Text>
+            </Stack>
+          }
 
           <Box w="full" display="flex">
-            <StripeCheckoutForm teamSlug={teamSlug} />
+            <StripeCheckoutForm teamSlug={teamSlug} subscriptionActive={currentSubscription?.subscriptionActive}/>
           </Box>
 
         </VStack>
