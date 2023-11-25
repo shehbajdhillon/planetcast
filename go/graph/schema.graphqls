@@ -65,22 +65,11 @@ type Mutation {
   deleteProject(projectId: Int64! @ownsProject): Project! @loggedIn
   createTranslation(projectId: Int64! @ownsProject, targetLanguage: String!, lipSync: Boolean!): Transformation! @loggedIn
   deleteTransformation(transformationId: Int64! @ownsTransformation): Transformation! @loggedIn
-  createCheckoutSession(teamSlug: String! @memberTeam, lineItems: [LineItemInput!]!): CheckoutSessionResponse! @loggedIn
+  createCheckoutSession(teamSlug: String! @memberTeam, lookUpKey: String!): CheckoutSessionResponse! @loggedIn
 }
 
 type CheckoutSessionResponse {
   sessionId: String!
-}
-
-input LineItemInput {
-  priceData: PriceDataInput!
-  quantity: Int!
-}
-
-input PriceDataInput {
-  currency: String!
-  unitAmount: Int!
-  productName: String!
 }
 
 enum TeamType {

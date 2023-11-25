@@ -20,6 +20,7 @@ import (
 	"github.com/google/uuid"
 	stripe "github.com/stripe/stripe-go/v76"
 	"github.com/stripe/stripe-go/v76/checkout/session"
+	"github.com/stripe/stripe-go/v76/price"
 	"github.com/tabbed/pqtype"
 	"go.uber.org/zap"
 )
@@ -226,7 +227,7 @@ func (r *mutationResolver) DeleteTransformation(ctx context.Context, transformat
 }
 
 // CreateCheckoutSession is the resolver for the createCheckoutSession field.
-func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, teamSlug string, lineItems []model.LineItemInput) (model.CheckoutSessionResponse, error) {
+func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, teamSlug string, lookUpKey string) (model.CheckoutSessionResponse, error) {
 	production := os.Getenv("PRODUCTION") != ""
 
 	baseUrl := "https://www.planetcast.ai"
@@ -234,29 +235,36 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, teamSlug s
 		baseUrl = "http://localhost:3000"
 	}
 
-	SuccessURL := fmt.Sprintf("%s/dashboard/%s/settings/subscription?action=success", baseUrl, teamSlug)
+	SuccessURL := fmt.Sprintf("%s/dashboard/%s/settings/subscription?action=success&session_id={CHECKOUT_SESSION_ID}", baseUrl, teamSlug)
 	CancelURL := fmt.Sprintf("%s/dashboard/%s/settings/subscription?action=cancel", baseUrl, teamSlug)
 
-	var stripeLineItems []*stripe.CheckoutSessionLineItemParams
-	for _, item := range lineItems {
-		stripeLineItems = append(stripeLineItems, &stripe.CheckoutSessionLineItemParams{
-			PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
-				UnitAmount: stripe.Int64(int64(item.PriceData.UnitAmount)),
-				Currency:   stripe.String(item.PriceData.Currency),
-				ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
-					Name: stripe.String(item.PriceData.ProductName),
-				},
-			},
-			Quantity: stripe.Int64(int64(item.Quantity)),
-		})
+	priceLookUpParams := &stripe.PriceListParams{
+		LookupKeys: stripe.StringSlice([]string{lookUpKey}),
 	}
 
+	itemIterable := price.List(priceLookUpParams)
+
+	var price *stripe.Price
+	for itemIterable.Next() {
+		p := itemIterable.Price()
+		price = p
+	}
+
+	var stripeLineItems []*stripe.CheckoutSessionLineItemParams
+	stripeLineItems = append(stripeLineItems, &stripe.CheckoutSessionLineItemParams{
+		Price:    stripe.String(price.ID),
+		Quantity: stripe.Int64(1),
+	})
+
+	currentCustomer, err := r.Payments.GetCustomerByTeamSlug(ctx, teamSlug)
+
 	params := &stripe.CheckoutSessionParams{
-		Mode:               stripe.String(string(stripe.CheckoutSessionModePayment)),
+		Mode:               stripe.String(string(stripe.CheckoutSessionModeSubscription)),
 		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
 		LineItems:          stripeLineItems,
 		SuccessURL:         stripe.String(SuccessURL),
 		CancelURL:          stripe.String(CancelURL),
+		Customer:           stripe.String(currentCustomer.ID),
 	}
 
 	session, err := session.New(params)

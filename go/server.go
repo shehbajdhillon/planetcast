@@ -43,7 +43,6 @@ func main() {
 		Logger.Info(".env: Loaded environment variables")
 	}
 
-	Payments := paymentsmiddleware.Connect()
 	Replicate := replicatemiddleware.Connect(replicatemiddleware.ReplicateConnectProps{Logger: Logger})
 	ElevenLabs := elevenlabsmiddleware.Connect(elevenlabsmiddleware.ElevenLabsConnectProps{Logger: Logger})
 	OpenAI := openaimiddleware.Connect(openaimiddleware.OpenAIConnectProps{Logger: Logger})
@@ -52,6 +51,12 @@ func main() {
 	Youtube := youtubemiddleware.Connect(youtubemiddleware.YoutubeConnectProps{Logger: Logger, Ffmpeg: Ffmpeg})
 	Storage := storage.Connect(storage.StorageConnectProps{Logger: Logger})
 	Database := database.Connect(database.DatabaseConnectProps{Logger: Logger})
+
+	Payments := paymentsmiddleware.Connect(
+		paymentsmiddleware.PaymentsConnectProps{
+			Logger:   Logger,
+			Database: Database,
+		})
 
 	Dubbing := dubbing.Connect(
 		dubbing.DubbingConnectProps{

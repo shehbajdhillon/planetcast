@@ -116,11 +116,12 @@ type SubscriptionPlan struct {
 }
 
 type Team struct {
-	ID       int64
-	Slug     string
-	Name     string
-	TeamType TeamType
-	Created  time.Time
+	ID               int64
+	Slug             string
+	Name             string
+	StripeCustomerID sql.NullString
+	TeamType         TeamType
+	Created          time.Time
 }
 
 type TeamMembership struct {
