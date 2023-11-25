@@ -17,6 +17,9 @@ SELECT * FROM team WHERE id = $1 LIMIT 1;
 -- name: GetTeamBySlug :one
 SELECT * FROM team WHERE slug = $1 LIMIT 1;
 
+-- name: UpdateTeamStripeCustomerIdByTeamId :one
+UPDATE team SET stripe_customer_id = $2 WHERE id = $1 RETURNING *;
+
 -- name: AddTeamMembership :one
 INSERT INTO team_membership (team_id, user_id, membership_type, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING *;
 
@@ -89,7 +92,7 @@ VALUES ($1, $2, $3, $4, clock_timestamp()) RETURNING *;
 
 
 -- name: GetSubscriptionsByTeamId :many
-SELECT * FROM subscription_plan WHERE team_id = $1 ORDER BY start_date;
+SELECT * FROM subscription_plan WHERE team_id = $1 ORDER BY created;
 
 -- name: GetSubscriptionByTeamIdSubcriptionId :one
 SELECT * FROM subscription_plan WHERE team_id = $1 AND id = $2 LIMIT 1;

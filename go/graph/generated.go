@@ -61,9 +61,9 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateCheckoutSession func(childComplexity int, teamSlug string, lineItems []model.LineItemInput) int
+		CreateCheckoutSession func(childComplexity int, teamSlug string, lookUpKey string) int
 		CreateProject         func(childComplexity int, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *string, initialLipSync bool) int
-		CreateTeam            func(childComplexity int, teamType database.TeamType) int
+		CreateTeam            func(childComplexity int, teamType database.TeamType, addTrial bool) int
 		CreateTranslation     func(childComplexity int, projectID int64, targetLanguage string, lipSync bool) int
 		DeleteProject         func(childComplexity int, projectID int64) int
 		DeleteTransformation  func(childComplexity int, transformationID int64) int
@@ -119,12 +119,12 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateTeam(ctx context.Context, teamType database.TeamType) (database.Team, error)
+	CreateTeam(ctx context.Context, teamType database.TeamType, addTrial bool) (database.Team, error)
 	CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *string, initialLipSync bool) (database.Project, error)
 	DeleteProject(ctx context.Context, projectID int64) (database.Project, error)
 	CreateTranslation(ctx context.Context, projectID int64, targetLanguage string, lipSync bool) (database.Transformation, error)
 	DeleteTransformation(ctx context.Context, transformationID int64) (database.Transformation, error)
-	CreateCheckoutSession(ctx context.Context, teamSlug string, lineItems []model.LineItemInput) (model.CheckoutSessionResponse, error)
+	CreateCheckoutSession(ctx context.Context, teamSlug string, lookUpKey string) (model.CheckoutSessionResponse, error)
 }
 type ProjectResolver interface {
 	Transformations(ctx context.Context, obj *database.Project, transformationID *int64) ([]database.Transformation, error)
@@ -181,7 +181,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateCheckoutSession(childComplexity, args["teamSlug"].(string), args["lineItems"].([]model.LineItemInput)), true
+		return e.complexity.Mutation.CreateCheckoutSession(childComplexity, args["teamSlug"].(string), args["lookUpKey"].(string)), true
 
 	case "Mutation.createProject":
 		if e.complexity.Mutation.CreateProject == nil {
@@ -205,7 +205,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateTeam(childComplexity, args["teamType"].(database.TeamType)), true
+		return e.complexity.Mutation.CreateTeam(childComplexity, args["teamType"].(database.TeamType), args["addTrial"].(bool)), true
 
 	case "Mutation.createTranslation":
 		if e.complexity.Mutation.CreateTranslation == nil {
@@ -480,10 +480,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
-	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputLineItemInput,
-		ec.unmarshalInputPriceDataInput,
-	)
+	inputUnmarshalMap := graphql.BuildUnmarshalerMap()
 	first := true
 
 	switch rc.Operation.Operation {
@@ -624,15 +621,15 @@ func (ec *executionContext) field_Mutation_createCheckoutSession_args(ctx contex
 		}
 	}
 	args["teamSlug"] = arg0
-	var arg1 []model.LineItemInput
-	if tmp, ok := rawArgs["lineItems"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lineItems"))
-		arg1, err = ec.unmarshalNLineItemInput2ᚕplanetcastdevᚋgraphᚋmodelᚐLineItemInputᚄ(ctx, tmp)
+	var arg1 string
+	if tmp, ok := rawArgs["lookUpKey"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lookUpKey"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["lineItems"] = arg1
+	args["lookUpKey"] = arg1
 	return args, nil
 }
 
@@ -730,6 +727,15 @@ func (ec *executionContext) field_Mutation_createTeam_args(ctx context.Context, 
 		}
 	}
 	args["teamType"] = arg0
+	var arg1 bool
+	if tmp, ok := rawArgs["addTrial"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addTrial"))
+		arg1, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["addTrial"] = arg1
 	return args, nil
 }
 
@@ -1020,7 +1026,7 @@ func (ec *executionContext) _Mutation_createTeam(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateTeam(rctx, fc.Args["teamType"].(database.TeamType))
+			return ec.resolvers.Mutation().CreateTeam(rctx, fc.Args["teamType"].(database.TeamType), fc.Args["addTrial"].(bool))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.LoggedIn == nil {
@@ -1471,7 +1477,7 @@ func (ec *executionContext) _Mutation_createCheckoutSession(ctx context.Context,
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateCheckoutSession(rctx, fc.Args["teamSlug"].(string), fc.Args["lineItems"].([]model.LineItemInput))
+			return ec.resolvers.Mutation().CreateCheckoutSession(rctx, fc.Args["teamSlug"].(string), fc.Args["lookUpKey"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.LoggedIn == nil {
@@ -4915,91 +4921,6 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputLineItemInput(ctx context.Context, obj interface{}) (model.LineItemInput, error) {
-	var it model.LineItemInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"priceData", "quantity"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "priceData":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priceData"))
-			data, err := ec.unmarshalNPriceDataInput2planetcastdevᚋgraphᚋmodelᚐPriceDataInput(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.PriceData = data
-		case "quantity":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quantity"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Quantity = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputPriceDataInput(ctx context.Context, obj interface{}) (model.PriceDataInput, error) {
-	var it model.PriceDataInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"currency", "unitAmount", "productName"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "currency":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("currency"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Currency = data
-		case "unitAmount":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unitAmount"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.UnitAmount = data
-		case "productName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ProductName = data
-		}
-	}
-
-	return it, nil
-}
-
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -6096,21 +6017,6 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
-	res, err := graphql.UnmarshalInt(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
-	res := graphql.MarshalInt(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) unmarshalNInt642int64(ctx context.Context, v interface{}) (int64, error) {
 	res, err := graphql.UnmarshalInt64(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6124,33 +6030,6 @@ func (ec *executionContext) marshalNInt642int64(ctx context.Context, sel ast.Sel
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNLineItemInput2planetcastdevᚋgraphᚋmodelᚐLineItemInput(ctx context.Context, v interface{}) (model.LineItemInput, error) {
-	res, err := ec.unmarshalInputLineItemInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNLineItemInput2ᚕplanetcastdevᚋgraphᚋmodelᚐLineItemInputᚄ(ctx context.Context, v interface{}) ([]model.LineItemInput, error) {
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]model.LineItemInput, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNLineItemInput2planetcastdevᚋgraphᚋmodelᚐLineItemInput(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) unmarshalNPriceDataInput2planetcastdevᚋgraphᚋmodelᚐPriceDataInput(ctx context.Context, v interface{}) (model.PriceDataInput, error) {
-	res, err := ec.unmarshalInputPriceDataInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNProject2planetcastdevᚋdatabaseᚐProject(ctx context.Context, sel ast.SelectionSet, v database.Project) graphql.Marshaler {

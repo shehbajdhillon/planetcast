@@ -112,7 +112,7 @@ func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscription
 }
 
 const createTeam = `-- name: CreateTeam :one
-INSERT INTO team (slug, name, team_type, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, slug, name, team_type, created
+INSERT INTO team (slug, name, team_type, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, slug, name, stripe_customer_id, team_type, created
 `
 
 type CreateTeamParams struct {
@@ -128,6 +128,7 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 		&i.ID,
 		&i.Slug,
 		&i.Name,
+		&i.StripeCustomerID,
 		&i.TeamType,
 		&i.Created,
 	)
@@ -348,7 +349,7 @@ func (q *Queries) GetSubscriptionByTeamIdSubcriptionId(ctx context.Context, arg 
 }
 
 const getSubscriptionsByTeamId = `-- name: GetSubscriptionsByTeamId :many
-SELECT id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created FROM subscription_plan WHERE team_id = $1 ORDER BY start_date
+SELECT id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created FROM subscription_plan WHERE team_id = $1 ORDER BY created
 `
 
 func (q *Queries) GetSubscriptionsByTeamId(ctx context.Context, teamID int64) ([]SubscriptionPlan, error) {
@@ -382,7 +383,7 @@ func (q *Queries) GetSubscriptionsByTeamId(ctx context.Context, teamID int64) ([
 }
 
 const getTeamById = `-- name: GetTeamById :one
-SELECT id, slug, name, team_type, created FROM team WHERE id = $1 LIMIT 1
+SELECT id, slug, name, stripe_customer_id, team_type, created FROM team WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetTeamById(ctx context.Context, id int64) (Team, error) {
@@ -392,6 +393,7 @@ func (q *Queries) GetTeamById(ctx context.Context, id int64) (Team, error) {
 		&i.ID,
 		&i.Slug,
 		&i.Name,
+		&i.StripeCustomerID,
 		&i.TeamType,
 		&i.Created,
 	)
@@ -399,7 +401,7 @@ func (q *Queries) GetTeamById(ctx context.Context, id int64) (Team, error) {
 }
 
 const getTeamBySlug = `-- name: GetTeamBySlug :one
-SELECT id, slug, name, team_type, created FROM team WHERE slug = $1 LIMIT 1
+SELECT id, slug, name, stripe_customer_id, team_type, created FROM team WHERE slug = $1 LIMIT 1
 `
 
 func (q *Queries) GetTeamBySlug(ctx context.Context, slug string) (Team, error) {
@@ -409,6 +411,7 @@ func (q *Queries) GetTeamBySlug(ctx context.Context, slug string) (Team, error) 
 		&i.ID,
 		&i.Slug,
 		&i.Name,
+		&i.StripeCustomerID,
 		&i.TeamType,
 		&i.Created,
 	)
@@ -655,6 +658,29 @@ func (q *Queries) UpdateTargetMediaById(ctx context.Context, arg UpdateTargetMed
 		&i.IsSource,
 		&i.Status,
 		&i.Progress,
+		&i.Created,
+	)
+	return i, err
+}
+
+const updateTeamStripeCustomerIdByTeamId = `-- name: UpdateTeamStripeCustomerIdByTeamId :one
+UPDATE team SET stripe_customer_id = $2 WHERE id = $1 RETURNING id, slug, name, stripe_customer_id, team_type, created
+`
+
+type UpdateTeamStripeCustomerIdByTeamIdParams struct {
+	ID               int64
+	StripeCustomerID sql.NullString
+}
+
+func (q *Queries) UpdateTeamStripeCustomerIdByTeamId(ctx context.Context, arg UpdateTeamStripeCustomerIdByTeamIdParams) (Team, error) {
+	row := q.db.QueryRowContext(ctx, updateTeamStripeCustomerIdByTeamId, arg.ID, arg.StripeCustomerID)
+	var i Team
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.Name,
+		&i.StripeCustomerID,
+		&i.TeamType,
 		&i.Created,
 	)
 	return i, err

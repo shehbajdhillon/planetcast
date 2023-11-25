@@ -17,6 +17,7 @@ CREATE TABLE team (
   id BIGSERIAL PRIMARY KEY NOT NULL,
   slug TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
+  stripe_customer_id TEXT UNIQUE,
   team_type TEAM_TYPE NOT NULL,
   created TIMESTAMP NOT NULL
 );
