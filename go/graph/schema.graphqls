@@ -66,10 +66,15 @@ type Mutation {
   createTranslation(projectId: Int64! @ownsProject, targetLanguage: String!, lipSync: Boolean!): Transformation! @loggedIn
   deleteTransformation(transformationId: Int64! @ownsTransformation): Transformation! @loggedIn
   createCheckoutSession(teamSlug: String! @memberTeam, lookUpKey: String!): CheckoutSessionResponse! @loggedIn
+  createPortalSession(teamSlug: String! @memberTeam): PortalSessionResponse! @loggedIn
 }
 
 type CheckoutSessionResponse {
   sessionId: String!
+}
+
+type PortalSessionResponse {
+  sessionUrl: String!
 }
 
 enum TeamType {

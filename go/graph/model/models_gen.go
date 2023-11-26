@@ -12,6 +12,10 @@ type CheckoutSessionResponse struct {
 	SessionID string `json:"sessionId"`
 }
 
+type PortalSessionResponse struct {
+	SessionURL string `json:"sessionUrl"`
+}
+
 type UploadOption string
 
 const (

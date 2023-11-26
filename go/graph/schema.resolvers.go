@@ -20,6 +20,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/google/uuid"
 	stripe "github.com/stripe/stripe-go/v76"
+	portalsession "github.com/stripe/stripe-go/v76/billingportal/session"
 	"github.com/stripe/stripe-go/v76/checkout/session"
 	"github.com/stripe/stripe-go/v76/price"
 	"github.com/tabbed/pqtype"
@@ -270,6 +271,10 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, teamSlug s
 		price = p
 	}
 
+	if price == nil {
+		return model.CheckoutSessionResponse{}, fmt.Errorf("No item found")
+	}
+
 	var stripeLineItems []*stripe.CheckoutSessionLineItemParams
 	stripeLineItems = append(stripeLineItems, &stripe.CheckoutSessionLineItemParams{
 		Price:    stripe.String(price.ID),
@@ -294,6 +299,35 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, teamSlug s
 	}
 
 	return model.CheckoutSessionResponse{SessionID: session.ID}, nil
+}
+
+// CreatePortalSession is the resolver for the createPortalSession field.
+func (r *mutationResolver) CreatePortalSession(ctx context.Context, teamSlug string) (model.PortalSessionResponse, error) {
+	production := os.Getenv("PRODUCTION") != ""
+
+	baseUrl := "https://www.planetcast.ai"
+	if production == false {
+		baseUrl = "http://localhost:3000"
+	}
+
+	currentTeam, err := r.DB.GetTeamBySlug(ctx, teamSlug)
+	if err != nil || currentTeam.StripeCustomerID.Valid == false {
+		return model.PortalSessionResponse{}, fmt.Errorf("No customer records found")
+	}
+
+	ReturnURL := fmt.Sprintf("%s/dashboard/%s/settings/subscription", baseUrl, teamSlug)
+	customerId := currentTeam.StripeCustomerID.String
+	params := &stripe.BillingPortalSessionParams{
+		Customer:  stripe.String(customerId),
+		ReturnURL: stripe.String(ReturnURL),
+	}
+
+	ps, err := portalsession.New(params)
+	if err != nil {
+		return model.PortalSessionResponse{}, err
+	}
+
+	return model.PortalSessionResponse{SessionURL: ps.URL}, nil
 }
 
 // Transformations is the resolver for the transformations field.
