@@ -3,9 +3,6 @@ package paymentsmiddleware
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
-	"io"
-	"net/http"
 	"os"
 	"planetcastdev/auth"
 	"planetcastdev/database"
@@ -13,8 +10,8 @@ import (
 	"github.com/stripe/stripe-go/v76"
 	"github.com/stripe/stripe-go/v76/customer"
 	"github.com/stripe/stripe-go/v76/paymentmethod"
+	"github.com/stripe/stripe-go/v76/product"
 	"github.com/stripe/stripe-go/v76/subscription"
-	"github.com/stripe/stripe-go/v76/webhook"
 	"go.uber.org/zap"
 )
 
@@ -94,8 +91,29 @@ func (p *Payments) DeleteCustomer(customerId string) (*stripe.Customer, error) {
 	return customer.Del(customerId, nil)
 }
 
+func (p *Payments) DeleteCustomerFromDB(ctx context.Context, customerId string) error {
+	team, err := p.database.GetTeamByStripeCustomerId(ctx, sql.NullString{Valid: true, String: customerId})
+
+	if err != nil {
+		return err
+	}
+
+	team, err = p.database.UpdateTeamStripeCustomerIdByTeamId(ctx, database.UpdateTeamStripeCustomerIdByTeamIdParams{
+		ID:               team.ID,
+		StripeCustomerID: sql.NullString{Valid: false, String: ""},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	p.logger.Info("Deleted stripe customer id for team", zap.String("team_name", team.Name), zap.Int64("team_id", team.ID))
+
+	return nil
+}
+
 // Subscription Management
-func (p *Payments) CreateSubcription(customerId string, priceId string) (*stripe.Subscription, error) {
+func (p *Payments) CreateSubscription(customerId string, priceId string) (*stripe.Subscription, error) {
 	params := &stripe.SubscriptionParams{
 		Customer: stripe.String(customerId),
 		Items: []*stripe.SubscriptionItemsParams{
@@ -105,11 +123,32 @@ func (p *Payments) CreateSubcription(customerId string, priceId string) (*stripe
 	return subscription.New(params)
 }
 
-func (p *Payments) GetSubcription(subscriptionId string) (*stripe.Subscription, error) {
+func (p *Payments) GetSubscription(subscriptionId string) (*stripe.Subscription, error) {
 	return subscription.Get(subscriptionId, nil)
 }
 
-func (p *Payments) CancelSubcription(subscriptionId string) (*stripe.Subscription, error) {
+func (p *Payments) GetSubscriptionProducts(subscriptionId string) ([]*stripe.Product, error) {
+
+	sub, err := p.GetSubscription(subscriptionId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	productArray := []*stripe.Product{}
+
+	for _, item := range sub.Items.Data {
+		product, err := product.Get(item.Price.Product.ID, nil)
+		if err != nil {
+			return nil, err
+		}
+		productArray = append(productArray, product)
+	}
+
+	return productArray, nil
+}
+
+func (p *Payments) CancelSubscription(subscriptionId string) (*stripe.Subscription, error) {
 	params := &stripe.SubscriptionCancelParams{
 		InvoiceNow: stripe.Bool(true),
 		Prorate:    stripe.Bool(true),
@@ -155,83 +194,3 @@ func ListPaymentMethods(customerId string, paymentMethodType string) ([]*stripe.
 }
 
 // Webhook Handler
-func HandleStripeWebhook(w http.ResponseWriter, r *http.Request, endpointSecret string) {
-	const MaxBodyBytes = int64(65536)
-	r.Body = http.MaxBytesReader(w, r.Body, MaxBodyBytes)
-	payload, err := io.ReadAll(r.Body)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "Error reading request body")
-		return
-	}
-
-	event := stripe.Event{}
-	if err := json.Unmarshal(payload, &event); err != nil {
-		RespondWithError(w, http.StatusBadRequest, "Error parsing webhook JSON")
-		return
-	}
-
-	sigHeader := r.Header.Get("Stripe-Signature")
-	_, err = webhook.ConstructEvent(payload, sigHeader, endpointSecret)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "Error verifying webhook signature")
-		return
-	}
-
-	switch event.Type {
-
-	case "payment_intent.succeeded":
-		var paymentIntent stripe.PaymentIntent
-		err := json.Unmarshal(event.Data.Raw, &paymentIntent)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Error parsing payment intent")
-			return
-		}
-
-	case "payment_intent.payment_failed":
-		var paymentIntent stripe.PaymentIntent
-		err := json.Unmarshal(event.Data.Raw, &paymentIntent)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Error parsing payment intent")
-			return
-		}
-
-	case "customer.subcription.created":
-		var subscription stripe.Subscription
-		err := json.Unmarshal(event.Data.Raw, &subscription)
-		if err != nil {
-			RespondWithJSON(w, http.StatusInternalServerError, "Error parsing subscription")
-			return
-		}
-
-	default:
-		RespondWithError(w, http.StatusNotFound, "Event type not handled")
-		return
-	}
-
-	RespondWithError(w, http.StatusNotFound, "Event type not handled")
-	return
-
-}
-
-// RespondWithError sends an error response with a given HTTP status code and error message.
-func RespondWithError(w http.ResponseWriter, code int, message string) {
-	RespondWithJSON(w, code, map[string]string{"error": message})
-}
-
-// RespondWithJSON sends a JSON response.
-func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	response, err := json.Marshal(payload)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Internal Server Error"))
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(response)
-}
-
-// FormatStripeAmount formats amount in cents to a float value.
-func FormatStripeAmount(amount int64) float64 {
-	return float64(amount) / 100
-}

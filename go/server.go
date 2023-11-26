@@ -91,6 +91,7 @@ func main() {
 	}).Handler)
 
 	router.Handle("/", GqlServer)
+	router.Post("/stripe-webhook", Payments.HandleStripeWebhook)
 
 	if production == false {
 		Logger.Info("Connect to http://localhost:" + port + " for GraphQL server")

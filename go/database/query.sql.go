@@ -12,6 +12,29 @@ import (
 	"github.com/tabbed/pqtype"
 )
 
+const addSubscriptionCreditsByTeamId = `-- name: AddSubscriptionCreditsByTeamId :one
+UPDATE subscription_plan SET remaining_credits = remaining_credits + $2 WHERE team_id = $1 RETURNING id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created
+`
+
+type AddSubscriptionCreditsByTeamIdParams struct {
+	TeamID           int64
+	RemainingCredits int64
+}
+
+func (q *Queries) AddSubscriptionCreditsByTeamId(ctx context.Context, arg AddSubscriptionCreditsByTeamIdParams) (SubscriptionPlan, error) {
+	row := q.db.QueryRowContext(ctx, addSubscriptionCreditsByTeamId, arg.TeamID, arg.RemainingCredits)
+	var i SubscriptionPlan
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.StripeSubscriptionID,
+		&i.SubscriptionActive,
+		&i.RemainingCredits,
+		&i.Created,
+	)
+	return i, err
+}
+
 const addTeamMembership = `-- name: AddTeamMembership :one
 INSERT INTO team_membership (team_id, user_id, membership_type, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, team_id, user_id, membership_type, created
 `
@@ -325,17 +348,35 @@ func (q *Queries) GetSubscriptionById(ctx context.Context, id int64) (Subscripti
 	return i, err
 }
 
-const getSubscriptionByTeamIdSubcriptionId = `-- name: GetSubscriptionByTeamIdSubcriptionId :one
+const getSubscriptionByStripeSubscriptionId = `-- name: GetSubscriptionByStripeSubscriptionId :one
+SELECT id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created FROM subscription_plan WHERE stripe_subscription_id = $1 LIMIT 1
+`
+
+func (q *Queries) GetSubscriptionByStripeSubscriptionId(ctx context.Context, stripeSubscriptionID sql.NullString) (SubscriptionPlan, error) {
+	row := q.db.QueryRowContext(ctx, getSubscriptionByStripeSubscriptionId, stripeSubscriptionID)
+	var i SubscriptionPlan
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.StripeSubscriptionID,
+		&i.SubscriptionActive,
+		&i.RemainingCredits,
+		&i.Created,
+	)
+	return i, err
+}
+
+const getSubscriptionByTeamIdSubscriptionId = `-- name: GetSubscriptionByTeamIdSubscriptionId :one
 SELECT id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created FROM subscription_plan WHERE team_id = $1 AND id = $2 LIMIT 1
 `
 
-type GetSubscriptionByTeamIdSubcriptionIdParams struct {
+type GetSubscriptionByTeamIdSubscriptionIdParams struct {
 	TeamID int64
 	ID     int64
 }
 
-func (q *Queries) GetSubscriptionByTeamIdSubcriptionId(ctx context.Context, arg GetSubscriptionByTeamIdSubcriptionIdParams) (SubscriptionPlan, error) {
-	row := q.db.QueryRowContext(ctx, getSubscriptionByTeamIdSubcriptionId, arg.TeamID, arg.ID)
+func (q *Queries) GetSubscriptionByTeamIdSubscriptionId(ctx context.Context, arg GetSubscriptionByTeamIdSubscriptionIdParams) (SubscriptionPlan, error) {
+	row := q.db.QueryRowContext(ctx, getSubscriptionByTeamIdSubscriptionId, arg.TeamID, arg.ID)
 	var i SubscriptionPlan
 	err := row.Scan(
 		&i.ID,
@@ -406,6 +447,24 @@ SELECT id, slug, name, stripe_customer_id, team_type, created FROM team WHERE sl
 
 func (q *Queries) GetTeamBySlug(ctx context.Context, slug string) (Team, error) {
 	row := q.db.QueryRowContext(ctx, getTeamBySlug, slug)
+	var i Team
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.Name,
+		&i.StripeCustomerID,
+		&i.TeamType,
+		&i.Created,
+	)
+	return i, err
+}
+
+const getTeamByStripeCustomerId = `-- name: GetTeamByStripeCustomerId :one
+SELECT id, slug, name, stripe_customer_id, team_type, created FROM team WHERE stripe_customer_id = $1
+`
+
+func (q *Queries) GetTeamByStripeCustomerId(ctx context.Context, stripeCustomerID sql.NullString) (Team, error) {
+	row := q.db.QueryRowContext(ctx, getTeamByStripeCustomerId, stripeCustomerID)
 	var i Team
 	err := row.Scan(
 		&i.ID,
@@ -610,6 +669,52 @@ func (q *Queries) GetUserById(ctx context.Context, id int64) (Userinfo, error) {
 		&i.ID,
 		&i.Email,
 		&i.FullName,
+		&i.Created,
+	)
+	return i, err
+}
+
+const setSubscriptionActiveStatusByTeamId = `-- name: SetSubscriptionActiveStatusByTeamId :one
+UPDATE subscription_plan SET subscription_active = $2 WHERE team_id = $1 RETURNING id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created
+`
+
+type SetSubscriptionActiveStatusByTeamIdParams struct {
+	TeamID             int64
+	SubscriptionActive bool
+}
+
+func (q *Queries) SetSubscriptionActiveStatusByTeamId(ctx context.Context, arg SetSubscriptionActiveStatusByTeamIdParams) (SubscriptionPlan, error) {
+	row := q.db.QueryRowContext(ctx, setSubscriptionActiveStatusByTeamId, arg.TeamID, arg.SubscriptionActive)
+	var i SubscriptionPlan
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.StripeSubscriptionID,
+		&i.SubscriptionActive,
+		&i.RemainingCredits,
+		&i.Created,
+	)
+	return i, err
+}
+
+const setSubscriptionStripeIdByTeamId = `-- name: SetSubscriptionStripeIdByTeamId :one
+UPDATE subscription_plan SET stripe_subscription_id = $2 WHERE team_id = $1 RETURNING id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created
+`
+
+type SetSubscriptionStripeIdByTeamIdParams struct {
+	TeamID               int64
+	StripeSubscriptionID sql.NullString
+}
+
+func (q *Queries) SetSubscriptionStripeIdByTeamId(ctx context.Context, arg SetSubscriptionStripeIdByTeamIdParams) (SubscriptionPlan, error) {
+	row := q.db.QueryRowContext(ctx, setSubscriptionStripeIdByTeamId, arg.TeamID, arg.StripeSubscriptionID)
+	var i SubscriptionPlan
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.StripeSubscriptionID,
+		&i.SubscriptionActive,
+		&i.RemainingCredits,
 		&i.Created,
 	)
 	return i, err

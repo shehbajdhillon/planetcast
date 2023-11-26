@@ -67,23 +67,25 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, teamType database.Tea
 		MembershipType: database.MembershipTypeOWNER,
 	})
 
+	TRIAL_MINUTES := 0
 	if addTrial == true {
-		TRIAL_MINUTES := 10
-		_, err := r.DB.CreateSubscription(ctx, database.CreateSubscriptionParams{
-			TeamID:               team.ID,
-			StripeSubscriptionID: sql.NullString{Valid: false, String: ""},
-			SubscriptionActive:   false,
-			RemainingCredits:     int64(TRIAL_MINUTES),
-		})
+		TRIAL_MINUTES = 10
+	}
 
-		if err != nil {
-			r.Logger.Error(
-				"Could not add trial for team",
-				zap.Error(err),
-				zap.Int64("team_id", team.ID),
-				zap.String("team_name", team.Name),
-			)
-		}
+	_, err = r.DB.CreateSubscription(ctx, database.CreateSubscriptionParams{
+		TeamID:               team.ID,
+		StripeSubscriptionID: sql.NullString{Valid: false, String: ""},
+		SubscriptionActive:   false,
+		RemainingCredits:     int64(TRIAL_MINUTES),
+	})
+
+	if err != nil {
+		r.Logger.Error(
+			"Could not add subscription plan for team",
+			zap.Error(err),
+			zap.Int64("team_id", team.ID),
+			zap.String("team_name", team.Name),
+		)
 	}
 
 	return team, nil
@@ -422,7 +424,7 @@ func (r *teamResolver) SubscriptionPlans(ctx context.Context, obj *database.Team
 		return r.DB.GetSubscriptionsByTeamId(ctx, obj.ID)
 	}
 
-	subscription, err := r.DB.GetSubscriptionByTeamIdSubcriptionId(ctx, database.GetSubscriptionByTeamIdSubcriptionIdParams{TeamID: obj.ID, ID: *subscriptionID})
+	subscription, err := r.DB.GetSubscriptionByTeamIdSubscriptionId(ctx, database.GetSubscriptionByTeamIdSubscriptionIdParams{TeamID: obj.ID, ID: *subscriptionID})
 	return []database.SubscriptionPlan{subscription}, err
 }
 
