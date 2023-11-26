@@ -1,10 +1,9 @@
 import { Button as ChakraButton, ButtonProps, useColorModeValue } from "@chakra-ui/react";
 
-interface FlipProps {
+interface NavButtonProps extends ButtonProps {
   flip?: boolean;
   gradient?: boolean;
 }
-interface NavButtonProps extends ButtonProps, FlipProps {}
 
 const Button: React.FC<NavButtonProps> = (props) => {
 

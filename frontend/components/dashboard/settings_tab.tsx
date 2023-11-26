@@ -17,7 +17,8 @@ import {
   Text,
   VStack,
   useDisclosure,
-  useToast
+  useToast,
+  useColorModeValue
 } from "@chakra-ui/react";
 import { Menu } from "lucide-react";
 import { useRouter } from "next/router";
@@ -26,6 +27,17 @@ import StripeCheckoutForm from "../stripe_checkout";
 
 import { useSearchParams } from 'next/navigation';
 import { Team } from "@/types";
+import PricingComponent from "../marketing_page/pricing_component";
+import { gql, useMutation } from "@apollo/client";
+import { useStripe } from "@stripe/react-stripe-js";
+
+const CREATE_STRIPE_CHECKOUT = gql`
+  mutation CreateStripeCheckout($teamSlug: String!, $lookUpKey: String!) {
+    createCheckoutSession(teamSlug: $teamSlug, lookUpKey: $lookUpKey) {
+      sessionId
+    }
+  }
+`;
 
 interface TabButtonsProps {
   tabIdx: number;
@@ -100,7 +112,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ teamSlug, params, loading, te
       w={"full"}
       hidden={loading}
     >
-      <Box w="full" maxW={"1200px"}>
+      <Box w="full" maxW={"1450px"}>
         <Grid
           templateAreas={{
             base: `
@@ -116,7 +128,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ teamSlug, params, loading, te
           <GridItem area={"sidebar"} display={{ base: "none", lg: "block" }}>
             <TabButtons tabIdx={tabIdx} switchTab={switchTab} />
           </GridItem>
-          <GridItem area={"main"} maxW={"912px"}>
+          <GridItem area={"main"} w="full">
 
             <Drawer isOpen={isOpen} onClose={onClose} placement="left" size={"md"}>
               <DrawerOverlay />
@@ -144,6 +156,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ teamSlug, params, loading, te
   );
 };
 
+
 interface SubscriptionSettingsTabProps {
   drawerOpen: () => void;
   teamSlug: string;
@@ -157,7 +170,29 @@ const SubscriptionSettingsTab: React.FC<SubscriptionSettingsTabProps> = (props) 
   const router = useRouter();
   const toast = useToast();
 
+  const stripe = useStripe();
+
   const currentSubscription = team?.subscriptionPlans[0];
+
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const onUpdateClick = () => {
+    setShowUpgrade(true);
+    router.push('#upgrades');
+  }
+
+  const [annualPricing, setAnnualPricing] = useState(true);
+  const bgColor = useColorModeValue("black", "white");
+  const textColor = useColorModeValue("white", "black");
+
+  const [createCheckoutSession, { loading }] = useMutation(CREATE_STRIPE_CHECKOUT);
+  const handleCheckout = async (lookUpKey: string) => {
+    const response = await createCheckoutSession({ variables: { teamSlug, lookUpKey } });
+    const sessionId = response.data?.createCheckoutSession?.sessionId;
+    const res = await stripe?.redirectToCheckout({ sessionId });
+    if (res?.error) {
+      console.log('[stripe error]', res.error.message);
+    }
+  };
 
   useEffect(() => {
     const action = searchParams.get("action");
@@ -265,11 +300,53 @@ const SubscriptionSettingsTab: React.FC<SubscriptionSettingsTabProps> = (props) 
           }
 
           <Box w="full" display="flex">
-            <StripeCheckoutForm teamSlug={teamSlug} subscriptionActive={currentSubscription?.subscriptionActive}/>
+            <StripeCheckoutForm
+              teamSlug={teamSlug}
+              subscriptionActive={currentSubscription?.subscriptionActive}
+              onUpdateClick={onUpdateClick}
+            />
           </Box>
-
         </VStack>
       </Stack>
+
+      <Box id="upgrades" scrollMarginTop={"120px"} />
+      { showUpgrade &&
+        <VStack spacing={"30px"} pt="20px" pb="50px" w="full">
+          <HStack borderWidth={"1px"} p="5px" rounded={"md"}>
+            <Button
+              onClick={() => setAnnualPricing(false)}
+              bgColor={!annualPricing ? bgColor : textColor}
+              textColor={!annualPricing ? textColor : bgColor}
+              bgGradient={!annualPricing ? 'linear(to-tl, #007CF0, #01DFD8)' : ''}
+              _hover={{
+                backgroundColor: !annualPricing ? bgColor : textColor,
+                textColor: annualPricing ? bgColor : textColor,
+              }}
+            >
+              Monthly
+            </Button>
+            <Button
+              onClick={() => setAnnualPricing(true)}
+              bgColor={annualPricing ? bgColor : textColor}
+              textColor={annualPricing ? textColor : bgColor}
+              bgGradient={annualPricing ? 'linear(to-tl, #007CF0, #01DFD8)' : ''}
+              _hover={{
+                backgroundColor: annualPricing ? bgColor : textColor,
+                textColor: !annualPricing ? bgColor : textColor,
+              }}
+            >
+              Annual
+            </Button>
+          </HStack>
+          <PricingComponent
+            p="0px"
+            annualPricing={annualPricing}
+            spacing={{ base: "16px", md: "4px" }}
+            handleCheckout={handleCheckout}
+            marketingPage={false}
+          />
+        </VStack>
+      }
     </VStack>
   );
 };

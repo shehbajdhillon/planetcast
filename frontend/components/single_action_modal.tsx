@@ -7,26 +7,27 @@ import {
   ModalBody,
   ModalCloseButton,
   Center,
+  ModalProps,
 } from '@chakra-ui/react'
 import NProgress from 'nprogress';
-import { useEffect } from 'react';
+import { ReactNode, useEffect } from 'react';
 
 import Button from './button';
 
 
-interface SingleActionModalProps {
+interface SingleActionModalProps extends ModalProps {
   heading: any;
-  body: any;
-  action: () => Promise<void>;
+  action: () => any;
   isOpen: boolean;
   onClose: () => void;
   loading?: boolean;
+  children: ReactNode;
 };
 
 
 const SingleActionModal: React.FC<SingleActionModalProps> = (props) => {
 
-  const {heading, body, action, isOpen, onClose, loading} = props;
+  const {heading, children, action, onClose, loading} = props;
 
   const takeAction = async () => {
     await action();
@@ -39,13 +40,13 @@ const SingleActionModal: React.FC<SingleActionModalProps> = (props) => {
   }, [loading]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
+    <Modal isCentered {...props}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>{heading}</ModalHeader>
         <ModalCloseButton />
-        <ModalBody>
-          {body}
+        <ModalBody overflowY={"auto"} maxH={"600px"}>
+          {children}
         </ModalBody>
         <ModalFooter w="full">
           <Center w={"full"}>

@@ -688,7 +688,7 @@ const PricingSection = () => {
         </Button>
       </HStack>
 
-      <PricingComponent annualPricing={annualPricing} />
+      <PricingComponent annualPricing={annualPricing} marketingPage={true} />
     </Stack>
   );
 };

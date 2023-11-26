@@ -75,11 +75,13 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ projectId, teamSlug }) => {
   const [tabIdx, setTabIdx] = useState(0);
 
   const RenderTabButtons = () => (
-    <VStack w="max" alignItems={"flex-start"} px="10px">
+    <VStack w="full" alignItems={"flex-start"} px="10px" spacing={"10px"}>
       <Button
+        w="full"
         variant={"ghost"}
         onClick={() => setTabIdx(0)}
         borderWidth={tabIdx === 0 ? '1px' : ''}
+        justifyContent={"left"}
       >
         General
       </Button>
@@ -93,7 +95,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ projectId, teamSlug }) => {
       justifyContent={"center"}
       w={"full"}
     >
-      <Box w="full" maxW={"1200px"}>
+      <Box w="full" maxW={"1450px"}>
         <Grid
           templateAreas={{
             base: `
@@ -109,7 +111,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ projectId, teamSlug }) => {
           <GridItem area={"sidebar"} display={{ base: "none", lg: "block" }}>
             <RenderTabButtons />
           </GridItem>
-          <GridItem area={"main"} maxW={"912px"}>
+          <GridItem area={"main"} w="full">
             {tabIdx === 0 &&
               <VStack alignItems={{ lg: "flex-start" }}>
                 <Heading>Danger Zone</Heading>
@@ -130,12 +132,13 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ projectId, teamSlug }) => {
                     <Box>
                       <SingleActionModal
                         heading={"Delete Project"}
-                        body={`Are you sure you want to delete this Project? This will delete the original video and all the dubbings generated. This action is irreversible.`}
                         action={() => deleteProject()}
                         loading={loading}
                         isOpen={isOpen}
                         onClose={onClose}
-                      />
+                      >
+                        Are you sure you want to delete this Project? This will delete the original video and all the dubbings generated. This action is irreversible.
+                      </SingleActionModal>
                       <Button colorScheme="red" onClick={onOpen}>
                         Delete Project
                       </Button>
@@ -333,12 +336,13 @@ const ProjectTab: React.FC<ProjectTabProps> = (props) => {
               { transformation && <Link href={transformation?.targetMedia}><Button leftIcon={<DownloadIcon />} variant={"outline"}>Download</Button></Link> }
               <SingleActionModal
                 heading={"Delete Dubbing"}
-                body={`Are you sure you want to delete this dubbing? This action is irreversible.`}
                 action={() => deleteDubbing(transformations[transformationIdx].id)}
                 loading={deleteTfnLoading}
                 isOpen={isOpen}
                 onClose={onClose}
-              />
+              >
+                Are you sure you want to delete this dubbing? This action is irreversible.
+              </SingleActionModal>
               {!transformations[transformationIdx]?.isSource && <Button onClick={onOpen} leftIcon={<TrashIcon />} variant={"outline"}>Delete Dubbing</Button>}
             </HStack>
           </GridItem>

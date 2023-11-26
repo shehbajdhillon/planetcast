@@ -1,12 +1,19 @@
-import { Box, Text, Button, VStack, HStack, Icon, useColorModeValue, Badge, Stack, Circle, Spacer, Heading } from "@chakra-ui/react";
+import { Box, Text, Button, VStack, HStack, Icon, useColorModeValue, Badge, Stack, Circle, Spacer, Heading, StackProps } from "@chakra-ui/react";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 
-interface PricingComponentProps {
+
+interface PricingComponentProps extends StackProps {
   annualPricing: boolean;
+  marketingPage: boolean;
+  handleCheckout?: (lookUpKey: string) => any;
+  loading?: boolean;
 };
 
-const PricingComponent: React.FC<PricingComponentProps> = ({ annualPricing }) => {
+const PricingComponent: React.FC<PricingComponentProps> = (props) => {
+
+  const { loading, handleCheckout, marketingPage, annualPricing } = props;
+
   const priceColor= useColorModeValue("zinc.600", "zinc.400");
   const cardBgColor = useColorModeValue("white", "black");
 
@@ -18,6 +25,7 @@ const PricingComponent: React.FC<PricingComponentProps> = ({ annualPricing }) =>
         '$1.97 per additional minute of dubbing',
         'Dub videos to 28+ Languagues',
       ],
+      'lookUpKey': annualPricing ? 'starter_annual_test' : 'starter_monthly_test',
     },
     'Pro': {
       'price': annualPricing ? 117 : 137,
@@ -26,6 +34,7 @@ const PricingComponent: React.FC<PricingComponentProps> = ({ annualPricing }) =>
         '$1.47 per additional minute of dubbing',
         'Dub videos to 28+ Languagues',
       ],
+      'lookUpKey': annualPricing ? 'pro_annual_test' : 'pro_monthly_test',
     },
     'Business': {
       'price': annualPricing ? 497 : 547,
@@ -37,6 +46,7 @@ const PricingComponent: React.FC<PricingComponentProps> = ({ annualPricing }) =>
         'API Access',
         "CEO's Phone number",
       ],
+      'lookUpKey': annualPricing ? 'business_annual_test' : 'business_monthly_test',
     }
   };
 
@@ -45,7 +55,7 @@ const PricingComponent: React.FC<PricingComponentProps> = ({ annualPricing }) =>
 
 
   return (
-    <Stack direction={{ base: "column", md: "row" }} w="full" spacing={"80px"} px="16px">
+    <Stack direction={{ base: "column", md: "row" }} w="full" spacing={"80px"} px="16px" {...props}>
       {/* Repeating pattern for Cards, replace as needed */}
       {Object.keys(priceMap).map((tier)  => (
         <Box
@@ -94,23 +104,48 @@ const PricingComponent: React.FC<PricingComponentProps> = ({ annualPricing }) =>
             </VStack>
             <Spacer />
 
-            <Link href={'/dashboard'}>
+            { !marketingPage ?
+
               <Button
                 size={"lg"}
                 backgroundColor={bgColor}
+                isDisabled={loading}
                 textColor={textColor}
                 borderColor={textColor}
                 borderWidth={"1px"}
                 bgGradient={tier === "Pro" ? 'linear(to-tl, #007CF0, #01DFD8)' : ''}
+                onClick={() => handleCheckout?.(priceMap[tier].lookUpKey)}
                 _hover={{
                   backgroundColor: tier === "Pro" ? bgColor : textColor,
                   textColor: textColor,
                   bgGradient: tier === "Pro" ? '' : 'linear(to-tl, #007CF0, #01DFD8)'
                 }}
               >
-                Start for Free
+                Switch
               </Button>
-            </Link>
+
+                :
+
+              <Link href={'/dashboard'}>
+                <Button
+                  size={"lg"}
+                  backgroundColor={bgColor}
+                  textColor={textColor}
+                  borderColor={textColor}
+                  borderWidth={"1px"}
+                  bgGradient={tier === "Pro" ? 'linear(to-tl, #007CF0, #01DFD8)' : ''}
+                  _hover={{
+                    backgroundColor: tier === "Pro" ? bgColor : textColor,
+                    textColor: textColor,
+                    bgGradient: tier === "Pro" ? '' : 'linear(to-tl, #007CF0, #01DFD8)'
+                  }}
+                >
+                  Start for Free
+                </Button>
+              </Link>
+
+            }
+
           </VStack>
         </Box>
       ))}
