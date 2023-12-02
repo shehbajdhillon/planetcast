@@ -203,6 +203,23 @@ func (p *Payments) ListSubscriptions(customerId string) ([]*stripe.Subscription,
 	return subscriptions, i.Err()
 }
 
+func (p *Payments) GetSubscriptionInterval(subscriptionId string) (stripe.PlanInterval, error) {
+	subPlan, err := p.GetSubscription(subscriptionId)
+
+	if err != nil {
+		return "", err
+	}
+
+	if err != nil {
+		return "", fmt.Errorf("No items found for subscription ID %s", subscriptionId)
+	}
+
+	firstItem := subPlan.Items.Data[0]
+	interval := firstItem.Plan.Interval
+
+	return interval, nil
+}
+
 // Payment Management
 func (p *Payments) AttachPaymentMethod(customerId string, paymentMethodId string) (*stripe.PaymentMethod, error) {
 	return paymentmethod.Detach(paymentMethodId, nil)

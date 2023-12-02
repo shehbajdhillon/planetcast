@@ -214,7 +214,7 @@ func (p *Payments) handleInvoicePaid(ctx context.Context, invoice stripe.Invoice
 		return fmt.Errorf("Could not fetch subscription %s products: %s", subscriptionId, err.Error())
 	}
 
-	credits, ok := prod.Metadata["credits_included"]
+	credits, ok := prod.Metadata["monthly_credits_included"]
 	if !ok {
 		return fmt.Errorf("No credits included field in the product %s %s", prod.ID, prod.Name)
 	}
@@ -228,6 +228,12 @@ func (p *Payments) handleInvoicePaid(ctx context.Context, invoice stripe.Invoice
 
 	if value <= 0 {
 		return fmt.Errorf("Invalid amount of credits included (%d) in the subscription %s", value, subscriptionId)
+	}
+
+	interval, _ := p.GetSubscriptionInterval(subscriptionId)
+
+	if interval == stripe.PlanIntervalYear {
+		value *= 12
 	}
 
 	sub_plan, err := p.database.AddSubscriptionCreditsByTeamId(ctx, database.AddSubscriptionCreditsByTeamIdParams{
