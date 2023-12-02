@@ -1,5 +1,4 @@
 import { useMutation, gql } from '@apollo/client';
-import { useStripe } from '@stripe/react-stripe-js';
 import { Spacer, Stack } from '@chakra-ui/react';
 import Button from './button';
 import { Button as ChakraButton } from '@chakra-ui/react';
@@ -23,11 +22,7 @@ interface StripeCheckoutFormProps {
 const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ onUpdateClick, teamSlug, subscriptionActive }) => {
 
   const router = useRouter();
-
   const [createPortalSession, { loading: portalLoading, error: portalError }] = useMutation(CREATE_STRIPE_PORTAL);
-
-  const stripe = useStripe();
-
 
   const handlePortalSession = async () => {
     const response = await createPortalSession({ variables: { teamSlug } });
@@ -49,12 +44,17 @@ const StripeCheckoutForm: React.FC<StripeCheckoutFormProps> = ({ onUpdateClick, 
         Buy Minutes
       </Button>
       <Button isDisabled={portalLoading} onClick={handlePortalSession} flip={true}>
-        Manage Invoices
+        Manage Billing
       </Button>
 
       <Spacer />
 
-      <ChakraButton colorScheme='red' hidden={!subscriptionActive}>
+      <ChakraButton
+        colorScheme='red'
+        isDisabled={portalLoading}
+        onClick={handlePortalSession}
+        hidden={!subscriptionActive}
+      >
         Cancel Subscription
       </ChakraButton>
 

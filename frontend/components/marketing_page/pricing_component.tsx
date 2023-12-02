@@ -53,7 +53,6 @@ const PricingComponent: React.FC<PricingComponentProps> = (props) => {
   const bgColor = useColorModeValue("black", "white");
   const textColor = useColorModeValue("white", "black");
 
-
   return (
     <Stack direction={{ base: "column", md: "row" }} w="full" spacing={"80px"} px="16px" {...props}>
       {/* Repeating pattern for Cards, replace as needed */}
@@ -121,7 +120,7 @@ const PricingComponent: React.FC<PricingComponentProps> = (props) => {
                   bgGradient: tier === "Pro" ? '' : 'linear(to-tl, #007CF0, #01DFD8)'
                 }}
               >
-                Switch
+                {'Switch'}
               </Button>
 
                 :

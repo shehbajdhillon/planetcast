@@ -19,9 +19,19 @@ export interface Project {
 export interface SubscriptionPlan {
   id: number;
   teamId: number;
-  stripeSubscriptionId: string;
-  subscriptionActive: boolean;
+  stripeSubscriptionId?: string;
   remainingCredits: number;
+  subscriptionData?: SubscriptionData;
+}
+
+export interface SubscriptionData {
+  currentPeriodStart: string,
+  currentPeriodEnd: string,
+  status: string,
+  interval: string,
+  planName: string,
+  costInUsd: number,
+  lastFourCardDigits: string,
 }
 
 export interface Transformation {

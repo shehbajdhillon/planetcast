@@ -30,6 +30,7 @@ import { Team } from "@/types";
 import PricingComponent from "../marketing_page/pricing_component";
 import { gql, useMutation } from "@apollo/client";
 import { useStripe } from "@stripe/react-stripe-js";
+import { convertUtcToLocal } from "@/utils";
 
 const CREATE_STRIPE_CHECKOUT = gql`
   mutation CreateStripeCheckout($teamSlug: String!, $lookUpKey: String!) {
@@ -174,6 +175,7 @@ const SubscriptionSettingsTab: React.FC<SubscriptionSettingsTabProps> = (props) 
 
   const currentSubscription = team?.subscriptionPlans[0];
 
+
   const [showUpgrade, setShowUpgrade] = useState(false);
   const onUpdateClick = () => {
     setShowUpgrade(true);
@@ -231,6 +233,11 @@ const SubscriptionSettingsTab: React.FC<SubscriptionSettingsTabProps> = (props) 
 
   }, []);
 
+  const subActive = currentSubscription?.stripeSubscriptionId !== null;
+  const subscriptionData = currentSubscription?.subscriptionData
+
+  const subStatus = subscriptionData?.status;
+
   return (
     <VStack alignItems={{ lg: "flex-start" }}>
       <Button
@@ -255,12 +262,16 @@ const SubscriptionSettingsTab: React.FC<SubscriptionSettingsTabProps> = (props) 
         rounded={"lg"}
       >
         <VStack h="full" w="full" spacing="15px">
-          {currentSubscription?.subscriptionActive ?
+          {subActive ?
             <HStack w="full">
-              <Badge colorScheme="green" rounded={"md"} p={1}>
-                Active
+              <Badge
+                colorScheme={subStatus === "active" ? "green" : "red"}
+                rounded={"md"}
+                p={1}
+              >
+                { subStatus }
               </Badge>
-            <Text fontWeight={"semibold"}>Starter Monthly</Text>
+            <Text fontWeight={"semibold"}>{ subscriptionData?.planName }</Text>
             </HStack>
           :
             <HStack w="full">
@@ -272,16 +283,14 @@ const SubscriptionSettingsTab: React.FC<SubscriptionSettingsTabProps> = (props) 
           }
 
 
-          {currentSubscription?.subscriptionActive &&
+          {subActive &&
             <>
               <Stack w="full" spacing={"2px"}>
                 <Text fontWeight={"semibold"}>Current Billing Cycle:</Text>
-                <Text fontWeight={"semibold"}>Nov 15 2023 to Dec 25 2023</Text>
-              </Stack>
-
-              <Stack w="full" spacing={"2px"}>
-                <Text fontWeight={"semibold"}>Next Billing Cycle:</Text>
-                <Text fontWeight={"semibold"}>Dec 25 2023 to Jan 25 2023</Text>
+                <Text fontWeight={"semibold"}>
+                  {convertUtcToLocal(subscriptionData?.currentPeriodStart || "")} to {' '}
+                  {convertUtcToLocal(subscriptionData?.currentPeriodEnd || "")}
+                </Text>
               </Stack>
             </>
           }
@@ -291,18 +300,29 @@ const SubscriptionSettingsTab: React.FC<SubscriptionSettingsTabProps> = (props) 
             <Text fontWeight={"semibold"}>{currentSubscription?.remainingCredits}</Text>
           </Stack>
 
-          {currentSubscription?.subscriptionActive &&
+          {subActive && subStatus === "active" ?
             <Stack w="full" spacing={"2px"}>
-              <Text fontWeight={"semibold"}>Subscription automatically renews on Dec 25 2023</Text>
-              <Text>Card ending with 0045 will be charged $60</Text>
+              <Text fontWeight={"semibold"}>
+                Subscription next renews on {convertUtcToLocal(subscriptionData?.currentPeriodEnd || "")} (renews every {subscriptionData?.interval})
+              </Text>
+              <Text>Card ending with {subscriptionData?.lastFourCardDigits} will be charged ${subscriptionData?.costInUsd}</Text>
               <Text>Click on Manage Billing to update payment information</Text>
+            </Stack>
+            :
+            <Stack w="full" spacing={"2px"}>
+              <Text fontWeight={"semibold"}>
+                There is a problem in renewing your subscription.
+              </Text>
+              <Text fontWeight={"semibold"}>
+                Please click on Manage Billing to resolve the issue.
+              </Text>
             </Stack>
           }
 
           <Box w="full" display="flex">
             <StripeCheckoutForm
               teamSlug={teamSlug}
-              subscriptionActive={currentSubscription?.subscriptionActive}
+              subscriptionActive={subActive}
               onUpdateClick={onUpdateClick}
             />
           </Box>

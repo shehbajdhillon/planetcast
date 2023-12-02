@@ -57,8 +57,16 @@ const GET_TEAM_BY_ID = gql`
       subscriptionPlans {
         id
         remainingCredits
-        subscriptionActive
         stripeSubscriptionId
+        subscriptionData {
+          currentPeriodStart
+          currentPeriodEnd
+          status
+          interval
+          planName
+          costInUsd
+          lastFourCardDigits
+        }
       }
     }
   }
