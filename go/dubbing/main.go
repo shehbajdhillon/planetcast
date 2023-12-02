@@ -27,7 +27,6 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-
 type Dubbing struct {
 	storage    *storage.Storage
 	database   *database.Queries
@@ -62,7 +61,6 @@ func Connect(args DubbingConnectProps) *Dubbing {
 		elevenlabs: args.ElevenLabs,
 	}
 }
-
 
 type CreateTransformationParams struct {
 	ProjectID int64
@@ -274,6 +272,7 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 
 	var wg sync.WaitGroup
 	mutex := &sync.Mutex{}
+	errChan := make(chan error, 1)
 
 	wg.Add(len(args.segments))
 
@@ -291,6 +290,8 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 		sem.Acquire(ctx, 1)
 
 		go func(idx int) {
+			defer sem.Release(1)
+			defer wg.Done()
 
 			segmentRetires := 6
 			var translatedSeg *Segment
@@ -314,6 +315,14 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 				}
 			}
 
+			if err != nil {
+				select {
+				case errChan <- err:
+				default:
+				}
+				return
+			}
+
 			mutex.Lock()
 
 			translatedSegments = append(translatedSegments, *translatedSeg)
@@ -328,13 +337,17 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 
 			mutex.Unlock()
 
-			sem.Release(1)
-			wg.Done()
-
 		}(idx)
 	}
 
-	wg.Wait()
+	go func() {
+		wg.Wait()
+		close(errChan)
+	}()
+
+	if err := <-errChan; err != nil {
+		return nil, err
+	}
 
 	// Sort the array by the Id of the segment
 	sort.Slice(translatedSegments, func(i, j int) bool {
