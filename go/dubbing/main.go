@@ -22,40 +22,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/tabbed/pqtype"
 	"go.uber.org/zap"
 	"golang.org/x/sync/semaphore"
 )
 
-func getAudioFileName(identifier string, id int64) string {
-	audioFileName := fmt.Sprintf("%s_%d_audio_file.mp3", identifier, id)
-	return audioFileName
-}
-
-func getVideoSegmentName(identifier string, id int64) string {
-	videoSegmentName := fmt.Sprintf("%s_%d_video_segment.mp4", identifier, id)
-	return videoSegmentName
-}
-
-type WhisperOutput struct {
-	Language string    `json:"detected_language"`
-	Segments []Segment `json:"segments"`
-}
-
-type Segment struct {
-	Id    int64   `json:"id"`
-	Start float64 `json:"start"`
-	End   float64 `json:"end"`
-	Text  string  `json:"text"`
-	Words []Word  `json:"words"`
-}
-
-type Word struct {
-	End   float64 `json:"end"`
-	Start float64 `json:"start"`
-	Word  string  `json:"word"`
-}
 
 type Dubbing struct {
 	storage    *storage.Storage
@@ -92,102 +63,6 @@ func Connect(args DubbingConnectProps) *Dubbing {
 	}
 }
 
-func (d *Dubbing) getTranscript(ctx context.Context, fileName string) (*WhisperOutput, error) {
-
-	fileUrl := d.storage.GetFileLink(fileName)
-
-	retries := 5
-
-	var output any
-
-	for retries > 0 {
-
-		sleepTime := utils.GetExponentialDelaySeconds(5 - retries)
-
-		replicateRequestBody := map[string]interface{}{
-			"version": "4a60104c44dd709fc08a03dfeca6c6906257633dd03fd58663ec896a4eeba30e",
-			"input": map[string]interface{}{
-				"audio":           fileUrl,
-				"model":           "large-v2",
-				"word_timestamps": true,
-			},
-		}
-		jsonBody, err := json.Marshal(replicateRequestBody)
-		output, err = d.replicate.MakeRequest(ctx, bytes.NewBuffer(jsonBody))
-
-		if err == nil {
-			break
-		} else {
-			retries -= 1
-			d.logger.Error("Whisper request failed, retrying after sleeping", zap.Error(err), zap.Int("sleep_time", sleepTime), zap.Int("retries_left", retries))
-			time.Sleep(time.Duration(sleepTime) * time.Second)
-		}
-	}
-
-	if retries <= 0 {
-		d.logger.Error("Failed to transcribe whisper request")
-		return nil, fmt.Errorf("Failed to transcribe whisper request")
-	}
-
-	outputJson, ok := output.(map[string]interface{})
-
-	if !ok {
-		d.logger.Error("Could not parse whisper json output")
-		return nil, fmt.Errorf("Could not parse whisper json output")
-	}
-
-	responseBody, err := json.Marshal(outputJson)
-	if err != nil {
-		d.logger.Error("Could not parse whisper output to bytes")
-		return nil, fmt.Errorf("Could not parse whisper json body to bytes")
-	}
-
-	var whisperOutput WhisperOutput
-	err = json.Unmarshal(responseBody, &whisperOutput)
-	if err != nil {
-		d.logger.Error("Could not parse whisper bytes to struct")
-		return nil, fmt.Errorf("Could not parse whisper bytes to struct")
-	}
-	d.logger.Info("Whisper request processes successfully for:", zap.String("fileName", fileName))
-
-	cleanedSegments := cleanSegments(&whisperOutput)
-	whisperOutput.Segments = cleanedSegments
-
-	return &whisperOutput, nil
-}
-
-func cleanSegments(whisperOutput *WhisperOutput) []Segment {
-	segments := whisperOutput.Segments
-	var newSegmentArray []Segment
-	var idx int64 = 0
-
-	THRESHOLD_SECONDS := 0.20
-
-	for _, seg := range segments {
-
-		if seg.Start >= seg.End {
-			continue
-		}
-		if len(seg.Text) <= 0 {
-			continue
-		}
-
-		segmentText := strings.Trim(seg.Text, " ")
-
-		if idx > 0 && (seg.Start-newSegmentArray[idx-1].End <= THRESHOLD_SECONDS) {
-			newSegmentArray[idx-1].End = seg.End
-			newSegmentArray[idx-1].Text += (" " + segmentText)
-		} else {
-			newSegmentArray = append(
-				newSegmentArray,
-				Segment{Id: idx, Start: seg.Start, End: seg.End, Text: segmentText, Words: []Word{}},
-			)
-			idx += 1
-		}
-	}
-
-	return newSegmentArray
-}
 
 type CreateTransformationParams struct {
 	ProjectID int64
@@ -377,17 +252,6 @@ func (d *Dubbing) CreateTranslation(
 
 	// return the update transformation
 	return &targetTransformation, nil
-}
-
-type VoiceSettings struct {
-	Stability       float64 `json:"stability"`
-	SimilarityBoost float64 `json:"similarity_boost"`
-}
-
-type VoiceRequest struct {
-	Text         string        `json:"text"`
-	ModelID      string        `json:"model_id"`
-	VoiceSetting VoiceSettings `json:"voice_settings"`
 }
 
 type fetchAndDubProps struct {
@@ -763,141 +627,6 @@ func (d *Dubbing) lipSyncClip(ctx context.Context, segment Segment, identifier s
 
 	return nil
 
-}
-
-func (d *Dubbing) concatSegments(ctx context.Context, segments []Segment, identifier string) (string, error) {
-
-	batchSize := 5
-	batchFiles := []string{}
-
-	for i := 0; i < len(segments); i += batchSize {
-		end := i + batchSize
-		if end > len(segments) {
-			end = len(segments)
-		}
-
-		batch := segments[i:end]
-		batchIdentifier := fmt.Sprintf("%s_batch%d_%s", identifier, i/batchSize, uuid.NewString())
-
-		err := d.concatBatchSegments(ctx, batch, batchIdentifier, identifier)
-		if err != nil {
-			return "", err
-		}
-
-		d.logger.Info("Segments concatonated successfully")
-		batchFiles = append(batchFiles, batchIdentifier+"_dubbed.mp4")
-	}
-
-	// Now we need to concatenate the batch files
-	finalOutput, err := d.concatBatchFiles(ctx, batchFiles, identifier, batchSize)
-	if err != nil {
-		return "", err
-	}
-
-	return finalOutput, nil
-}
-
-func (d *Dubbing) concatBatchSegments(ctx context.Context, batch []Segment, batchIdentifier string, identifier string) error {
-	inputList := []string{}
-	filterList := []string{}
-
-	for idx, s := range batch {
-		id := s.Id
-
-		videoSegmentName := getVideoSegmentName(identifier, id)
-		syncedSegmentName := "synced_" + videoSegmentName
-		inputList = append(inputList, fmt.Sprintf("-i file:'%s'", syncedSegmentName))
-		filterList = append(filterList, fmt.Sprintf("[%d:v][%d:a]", idx, idx))
-	}
-
-	filterList = append(filterList, fmt.Sprintf("concat=n=%d:v=1:a=1[v][a]", len(batch)))
-
-	inputArgs := strings.Join(inputList, " ")
-	filterComplex := strings.Join(filterList, "")
-
-	ffmpegCmd := fmt.Sprintf("ffmpeg -threads 1 %s -filter_complex '%s' -map '[v]' -map '[a]' -vsync 2 file:'%s_dubbed.mp4'",
-		inputArgs, filterComplex, batchIdentifier)
-
-	d.logger.Info("Concatenating segments", zap.String("ffmpeg_command", ffmpegCmd))
-
-	_, err := d.ffmpeg.Run(ctx, ffmpegCmd)
-
-	fileList := []string{}
-	for _, s := range batch {
-		fileName := "synced_" + getVideoSegmentName(identifier, s.Id)
-		fileList = append(fileList, fileName)
-	}
-	utils.DeleteFiles(fileList)
-
-	if err != nil {
-		return fmt.Errorf("Could not concat segments: %s\n%s", err.Error(), ffmpegCmd)
-	}
-
-	return nil
-}
-
-func (d *Dubbing) concatBatchFiles(ctx context.Context, batchFiles []string, identifier string, batchSize int) (string, error) {
-	for len(batchFiles) > 1 {
-		newBatchFiles := []string{}
-
-		for i := 0; i < len(batchFiles); i += batchSize {
-			end := i + batchSize
-			if end > len(batchFiles) {
-				end = len(batchFiles)
-			}
-
-			batch := batchFiles[i:end]
-			batchIdentifier := fmt.Sprintf("%s_finalbatch%d_%s", identifier, i/batchSize, uuid.NewString())
-
-			err := d.concatBatch(ctx, batch, batchIdentifier)
-			if err != nil {
-				return "", err
-			}
-
-			d.logger.Info("Batch files concatenated successfully")
-			utils.DeleteFiles(batch)
-			newBatchFiles = append(newBatchFiles, batchIdentifier+"_dubbed.mp4")
-		}
-
-		batchFiles = newBatchFiles
-	}
-
-	// Rename the final batch file to the final output file
-	finalOutput := identifier + "_dubbed.mp4"
-	err := os.Rename(batchFiles[0], finalOutput)
-	if err != nil {
-		return "", fmt.Errorf("Could not rename final output file: %s", err.Error())
-	}
-
-	return finalOutput, nil
-}
-
-func (d *Dubbing) concatBatch(ctx context.Context, batch []string, batchIdentifier string) error {
-	inputList := []string{}
-	filterList := []string{}
-
-	for idx, fileName := range batch {
-		inputList = append(inputList, fmt.Sprintf("-i file:'%s'", fileName))
-		filterList = append(filterList, fmt.Sprintf("[%d:v][%d:a]", idx, idx))
-	}
-
-	filterList = append(filterList, fmt.Sprintf("concat=n=%d:v=1:a=1[v][a]", len(batch)))
-
-	inputArgs := strings.Join(inputList, " ")
-	filterComplex := strings.Join(filterList, "")
-
-	ffmpegCmd := fmt.Sprintf("ffmpeg -threads 1 %s -filter_complex '%s' -map '[v]' -map '[a]' -vsync 2 file:'%s_dubbed.mp4'",
-		inputArgs, filterComplex, batchIdentifier)
-
-	d.logger.Info("Concatenating batch", zap.String("batch_identifier", batchIdentifier), zap.String("ffmpeg_command", ffmpegCmd))
-
-	_, err := d.ffmpeg.Run(ctx, ffmpegCmd)
-
-	if err != nil {
-		return fmt.Errorf("Could not concat batch files: %s\n%s", err.Error(), ffmpegCmd)
-	}
-
-	return nil
 }
 
 func (d *Dubbing) translateSegment(
