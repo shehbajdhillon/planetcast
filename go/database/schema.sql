@@ -27,7 +27,6 @@ CREATE TABLE subscription_plan (
   id BIGSERIAL PRIMARY KEY NOT NULL,
   team_id BIGINT REFERENCES team (id) ON DELETE CASCADE UNIQUE NOT NULL,
   stripe_subscription_id TEXT UNIQUE,
-  subscription_active BOOLEAN NOT NULL DEFAULT FALSE,
   remaining_credits BIGINT NOT NULL,
   created TIMESTAMP NOT NULL
 );

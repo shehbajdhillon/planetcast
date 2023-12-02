@@ -75,7 +75,6 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, teamType database.Tea
 	_, err = r.DB.CreateSubscription(ctx, database.CreateSubscriptionParams{
 		TeamID:               team.ID,
 		StripeSubscriptionID: sql.NullString{Valid: false, String: ""},
-		SubscriptionActive:   false,
 		RemainingCredits:     int64(TRIAL_MINUTES),
 	})
 
@@ -381,11 +380,25 @@ func (r *queryResolver) GetTeamByID(ctx context.Context, teamSlug string) (datab
 }
 
 // StripeSubscriptionID is the resolver for the stripeSubscriptionId field.
-func (r *subscriptionPlanResolver) StripeSubscriptionID(ctx context.Context, obj *database.SubscriptionPlan) (string, error) {
+func (r *subscriptionPlanResolver) StripeSubscriptionID(ctx context.Context, obj *database.SubscriptionPlan) (*string, error) {
 	if obj.StripeSubscriptionID.Valid == false {
-		return "", nil
+		return nil, nil
 	}
-	return obj.StripeSubscriptionID.String, nil
+	subscriptionId := obj.StripeSubscriptionID.String
+	return &subscriptionId, nil
+}
+
+// SubscriptionData is the resolver for the subscriptionData field.
+func (r *subscriptionPlanResolver) SubscriptionData(ctx context.Context, obj *database.SubscriptionPlan) (*model.SubscriptionData, error) {
+	if obj.StripeSubscriptionID.Valid == false {
+		return nil, nil
+	}
+	subscriptionData, err := r.Payments.GetSubscriptionPlanData(obj.StripeSubscriptionID.String)
+	if err != nil {
+		r.Logger.Error("Could not fetch subscription plan data %s", zap.Error(err))
+		return nil, fmt.Errorf("Could not fetch subscription plan data %s", err.Error())
+	}
+	return subscriptionData, nil
 }
 
 // Created is the resolver for the created field.

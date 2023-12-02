@@ -16,6 +16,16 @@ type PortalSessionResponse struct {
 	SessionURL string `json:"sessionUrl"`
 }
 
+type SubscriptionData struct {
+	CurrentPeriodStart string `json:"currentPeriodStart"`
+	CurrentPeriodEnd   string `json:"currentPeriodEnd"`
+	Status             string `json:"status"`
+	Interval           string `json:"interval"`
+	PlanName           string `json:"planName"`
+	CostInUsd          int64  `json:"costInUsd"`
+	LastFourCardDigits string `json:"lastFourCardDigits"`
+}
+
 type UploadOption string
 
 const (

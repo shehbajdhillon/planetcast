@@ -49,9 +49,19 @@ type Userinfo {
 type SubscriptionPlan {
   id: Int64!
   teamId: Int64!
-  stripeSubscriptionId: String!
-  subscriptionActive: Boolean!
+  stripeSubscriptionId: String
   remainingCredits: Int64!
+  subscriptionData: SubscriptionData
+}
+
+type SubscriptionData {
+  currentPeriodStart: DateTime!
+  currentPeriodEnd: DateTime!
+  status: String!
+  interval: String!
+  planName: String!
+  costInUsd: Int64!
+  lastFourCardDigits: String!
 }
 
 type Query {

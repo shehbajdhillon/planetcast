@@ -3,9 +3,12 @@ package paymentsmiddleware
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"os"
 	"planetcastdev/auth"
 	"planetcastdev/database"
+	"planetcastdev/graph/model"
+	"time"
 
 	"github.com/stripe/stripe-go/v76"
 	"github.com/stripe/stripe-go/v76/customer"
@@ -43,6 +46,15 @@ func (p *Payments) createCustomer(email string, name string) (*stripe.Customer, 
 
 func (p *Payments) getCustomer(customerId string) (*stripe.Customer, error) {
 	return customer.Get(customerId, nil)
+}
+
+func (p *Payments) GetLast4CardDigits(paymentMethodId string) (string, error) {
+	pm, err := paymentmethod.Get(paymentMethodId, nil)
+	if err != nil {
+		return "", nil
+	}
+	card := pm.Card
+	return card.Last4, nil
 }
 
 func (p *Payments) UpdateCustomer(customerId string, newEmail string) (*stripe.Customer, error) {
@@ -127,7 +139,7 @@ func (p *Payments) GetSubscription(subscriptionId string) (*stripe.Subscription,
 	return subscription.Get(subscriptionId, nil)
 }
 
-func (p *Payments) GetSubscriptionProducts(subscriptionId string) ([]*stripe.Product, error) {
+func (p *Payments) GetSubscriptionProduct(subscriptionId string) (*stripe.Product, error) {
 
 	sub, err := p.GetSubscription(subscriptionId)
 
@@ -135,17 +147,40 @@ func (p *Payments) GetSubscriptionProducts(subscriptionId string) ([]*stripe.Pro
 		return nil, err
 	}
 
-	productArray := []*stripe.Product{}
-
-	for _, item := range sub.Items.Data {
-		product, err := product.Get(item.Price.Product.ID, nil)
-		if err != nil {
-			return nil, err
-		}
-		productArray = append(productArray, product)
+	if len(sub.Items.Data) <= 0 {
+		return nil, fmt.Errorf("No items found for subscription ID %s", subscriptionId)
 	}
 
-	return productArray, nil
+	firstItem := sub.Items.Data[0]
+	productObject, err := product.Get(firstItem.Price.Product.ID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return productObject, nil
+}
+
+func (p *Payments) GetSubscriptionAmountInUSDAndInterval(subscriptionId string) (int64, string, error) {
+	sub, err := p.GetSubscription(subscriptionId)
+
+	if err != nil {
+		return 0, "", err
+	}
+
+	if len(sub.Items.Data) <= 0 {
+		return 0, "", fmt.Errorf("No items found for subscription ID %s", subscriptionId)
+	}
+
+	firstItem := sub.Items.Data[0]
+	interval := string(firstItem.Plan.Interval)
+
+	// This assumes that firstItem.Plan.Currency will be USD
+	// We are only listing out subscriptions in USD so this works for now
+	// Will have to change in future when we list subsctipions in other currencies
+	// currency := firstItem.Plan.Currency
+	amount := firstItem.Plan.Amount
+
+	return amount / 100, interval, nil
 }
 
 func (p *Payments) CancelSubscription(subscriptionId string) (*stripe.Subscription, error) {
@@ -193,4 +228,53 @@ func ListPaymentMethods(customerId string, paymentMethodType string) ([]*stripe.
 	return paymentMethods, i.Err()
 }
 
-// Webhook Handler
+func (p *Payments) GetSubscriptionPlanData(subscriptionId string) (*model.SubscriptionData, error) {
+
+	subPlan, err := p.GetSubscription(subscriptionId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(subPlan.Items.Data) <= 0 {
+		return nil, fmt.Errorf("No items found for subscription ID %s", subscriptionId)
+	}
+
+	firstItem := subPlan.Items.Data[0]
+	currentPeriodStart := time.Unix(subPlan.CurrentPeriodStart, 0).UTC()
+	currentPeriodEnd := time.Unix(subPlan.CurrentPeriodEnd, 0).UTC()
+	status := string(subPlan.Status)
+	interval := string(firstItem.Plan.Interval)
+
+	// This assumes that firstItem.Plan.Currency will be USD
+	// We are only listing out subscriptions in USD so this works for now
+	// Will have to change in future when we list subsctipions in other currencies
+	// currency := firstItem.Plan.Currency
+	amount := firstItem.Plan.Amount
+	costInUsd := (amount / 100)
+
+	prod, err := p.GetSubscriptionProduct(subscriptionId)
+	if err != nil {
+		return nil, err
+	}
+
+	planName := prod.Name
+
+	paymentMethodId := subPlan.DefaultPaymentMethod.ID
+	lastFourCardDigits, err := p.GetLast4CardDigits(paymentMethodId)
+	if err != nil {
+		return nil, err
+	}
+
+	subscriptionData := model.SubscriptionData{
+		CurrentPeriodStart: currentPeriodStart.String(),
+		CurrentPeriodEnd:   currentPeriodEnd.String(),
+		Status:             status,
+		Interval:           interval,
+		PlanName:           planName,
+		CostInUsd:          costInUsd,
+		LastFourCardDigits: lastFourCardDigits,
+	}
+
+	return &subscriptionData, nil
+}

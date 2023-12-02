@@ -110,7 +110,6 @@ type SubscriptionPlan struct {
 	ID                   int64
 	TeamID               int64
 	StripeSubscriptionID sql.NullString
-	SubscriptionActive   bool
 	RemainingCredits     int64
 	Created              time.Time
 }

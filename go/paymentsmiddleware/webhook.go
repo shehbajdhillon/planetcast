@@ -164,15 +164,6 @@ func (p *Payments) handleSubscriptionDeleted(ctx context.Context, subscription s
 		return fmt.Errorf("Could not fetch team from DB using stripe customer ID %s: %s", customerId, err.Error())
 	}
 
-	_, err = p.database.SetSubscriptionActiveStatusByTeamId(ctx, database.SetSubscriptionActiveStatusByTeamIdParams{
-		TeamID:             teamId,
-		SubscriptionActive: false,
-	})
-
-	if err != nil {
-		return fmt.Errorf("Unable to update subscription status for team: %d: %s", teamId, err.Error())
-	}
-
 	_, err = p.database.SetSubscriptionStripeIdByTeamId(ctx, database.SetSubscriptionStripeIdByTeamIdParams{
 		TeamID:               teamId,
 		StripeSubscriptionID: sql.NullString{Valid: false, String: ""},
@@ -218,26 +209,21 @@ func (p *Payments) handleInvoicePaid(ctx context.Context, invoice stripe.Invoice
 		return fmt.Errorf("Could not find subscription id %s: %s", subscriptionId, err.Error())
 	}
 
-	products, err := p.GetSubscriptionProducts(subscriptionId)
+	prod, err := p.GetSubscriptionProduct(subscriptionId)
 	if err != nil {
 		return fmt.Errorf("Could not fetch subscription %s products: %s", subscriptionId, err.Error())
 	}
 
-	value := 0
+	credits, ok := prod.Metadata["credits_included"]
+	if !ok {
+		return fmt.Errorf("No credits included field in the product %s %s", prod.ID, prod.Name)
+	}
 
-	for _, p := range products {
-		credits, ok := p.Metadata["credits_included"]
-
-		if !ok {
-			return fmt.Errorf("No credits included field in the product %s %s", p.ID, p.Name)
-		}
-
-		parsedInt, err := strconv.Atoi(credits)
-		if err != nil {
-			return fmt.Errorf("Unable to parse included credits string in product (%s %s) '%s': %s", p.ID, p.Name, credits, err.Error())
-		}
-
-		value += parsedInt
+	value, err := strconv.Atoi(credits)
+	if err != nil {
+		return fmt.Errorf(
+			"Unable to parse included credits string in product (%s %s) '%s': %s",
+			prod.ID, prod.Name, credits, err.Error())
 	}
 
 	if value <= 0 {
@@ -251,15 +237,6 @@ func (p *Payments) handleInvoicePaid(ctx context.Context, invoice stripe.Invoice
 
 	if err != nil {
 		return fmt.Errorf("Unable to add %d credits to team %d: %s", value, team.ID, err.Error())
-	}
-
-	sub_plan, err = p.database.SetSubscriptionActiveStatusByTeamId(ctx, database.SetSubscriptionActiveStatusByTeamIdParams{
-		TeamID:             team.ID,
-		SubscriptionActive: true,
-	})
-
-	if err != nil {
-		return fmt.Errorf("Unable to update subscription status for team: %d: %s", team.ID, err.Error())
 	}
 
 	sub_plan, err = p.database.SetSubscriptionStripeIdByTeamId(ctx, database.SetSubscriptionStripeIdByTeamIdParams{
@@ -283,30 +260,8 @@ func (p *Payments) handleInvoicePaid(ctx context.Context, invoice stripe.Invoice
 }
 
 func (p *Payments) handleInvoicePaymentFailed(ctx context.Context, invoice stripe.Invoice) error {
-
 	customerId := invoice.Customer.ID
 	p.logCustomer(customerId, "Subscription Invoice Payment Failed")
-
-	team, err := p.database.GetTeamByStripeCustomerId(ctx, sql.NullString{Valid: true, String: customerId})
-	if err != nil {
-		return fmt.Errorf("Could not fetch team from DB using stripe customer ID %s: %s", customerId, err.Error())
-	}
-
-	_, err = p.database.SetSubscriptionActiveStatusByTeamId(ctx, database.SetSubscriptionActiveStatusByTeamIdParams{
-		TeamID:             team.ID,
-		SubscriptionActive: false,
-	})
-
-	if err != nil {
-		return fmt.Errorf("Unable to update subscription status for team: %d: %s", team.ID, err.Error())
-	}
-
-	p.logger.Info(
-		"Set subscription to unactive due to payment failure for team",
-		zap.String("team_name", team.Name),
-		zap.Int64("team_id", team.ID),
-	)
-
 	return nil
 }
 

@@ -13,7 +13,7 @@ import (
 )
 
 const addSubscriptionCreditsByTeamId = `-- name: AddSubscriptionCreditsByTeamId :one
-UPDATE subscription_plan SET remaining_credits = remaining_credits + $2 WHERE team_id = $1 RETURNING id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created
+UPDATE subscription_plan SET remaining_credits = remaining_credits + $2 WHERE team_id = $1 RETURNING id, team_id, stripe_subscription_id, remaining_credits, created
 `
 
 type AddSubscriptionCreditsByTeamIdParams struct {
@@ -28,7 +28,6 @@ func (q *Queries) AddSubscriptionCreditsByTeamId(ctx context.Context, arg AddSub
 		&i.ID,
 		&i.TeamID,
 		&i.StripeSubscriptionID,
-		&i.SubscriptionActive,
 		&i.RemainingCredits,
 		&i.Created,
 	)
@@ -104,30 +103,23 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 
 const createSubscription = `-- name: CreateSubscription :one
 INSERT INTO subscription_plan
-(team_id, stripe_subscription_id, subscription_active, remaining_credits, created)
-VALUES ($1, $2, $3, $4, clock_timestamp()) RETURNING id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created
+(team_id, stripe_subscription_id, remaining_credits, created)
+VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, team_id, stripe_subscription_id, remaining_credits, created
 `
 
 type CreateSubscriptionParams struct {
 	TeamID               int64
 	StripeSubscriptionID sql.NullString
-	SubscriptionActive   bool
 	RemainingCredits     int64
 }
 
 func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (SubscriptionPlan, error) {
-	row := q.db.QueryRowContext(ctx, createSubscription,
-		arg.TeamID,
-		arg.StripeSubscriptionID,
-		arg.SubscriptionActive,
-		arg.RemainingCredits,
-	)
+	row := q.db.QueryRowContext(ctx, createSubscription, arg.TeamID, arg.StripeSubscriptionID, arg.RemainingCredits)
 	var i SubscriptionPlan
 	err := row.Scan(
 		&i.ID,
 		&i.TeamID,
 		&i.StripeSubscriptionID,
-		&i.SubscriptionActive,
 		&i.RemainingCredits,
 		&i.Created,
 	)
@@ -331,7 +323,7 @@ func (q *Queries) GetSourceTransformationByProjectId(ctx context.Context, projec
 }
 
 const getSubscriptionById = `-- name: GetSubscriptionById :one
-SELECT id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created FROM subscription_plan WHERE id = $1 LIMIT 1
+SELECT id, team_id, stripe_subscription_id, remaining_credits, created FROM subscription_plan WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetSubscriptionById(ctx context.Context, id int64) (SubscriptionPlan, error) {
@@ -341,7 +333,6 @@ func (q *Queries) GetSubscriptionById(ctx context.Context, id int64) (Subscripti
 		&i.ID,
 		&i.TeamID,
 		&i.StripeSubscriptionID,
-		&i.SubscriptionActive,
 		&i.RemainingCredits,
 		&i.Created,
 	)
@@ -349,7 +340,7 @@ func (q *Queries) GetSubscriptionById(ctx context.Context, id int64) (Subscripti
 }
 
 const getSubscriptionByStripeSubscriptionId = `-- name: GetSubscriptionByStripeSubscriptionId :one
-SELECT id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created FROM subscription_plan WHERE stripe_subscription_id = $1 LIMIT 1
+SELECT id, team_id, stripe_subscription_id, remaining_credits, created FROM subscription_plan WHERE stripe_subscription_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetSubscriptionByStripeSubscriptionId(ctx context.Context, stripeSubscriptionID sql.NullString) (SubscriptionPlan, error) {
@@ -359,7 +350,6 @@ func (q *Queries) GetSubscriptionByStripeSubscriptionId(ctx context.Context, str
 		&i.ID,
 		&i.TeamID,
 		&i.StripeSubscriptionID,
-		&i.SubscriptionActive,
 		&i.RemainingCredits,
 		&i.Created,
 	)
@@ -367,7 +357,7 @@ func (q *Queries) GetSubscriptionByStripeSubscriptionId(ctx context.Context, str
 }
 
 const getSubscriptionByTeamIdSubscriptionId = `-- name: GetSubscriptionByTeamIdSubscriptionId :one
-SELECT id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created FROM subscription_plan WHERE team_id = $1 AND id = $2 LIMIT 1
+SELECT id, team_id, stripe_subscription_id, remaining_credits, created FROM subscription_plan WHERE team_id = $1 AND id = $2 LIMIT 1
 `
 
 type GetSubscriptionByTeamIdSubscriptionIdParams struct {
@@ -382,7 +372,6 @@ func (q *Queries) GetSubscriptionByTeamIdSubscriptionId(ctx context.Context, arg
 		&i.ID,
 		&i.TeamID,
 		&i.StripeSubscriptionID,
-		&i.SubscriptionActive,
 		&i.RemainingCredits,
 		&i.Created,
 	)
@@ -390,7 +379,7 @@ func (q *Queries) GetSubscriptionByTeamIdSubscriptionId(ctx context.Context, arg
 }
 
 const getSubscriptionsByTeamId = `-- name: GetSubscriptionsByTeamId :many
-SELECT id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created FROM subscription_plan WHERE team_id = $1 ORDER BY created
+SELECT id, team_id, stripe_subscription_id, remaining_credits, created FROM subscription_plan WHERE team_id = $1 ORDER BY created
 `
 
 func (q *Queries) GetSubscriptionsByTeamId(ctx context.Context, teamID int64) ([]SubscriptionPlan, error) {
@@ -406,7 +395,6 @@ func (q *Queries) GetSubscriptionsByTeamId(ctx context.Context, teamID int64) ([
 			&i.ID,
 			&i.TeamID,
 			&i.StripeSubscriptionID,
-			&i.SubscriptionActive,
 			&i.RemainingCredits,
 			&i.Created,
 		); err != nil {
@@ -674,31 +662,8 @@ func (q *Queries) GetUserById(ctx context.Context, id int64) (Userinfo, error) {
 	return i, err
 }
 
-const setSubscriptionActiveStatusByTeamId = `-- name: SetSubscriptionActiveStatusByTeamId :one
-UPDATE subscription_plan SET subscription_active = $2 WHERE team_id = $1 RETURNING id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created
-`
-
-type SetSubscriptionActiveStatusByTeamIdParams struct {
-	TeamID             int64
-	SubscriptionActive bool
-}
-
-func (q *Queries) SetSubscriptionActiveStatusByTeamId(ctx context.Context, arg SetSubscriptionActiveStatusByTeamIdParams) (SubscriptionPlan, error) {
-	row := q.db.QueryRowContext(ctx, setSubscriptionActiveStatusByTeamId, arg.TeamID, arg.SubscriptionActive)
-	var i SubscriptionPlan
-	err := row.Scan(
-		&i.ID,
-		&i.TeamID,
-		&i.StripeSubscriptionID,
-		&i.SubscriptionActive,
-		&i.RemainingCredits,
-		&i.Created,
-	)
-	return i, err
-}
-
 const setSubscriptionStripeIdByTeamId = `-- name: SetSubscriptionStripeIdByTeamId :one
-UPDATE subscription_plan SET stripe_subscription_id = $2 WHERE team_id = $1 RETURNING id, team_id, stripe_subscription_id, subscription_active, remaining_credits, created
+UPDATE subscription_plan SET stripe_subscription_id = $2 WHERE team_id = $1 RETURNING id, team_id, stripe_subscription_id, remaining_credits, created
 `
 
 type SetSubscriptionStripeIdByTeamIdParams struct {
@@ -713,7 +678,6 @@ func (q *Queries) SetSubscriptionStripeIdByTeamId(ctx context.Context, arg SetSu
 		&i.ID,
 		&i.TeamID,
 		&i.StripeSubscriptionID,
-		&i.SubscriptionActive,
 		&i.RemainingCredits,
 		&i.Created,
 	)
