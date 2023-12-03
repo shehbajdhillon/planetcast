@@ -166,6 +166,7 @@ const GET_CURRENT_PROJECT = gql`
         id
         title
         sourceMedia
+        dubbingCreditsRequired
         transformations {
           id
           targetMedia

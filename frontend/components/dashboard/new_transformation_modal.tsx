@@ -93,6 +93,7 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
                   <Checkbox isChecked={lipSync} onChange={() => setLipSync(curr => !curr)}>
                     Enable Lip Syncing (Experimental)
                   </Checkbox>
+                  <Text>Dubbing credits required: {project.dubbingCreditsRequired} minutes</Text>
                 </Stack>
               </Box>
             </Stack>

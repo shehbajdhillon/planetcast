@@ -13,6 +13,7 @@ export interface Project {
   teamId: number;
   title: string;
   sourceMedia: string;
+  dubbingCreditsRequired?: number;
   transformations: Transformation[];
 };
 
