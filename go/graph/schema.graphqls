@@ -17,7 +17,7 @@ type Team {
   name: String!
   teamType: TeamType!
   created: DateTime!
-  projects(projectId: Int64): [Project!]!
+  projects(projectId: Int64 @ownsProject): [Project!]!
   subscriptionPlans(subscriptionId: Int64): [SubscriptionPlan!]!
 }
 
@@ -27,7 +27,7 @@ type Project {
   title: String!
   sourceMedia: String!
   dubbingCreditsRequired: Int64
-  transformations(transformationId: Int64): [Transformation!]!
+  transformations(transformationId: Int64 @ownsTransformation): [Transformation!]!
 }
 
 type Transformation {

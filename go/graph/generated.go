@@ -970,9 +970,24 @@ func (ec *executionContext) field_Project_transformations_args(ctx context.Conte
 	var arg0 *int64
 	if tmp, ok := rawArgs["transformationId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transformationId"))
-		arg0, err = ec.unmarshalOInt642ᚖint64(ctx, tmp)
+		directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalOInt642ᚖint64(ctx, tmp) }
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.OwnsTransformation == nil {
+				return nil, errors.New("directive ownsTransformation is not implemented")
+			}
+			return ec.directives.OwnsTransformation(ctx, rawArgs, directive0)
+		}
+
+		tmp, err = directive1(ctx)
 		if err != nil {
-			return nil, err
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if data, ok := tmp.(*int64); ok {
+			arg0 = data
+		} else if tmp == nil {
+			arg0 = nil
+		} else {
+			return nil, graphql.ErrorOnPath(ctx, fmt.Errorf(`unexpected type %T from directive, should be *int64`, tmp))
 		}
 	}
 	args["transformationId"] = arg0
@@ -1028,9 +1043,24 @@ func (ec *executionContext) field_Team_projects_args(ctx context.Context, rawArg
 	var arg0 *int64
 	if tmp, ok := rawArgs["projectId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
-		arg0, err = ec.unmarshalOInt642ᚖint64(ctx, tmp)
+		directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalOInt642ᚖint64(ctx, tmp) }
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.OwnsProject == nil {
+				return nil, errors.New("directive ownsProject is not implemented")
+			}
+			return ec.directives.OwnsProject(ctx, rawArgs, directive0)
+		}
+
+		tmp, err = directive1(ctx)
 		if err != nil {
-			return nil, err
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if data, ok := tmp.(*int64); ok {
+			arg0 = data
+		} else if tmp == nil {
+			arg0 = nil
+		} else {
+			return nil, graphql.ErrorOnPath(ctx, fmt.Errorf(`unexpected type %T from directive, should be *int64`, tmp))
 		}
 	}
 	args["projectId"] = arg0

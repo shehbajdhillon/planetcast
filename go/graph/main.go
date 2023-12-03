@@ -143,10 +143,6 @@ func isSuperAdmin(ctx context.Context) bool {
 		return true
 	}
 
-	if userEmail == "shehbaj.dhillon@gmail.com" {
-		return true
-	}
-
 	return false
 }
 
