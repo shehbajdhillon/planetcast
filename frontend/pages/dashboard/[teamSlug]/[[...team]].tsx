@@ -15,7 +15,7 @@ import { NextPage, GetServerSideProps } from "next";
 import DashboardTab from "@/components/dashboard/dashboard_tab";
 import Head from "next/head";
 import Navbar from "@/components/dashboard/navbar";
-import { Team } from "@/types";
+import { Project, Team } from "@/types";
 import { gql, useQuery } from "@apollo/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
@@ -80,12 +80,17 @@ export interface DashboardPageProps {
 const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug, tab }) => {
 
   const { data, refetch: getAllTeamsRefetch } = useQuery(GET_TEAMS, { fetchPolicy: 'no-cache' });
-  const { data: currentTeamData, refetch: currentTeamRefetch, loading } = useQuery(GET_TEAM_BY_ID, { fetchPolicy: 'no-cache', variables: { teamSlug } });
+  const {
+    data: currentTeamData,
+    refetch: currentTeamRefetch,
+    loading,
+    error
+  } = useQuery(GET_TEAM_BY_ID, { fetchPolicy: 'no-cache', variables: { teamSlug } });
 
   const teams = data?.getTeams;
   const projects = data?.getTeams.find((team: Team) => team.slug === teamSlug)?.projects;
 
-  const currentTeamProjects = currentTeamData?.getTeamById?.projects;
+  const currentTeamProjects: Project[] = currentTeamData?.getTeamById?.projects;
   const currentTeam: Team = currentTeamData?.getTeamById;
 
   const [tabIdx, setTabIdx] = useState(tab);
@@ -98,6 +103,10 @@ const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug, tab }) => {
     await currentTeamRefetch();
     await getAllTeamsRefetch();
   };
+
+  useEffect(() => {
+    if (error && error.message === "Access Denied") router.push('/404');
+  }, [error]);
 
   useEffect(() => {
     const params = router.query.team;

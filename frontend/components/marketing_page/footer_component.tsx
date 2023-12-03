@@ -15,7 +15,7 @@ import { ReactNode } from 'react'
 import Image from 'next/image';
 import { Linkedin, Twitter } from 'lucide-react';
 
-const Logo = (props: any) => {
+const Logo: React.FC = () => {
   return (
     <Box display={"flex"} alignItems={"center"} justifyContent={"center"}>
       <Image
@@ -66,7 +66,7 @@ const SocialButton = ({
   )
 }
 
-const FooterComponent = () => {
+const FooterComponent: React.FC = () => {
   return (
     <Box
       w="full"

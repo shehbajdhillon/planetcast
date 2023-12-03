@@ -115,10 +115,6 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
 
   const currentTeam: Team = teams?.filter((team: Team) => team.slug === teamSlug)[0];
 
-  useEffect(() => {
-    console.log({ currentTeam });
-  }, [currentTeam]);
-
   return (
     <Box w="full" display={"flex"} alignItems={"center"} justifyContent={"center"}>
       <Box

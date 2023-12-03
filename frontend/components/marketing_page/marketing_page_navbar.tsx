@@ -8,7 +8,6 @@ import {
   useColorModeValue,
   useDisclosure,
 } from '@chakra-ui/react';
-import { useUser } from '@clerk/nextjs';
 import { Moon, Sun, X, Menu } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -44,17 +43,10 @@ export const NavLink = ({ children }: { children: React.ReactNode }) => (
   </Button>
 );
 
-interface NavbarProps {
-  marketing?: boolean;
-};
-
-const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
+const Navbar: React.FC = () => {
 
   const { toggleColorMode } = useColorMode();
-  const { isSignedIn, isLoaded } = useUser();
-
   const { isOpen, onOpen, onClose } = useDisclosure();
-
   const blackWhite = useColorModeValue('black', 'white');
 
   return (
@@ -118,12 +110,9 @@ const Navbar: React.FC<NavbarProps> = ({ marketing }) => {
             variant={"ghost"}
           />
 
-          <Link
-            href={'/dashboard'}
-            hidden={!(marketing && isLoaded)}
-          >
+          <Link href={'/dashboard'}>
             <Button flip px="16px">
-              { isSignedIn ? 'Dashboard' : 'Start for Free' }
+              { 'Start for Free' }
             </Button>
           </Link>
 

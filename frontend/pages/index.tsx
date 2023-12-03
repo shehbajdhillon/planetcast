@@ -35,106 +35,104 @@ import PricingComponent from '@/components/marketing_page/pricing_component';
 import FooterComponent from '@/components/marketing_page/footer_component';
 
 
-const HeroSection: React.FC = () => {
-  return (
-    <Stack
-      display={"flex"}
-      alignItems={{ base: "center" }}
-      direction={{ base: "column-reverse", md: "row" }}
-      maxW={"1400px"}
+const HeroSection: React.FC = () => (
+  <Stack
+    display={"flex"}
+    alignItems={{ base: "center" }}
+    direction={{ base: "column-reverse", md: "row" }}
+    maxW={"1400px"}
+    w="full"
+  >
+    <Box
+      mb={{ base: "auto", md: "0px" }}
       w="full"
+      maxW={{ md: "75%" }}
+      alignItems={{ base: "center", md: "left" }}
+      justifyContent={{ base: "center", md: "left" }}
+      display={"flex"}
+      flexDir={"column"}
     >
-      <Box
-        mb={{ base: "auto", md: "0px" }}
-        w="full"
-        maxW={{ md: "75%" }}
-        alignItems={{ base: "center", md: "left" }}
-        justifyContent={{ base: "center", md: "left" }}
-        display={"flex"}
-        flexDir={"column"}
+      <Heading
+        size={{ base: '3xl', md: "4xl" }}
+        textAlign={{ base: "center", md: "left" }}
+        fontWeight={"medium"}
+        w={{ md: "full" }}
       >
-        <Heading
-          size={{ base: '3xl', md: "4xl" }}
-          textAlign={{ base: "center", md: "left" }}
-          fontWeight={"medium"}
-          w={{ md: "full" }}
+        Dub
+      </Heading>
+      <Heading
+        size={{ base: '3xl', md: "4xl" }}
+        textAlign={{ base: "center", md: "left" }}
+        fontWeight={"medium"}
+        w={{ md: "full" }}
+      >
+        Translate
+      </Heading>
+      <Heading
+        size={{ base: '3xl', md: "4xl" }}
+        textAlign={{ base: "center", md: "left" }}
+        fontWeight={"medium"}
+        w={{ md: "full" }}
+      >
+        Broadcast
+      </Heading>
+      <Heading
+        size={{ base: '3xl', md: "4xl" }}
+        textAlign={{ base: "center", md: "left" }}
+        fontWeight={"medium"}
+        w={{ md: "full" }}
+      >
+        Content Across the {' '}
+        <Text
+          as={"span"}
+          bgGradient={'linear(to-tr, #007CF0, #01DFD8)'}
+          bgClip='text'
         >
-          Dub
-        </Heading>
-        <Heading
-          size={{ base: '3xl', md: "4xl" }}
-          textAlign={{ base: "center", md: "left" }}
-          fontWeight={"medium"}
-          w={{ md: "full" }}
-        >
-          Translate
-        </Heading>
-        <Heading
-          size={{ base: '3xl', md: "4xl" }}
-          textAlign={{ base: "center", md: "left" }}
-          fontWeight={"medium"}
-          w={{ md: "full" }}
-        >
-          Broadcast
-        </Heading>
-        <Heading
-          size={{ base: '3xl', md: "4xl" }}
-          textAlign={{ base: "center", md: "left" }}
-          fontWeight={"medium"}
-          w={{ md: "full" }}
-        >
-          Content Across the {' '}
-          <Text
-            as={"span"}
-            bgGradient={'linear(to-tr, #007CF0, #01DFD8)'}
-            bgClip='text'
+          Planet
+        </Text>
+      </Heading>
+      <HStack w={{ md: "full" }} pt="10px">
+        <Link href={'/dashboard'}>
+          <Button
+            size={"lg"}
+            backgroundColor={useColorModeValue("black", "white")}
+            textColor={useColorModeValue("white", "black")}
+            borderColor={useColorModeValue("white", "black")}
+            borderWidth={"1px"}
+            _hover={{
+              backgroundColor: useColorModeValue("white", "black"),
+              textColor: useColorModeValue("white", "black"),
+              bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
+            }}
           >
-            Planet
-          </Text>
-        </Heading>
-        <HStack w={{ md: "full" }} pt="10px">
-          <Link href={'/dashboard'}>
-            <Button
-              size={"lg"}
-              backgroundColor={useColorModeValue("black", "white")}
-              textColor={useColorModeValue("white", "black")}
-              borderColor={useColorModeValue("white", "black")}
-              borderWidth={"1px"}
-              _hover={{
-                backgroundColor: useColorModeValue("white", "black"),
-                textColor: useColorModeValue("white", "black"),
-                bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
-              }}
-            >
-              Start for Free
-            </Button>
-          </Link>
-          <Link href={"#usecases"}>
-            <Button
-              size={"lg"}
-              variant={"outline"}
-              _hover={{
-                backgroundColor: useColorModeValue("black", "white:"),
-                textColor: useColorModeValue("white", "black"),
-                bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
-              }}
-            >
-              Read More
-            </Button>
-          </Link>
-        </HStack>
-      </Box>
-      <Box maxW={{ base: "200px", md: "25%" }} mt={{ base:"auto", md: "0px" }}>
-        <Image
-          height={1000}
-          width={400}
-          src={useColorModeValue('/planetcastgradientlight.svg', '/planetcastgradientdark.svg')}
-          alt='planet cast gradient logo'
-        />
-      </Box>
-    </Stack>
-  );
-};
+            Start for Free
+          </Button>
+        </Link>
+        <Link href={"#usecases"}>
+          <Button
+            size={"lg"}
+            variant={"outline"}
+            _hover={{
+              backgroundColor: useColorModeValue("black", "white:"),
+              textColor: useColorModeValue("white", "black"),
+              bgGradient: 'linear(to-tl, #007CF0, #01DFD8)'
+            }}
+          >
+            Read More
+          </Button>
+        </Link>
+      </HStack>
+    </Box>
+    <Box maxW={{ base: "200px", md: "25%" }} mt={{ base:"auto", md: "0px" }}>
+      <Image
+        height={1000}
+        width={400}
+        src={useColorModeValue('/planetcastgradientlight.svg', '/planetcastgradientdark.svg')}
+        alt='planet cast gradient logo'
+      />
+    </Box>
+  </Stack>
+);
 
 
 const BenefitsSection: React.FC = () => {
@@ -494,19 +492,21 @@ const UseCasesSection = () => {
           headings={headings1}
           subheadings={subheadings1}
           transformations={transformations1}
+          flip={false}
         />
 
         <InfoGridView
           headings={headings2}
           subheadings={subheadings2}
           transformations={transformations2}
-          flip
+          flip={true}
         />
 
         <InfoGridView
           headings={headings3}
           subheadings={subheadings3}
           transformations={transformations3}
+          flip={false}
         />
       </Stack>
 
@@ -516,7 +516,7 @@ const UseCasesSection = () => {
 
 
 interface InfoGridViewProps extends InfoViewProps, VideoViewProps {
-  flip?: boolean;
+  flip: boolean;
 }
 
 const InfoGridView: React.FC<InfoGridViewProps> = (props) => {
@@ -699,13 +699,17 @@ export default function Home() {
   return (
     <VStack>
       <Head>
-        <title>PlanetCast</title>
-        <meta name="description" content="Cast your Content Across the Planet" />
+        <title>PlanetCast - Broadcast your Content Across the Planet</title>
+        <meta name="description" content="PlanetCast is a platform that allows you to dub your content for audiences across the planet. We offer a variety of plans tailored to your needs." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
+        <meta property="og:title" content="PlanetCast - Broadcast your Content Across the Planet" />
+        <meta property="og:description" content="PlanetCast is a platform that allows you to dub your content for audiences across the planet. We offer a variety of plans tailored to your needs." />
+        <meta property="og:image" content="/favicon.ico" />
+        <meta property="og:url" content="https://www.planetcast.ai" />
       </Head>
       <Box position={"fixed"} top={0} left={0} w="full" px="10px" backgroundColor={bgColor} zIndex={100}>
-        <Navbar marketing />
+        <Navbar />
       </Box>
       <VStack w="full">
 
@@ -753,7 +757,6 @@ export default function Home() {
         </Center>
 
         <FooterComponent />
-
       </VStack>
     </VStack>
   )
