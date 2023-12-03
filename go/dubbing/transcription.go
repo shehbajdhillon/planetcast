@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"planetcastdev/utils"
 	"strings"
 	"time"
@@ -126,4 +127,14 @@ func cleanSegments(whisperOutput *WhisperOutput) []Segment {
 	}
 
 	return newSegmentArray
+}
+
+func (d *Dubbing) GetTranscriptLength(whisperOutput *WhisperOutput) int {
+	segments := whisperOutput.Segments
+	length := 0.0
+	for _, seg := range segments {
+		length += (seg.End - seg.Start)
+	}
+	length = length / 60
+	return int(math.Ceil(length))
 }

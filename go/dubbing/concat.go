@@ -11,7 +11,6 @@ import (
 	"go.uber.org/zap"
 )
 
-
 func (d *Dubbing) concatSegments(ctx context.Context, segments []Segment, identifier string) (string, error) {
 
 	batchSize := 5

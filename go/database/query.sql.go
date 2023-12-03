@@ -662,6 +662,28 @@ func (q *Queries) GetUserById(ctx context.Context, id int64) (Userinfo, error) {
 	return i, err
 }
 
+const setRemainingCreditsById = `-- name: SetRemainingCreditsById :one
+UPDATE subscription_plan SET remaining_credits = $2 WHERE id = $1 RETURNING id, team_id, stripe_subscription_id, remaining_credits, created
+`
+
+type SetRemainingCreditsByIdParams struct {
+	ID               int64
+	RemainingCredits int64
+}
+
+func (q *Queries) SetRemainingCreditsById(ctx context.Context, arg SetRemainingCreditsByIdParams) (SubscriptionPlan, error) {
+	row := q.db.QueryRowContext(ctx, setRemainingCreditsById, arg.ID, arg.RemainingCredits)
+	var i SubscriptionPlan
+	err := row.Scan(
+		&i.ID,
+		&i.TeamID,
+		&i.StripeSubscriptionID,
+		&i.RemainingCredits,
+		&i.Created,
+	)
+	return i, err
+}
+
 const setSubscriptionStripeIdByTeamId = `-- name: SetSubscriptionStripeIdByTeamId :one
 UPDATE subscription_plan SET stripe_subscription_id = $2 WHERE team_id = $1 RETURNING id, team_id, stripe_subscription_id, remaining_credits, created
 `

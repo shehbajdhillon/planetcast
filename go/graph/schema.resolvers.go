@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -194,6 +195,27 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 		return existingTransformation, nil
 	}
 
+	var whisperOutput dubbing.WhisperOutput
+	json.Unmarshal(sourceTransformation.Transcript.RawMessage, &whisperOutput)
+	requiredCredits := r.Dubbing.GetTranscriptLength(&whisperOutput)
+
+	//Check for existing credits, if not enough return
+	project, _ := r.DB.GetProjectById(ctx, projectID)
+	subs, _ := r.DB.GetSubscriptionsByTeamId(ctx, project.TeamID)
+	subPlan := subs[0]
+
+	currentCredits := subPlan.RemainingCredits
+	if int64(requiredCredits) > currentCredits {
+		return database.Transformation{}, fmt.Errorf("No sufficient credits available to process dubbing. Remaining: %d. Required: %d.", currentCredits, requiredCredits)
+	}
+
+	//if enough credits, deduct
+	remainingCredits := currentCredits - int64(requiredCredits)
+	subPlan, _ = r.DB.SetRemainingCreditsById(ctx, database.SetRemainingCreditsByIdParams{
+		RemainingCredits: remainingCredits,
+		ID:               subPlan.ID,
+	})
+
 	identifier := fmt.Sprintf("%d-%s-%s", sourceTransformation.ProjectID, utils.GetCurrentDateTimeString(), targetLanguage)
 	newFileName := identifier + "_dubbed.mp4"
 
@@ -228,6 +250,11 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 			r.DB.UpdateTransformationStatusById(newCtx, database.UpdateTransformationStatusByIdParams{
 				ID:     newTransformation.ID,
 				Status: "error",
+			})
+			//Reimburse credit
+			r.DB.SetRemainingCreditsById(newCtx, database.SetRemainingCreditsByIdParams{
+				ID:               subPlan.ID,
+				RemainingCredits: currentCredits,
 			})
 		}
 
@@ -329,6 +356,19 @@ func (r *mutationResolver) CreatePortalSession(ctx context.Context, teamSlug str
 	}
 
 	return model.PortalSessionResponse{SessionURL: ps.URL}, nil
+}
+
+// DubbingCreditsRequired is the resolver for the dubbingCreditsRequired field.
+func (r *projectResolver) DubbingCreditsRequired(ctx context.Context, obj *database.Project) (*int64, error) {
+	sourceTransformation, err := r.DB.GetSourceTransformationByProjectId(ctx, obj.ID)
+	if err != nil {
+		return nil, nil
+	}
+	var whisperOutput dubbing.WhisperOutput
+	json.Unmarshal(sourceTransformation.Transcript.RawMessage, &whisperOutput)
+	requiredCredits := int64(r.Dubbing.GetTranscriptLength(&whisperOutput))
+
+	return &requiredCredits, nil
 }
 
 // Transformations is the resolver for the transformations field.

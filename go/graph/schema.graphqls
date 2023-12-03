@@ -26,6 +26,7 @@ type Project {
   teamId: Int64!
   title: String!
   sourceMedia: String!
+  dubbingCreditsRequired: Int64
   transformations(transformationId: Int64): [Transformation!]!
 }
 

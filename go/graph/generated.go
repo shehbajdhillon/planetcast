@@ -75,11 +75,12 @@ type ComplexityRoot struct {
 	}
 
 	Project struct {
-		ID              func(childComplexity int) int
-		SourceMedia     func(childComplexity int) int
-		TeamID          func(childComplexity int) int
-		Title           func(childComplexity int) int
-		Transformations func(childComplexity int, transformationID *int64) int
+		DubbingCreditsRequired func(childComplexity int) int
+		ID                     func(childComplexity int) int
+		SourceMedia            func(childComplexity int) int
+		TeamID                 func(childComplexity int) int
+		Title                  func(childComplexity int) int
+		Transformations        func(childComplexity int, transformationID *int64) int
 	}
 
 	Query struct {
@@ -143,6 +144,7 @@ type MutationResolver interface {
 	CreatePortalSession(ctx context.Context, teamSlug string) (model.PortalSessionResponse, error)
 }
 type ProjectResolver interface {
+	DubbingCreditsRequired(ctx context.Context, obj *database.Project) (*int64, error)
 	Transformations(ctx context.Context, obj *database.Project, transformationID *int64) ([]database.Transformation, error)
 }
 type QueryResolver interface {
@@ -279,6 +281,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PortalSessionResponse.SessionURL(childComplexity), true
+
+	case "Project.dubbingCreditsRequired":
+		if e.complexity.Project.DubbingCreditsRequired == nil {
+			break
+		}
+
+		return e.complexity.Project.DubbingCreditsRequired(childComplexity), true
 
 	case "Project.id":
 		if e.complexity.Project.ID == nil {
@@ -1283,6 +1292,8 @@ func (ec *executionContext) fieldContext_Mutation_createProject(ctx context.Cont
 				return ec.fieldContext_Project_title(ctx, field)
 			case "sourceMedia":
 				return ec.fieldContext_Project_sourceMedia(ctx, field)
+			case "dubbingCreditsRequired":
+				return ec.fieldContext_Project_dubbingCreditsRequired(ctx, field)
 			case "transformations":
 				return ec.fieldContext_Project_transformations(ctx, field)
 			}
@@ -1370,6 +1381,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteProject(ctx context.Cont
 				return ec.fieldContext_Project_title(ctx, field)
 			case "sourceMedia":
 				return ec.fieldContext_Project_sourceMedia(ctx, field)
+			case "dubbingCreditsRequired":
+				return ec.fieldContext_Project_dubbingCreditsRequired(ctx, field)
 			case "transformations":
 				return ec.fieldContext_Project_transformations(ctx, field)
 			}
@@ -1949,6 +1962,47 @@ func (ec *executionContext) fieldContext_Project_sourceMedia(ctx context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Project_dubbingCreditsRequired(ctx context.Context, field graphql.CollectedField, obj *database.Project) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Project_dubbingCreditsRequired(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Project().DubbingCreditsRequired(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int64)
+	fc.Result = res
+	return ec.marshalOInt642ᚖint64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Project_dubbingCreditsRequired(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Project",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int64 does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3132,6 +3186,8 @@ func (ec *executionContext) fieldContext_Team_projects(ctx context.Context, fiel
 				return ec.fieldContext_Project_title(ctx, field)
 			case "sourceMedia":
 				return ec.fieldContext_Project_sourceMedia(ctx, field)
+			case "dubbingCreditsRequired":
+				return ec.fieldContext_Project_dubbingCreditsRequired(ctx, field)
 			case "transformations":
 				return ec.fieldContext_Project_transformations(ctx, field)
 			}
@@ -5684,6 +5740,39 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "dubbingCreditsRequired":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Project_dubbingCreditsRequired(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "transformations":
 			field := field
 

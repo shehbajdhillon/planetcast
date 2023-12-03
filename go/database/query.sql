@@ -58,6 +58,9 @@ UPDATE subscription_plan SET remaining_credits = remaining_credits + $2 WHERE te
 -- name: SetSubscriptionStripeIdByTeamId :one
 UPDATE subscription_plan SET stripe_subscription_id = $2 WHERE team_id = $1 RETURNING *;
 
+-- name: SetRemainingCreditsById :one
+UPDATE subscription_plan SET remaining_credits = $2 WHERE id = $1 RETURNING *;
+
 
 -- name: CreateProject :one
 INSERT INTO project (team_id, title, source_media, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING *;
