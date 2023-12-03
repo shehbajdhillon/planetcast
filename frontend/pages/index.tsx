@@ -122,6 +122,9 @@ const HeroSection: React.FC = () => (
           </Button>
         </Link>
       </HStack>
+      <Text w={{ md: "full" }} pt="2px" pl="1px">
+        No Credit Card Required
+      </Text>
     </Box>
     <Box maxW={{ base: "200px", md: "25%" }} mt={{ base:"auto", md: "0px" }}>
       <Image
@@ -152,7 +155,6 @@ const BenefitsSection: React.FC = () => {
         fontWeight={'medium'}
         textAlign={"left"}
         w={"full"}
-        px={{ base: "15px", md: "0px" }}
       >
         <HStack>
           <Text>10x your {' '}
@@ -198,11 +200,10 @@ const BenefitsSection: React.FC = () => {
               textAlign={"left"}
               w={"full"}
               size={{ base: "sm", sm: "lg" }}
-              px={{ base: "15px", md: "0px" }}
             >
               {"Engage listeners everywhere around the globe. Over 80% of the world's population does not speak English."}
             </Heading>
-            <HStack w="full" px={{ base: "15px", md: "0px"}}>
+            <HStack w="full">
               <Globe2Icon size={iconSizeBig} strokeWidth={"0.75px"}/>
               <LanguagesIcon size={iconSizeBig} strokeWidth={"0.75px"} />
             </HStack>
@@ -214,12 +215,11 @@ const BenefitsSection: React.FC = () => {
               w={"full"}
               fontWeight={'normal'}
               size={{ base: "sm", sm: "lg" }}
-              px={{ base: "15px", md: "0px" }}
             >
               Professional dubbing takes longer and breaks your bank.
               Our AI powered tools help you save time and money.
             </Heading>
-            <HStack w="full" px={{ base: "15px", md: "0px"}}>
+            <HStack w="full">
               <CircleDollarSign size={iconSizeBig} strokeWidth={"0.75px"} />
               <TimerReset size={iconSizeBig} strokeWidth={"0.75px"} />
             </HStack>
@@ -231,12 +231,11 @@ const BenefitsSection: React.FC = () => {
               w={"full"}
               fontWeight={'normal'}
               size={{ base: "sm", sm: "lg" }}
-              px={{ base: "15px", md: "0px" }}
             >
               Preserve original voices in every translation.
               Our AI powered tools preserve the original voice of the speaker in all the dubbings.
             </Heading>
-            <HStack w="full" px={{ base: "15px", md: "0px"}}>
+            <HStack w="full">
               <Volume2Icon size={iconSizeBig} strokeWidth={"0.75px"} />
               <ImportIcon size={iconSizeBig} strokeWidth={"0.75px"} />
             </HStack>
@@ -323,7 +322,6 @@ const TestimonialSection = () => {
         size={{ base: '2xl', md: "3xl" }}
         textAlign={"left"}
         w={"full"}
-        px={{ base: "15px", md: "0px" }}
       >
         Welcome to efficient {' '}
         <Text
@@ -339,7 +337,6 @@ const TestimonialSection = () => {
         size={{ base: "sm", sm: "lg" }}
         textAlign={"left"}
         w={"full"}
-        px={{ base: "15px", md: "0px" }}
       >
         Discover how our users are revolutionizing their content reach
       </Heading>
@@ -465,7 +462,6 @@ const UseCasesSection = () => {
         size={{ base: '2xl', md: "3xl" }}
         textAlign={"left"}
         w={"full"}
-        px={{ base: "15px", md: "0px" }}
       >
         Dubbing for your {' '}
         <Text
@@ -481,7 +477,6 @@ const UseCasesSection = () => {
         size={{ base: "sm", sm: "lg" }}
         textAlign={"left"}
         w={"full"}
-        px={{ base: "15px", md: "0px" }}
       >
         Podcasts, training & educational videos, marketing content, and journalism media
       </Heading>
@@ -529,13 +524,13 @@ const InfoGridView: React.FC<InfoGridViewProps> = (props) => {
       alignItems={"center"}
       spacing="25px"
     >
-      <Box w="full" px={{ base: "15px", md: "0px" }} maxW={{ md: "60%" }}>
+      <Box w="full" maxW={{ md: "60%" }}>
         <InfoView
           headings={headings}
           subheadings={subheadings}
         />
       </Box>
-      <Box w="full" px={{ base: "15px", md: "0px" }} maxW={{ md: "40%" }}>
+      <Box w="full" maxW={{ md: "40%" }}>
         <VideoView transformations={transformations} />
       </Box>
     </Stack>
@@ -640,7 +635,6 @@ const PricingSection = () => {
         size={{ base: '2xl', md: "3xl" }}
         textAlign={"left"}
         w={"full"}
-        px={{ base: "15px", md: "0px" }}
       >
         Start dubbing {' '}
         <Text
@@ -656,9 +650,8 @@ const PricingSection = () => {
         size={{ base: "sm", sm: "lg" }}
         textAlign={"left"}
         w={"full"}
-        px={{ base: "15px", md: "0px" }}
       >
-        Select the perfect plan tailored to your needs
+        Start for Free. No Credit Card Required.
       </Heading>
 
       <HStack borderWidth={"1px"} p="5px" my="40px" rounded={"md"}>
@@ -716,6 +709,7 @@ export default function Home() {
         <Center
           w="full"
           py={{ base:"110px", md: "250px" }}
+          px="10px"
         >
           <HeroSection />
         </Center>
@@ -725,6 +719,7 @@ export default function Home() {
           py={{ base:"60px", md: "200px" }}
           borderTopWidth={"1px"}
           id="usecases"
+          px="10px"
         >
           <UseCasesSection />
         </Center>
@@ -734,6 +729,7 @@ export default function Home() {
           py={{ base:"60px", md: "200px" }}
           borderTopWidth={"1px"}
           id="benefits"
+          px="10px"
         >
           <BenefitsSection />
         </Center>
@@ -743,6 +739,7 @@ export default function Home() {
           py={{ base:"60px", md: "200px" }}
           borderTopWidth={"1px"}
           id="testimonials"
+          px="10px"
         >
           <TestimonialSection />
         </Center>
@@ -752,6 +749,7 @@ export default function Home() {
           py={{ base:"60px", md: "200px" }}
           borderTopWidth={"1px"}
           id="pricing"
+          px="10px"
         >
           <PricingSection />
         </Center>
