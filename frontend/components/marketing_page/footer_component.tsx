@@ -1,8 +1,6 @@
-'use client'
-
 import {
   Box,
-  chakra,
+  Button,
   Container,
   Heading,
   Stack,
@@ -45,7 +43,7 @@ const SocialButton = ({
   href: string
 }) => {
   return (
-    <chakra.button
+    <Button
       bg={useColorModeValue('blackAlpha.100', 'whiteAlpha.100')}
       rounded={'full'}
       w={8}
@@ -62,7 +60,7 @@ const SocialButton = ({
       }}>
       <VisuallyHidden>{label}</VisuallyHidden>
       {children}
-    </chakra.button>
+    </Button>
   )
 }
 
