@@ -1,5 +1,5 @@
 import '@/styles/globals.css'
-import type { AppProps } from 'next/app'
+import type { AppContext, AppProps } from 'next/app'
 import { ChakraProvider } from '@chakra-ui/react'
 import { mode } from '@chakra-ui/theme-tools'
 import { extendTheme } from '@chakra-ui/react';
@@ -23,6 +23,7 @@ import NProgress from 'nprogress';
 
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+import App from 'next/app';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -83,17 +84,21 @@ if (typeof window !== 'undefined') {
 
 const ApolloProviderWrapper = ({ children }: PropsWithChildren) => {
   const { getToken } = useAuth();
-
   const client = useMemo(() => {
     return GetApolloClient(false, getToken)
   }, [getToken]);
-
   return <ApolloProvider client={client}>{children}</ApolloProvider>;
 };
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "")
+Main.getInitialProps = async (appContext: AppContext) => {
+  const appProps = await App.getInitialProps(appContext);
+  const { ctx } = appContext;
+  const { pathname } = ctx;
 
-export default function App({ Component, pageProps }: AppProps) {
+  return { ...appProps, pathname };
+};
+
+export default function Main({ Component, pageProps, pathname }: AppProps & { pathname: string }) {
 
   const router = useRouter();
 
@@ -125,20 +130,30 @@ export default function App({ Component, pageProps }: AppProps) {
     };
   }, [router.events]);
 
+  //We don't need auth, GQL, payment providers on landing and blog pages
+  const skipProviders = pathname === "/" || pathname.startsWith('/blog')
+
   return (
     <ChakraProvider theme={theme}>
-      <ClerkProvider>
-        <ApolloProviderWrapper>
-          <PostHogProvider client={posthog}>
-            <Elements stripe={stripePromise}>
-              <main className={inter.className}>
-                <Component {...pageProps} />
-                <Analytics />
-              </main>
-            </Elements>
-          </PostHogProvider>
-        </ApolloProviderWrapper>
-      </ClerkProvider>
+      <PostHogProvider client={posthog}>
+        { skipProviders ?
+          <main className={inter.className}>
+            <Component {...pageProps} />
+            <Analytics />
+          </main>
+        :
+          <ClerkProvider>
+            <ApolloProviderWrapper>
+              <Elements stripe={loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "")}>
+                <main className={inter.className}>
+                  <Component {...pageProps} />
+                  <Analytics />
+                </main>
+              </Elements>
+            </ApolloProviderWrapper>
+          </ClerkProvider>
+        }
+      </PostHogProvider>
     </ChakraProvider>
   );
 }
