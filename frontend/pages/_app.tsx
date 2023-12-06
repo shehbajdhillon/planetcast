@@ -5,7 +5,7 @@ import { mode } from '@chakra-ui/theme-tools'
 import { extendTheme } from '@chakra-ui/react';
 
 import { Inter } from 'next/font/google';
-import { ClerkProvider, SignedIn, SignedOut, useAuth } from '@clerk/nextjs';
+import { ClerkProvider, useAuth } from '@clerk/nextjs';
 import { PropsWithChildren, useMemo } from 'react';
 import { ApolloProvider } from '@apollo/client';
 import { GetApolloClient } from '@/apollo-client';
@@ -132,12 +132,7 @@ export default function App({ Component, pageProps }: AppProps) {
           <PostHogProvider client={posthog}>
             <Elements stripe={stripePromise}>
               <main className={inter.className}>
-                <SignedIn>
-                  <Component {...pageProps} />
-                </SignedIn>
-                <SignedOut>
-                  <Component {...pageProps} />
-                </SignedOut>
+                <Component {...pageProps} />
                 <Analytics />
               </main>
             </Elements>
