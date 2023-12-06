@@ -1,6 +1,14 @@
-import { Box, Button, HStack, Heading, Stack, Text, useColorModeValue } from "@chakra-ui/react";
+import {
+  AspectRatio,
+  Box,
+  Button,
+  HStack,
+  Heading,
+  Stack,
+  Text,
+  useColorModeValue
+} from "@chakra-ui/react";
 import { useState } from "react";
-import VideoPlayer from "../video_player";
 
 interface InfoViewProps {
   headings: string[];
@@ -85,9 +93,11 @@ const VideoView: React.FC<VideoViewProps> = ({ transformations }) => {
 
   return (
     <Box w="full">
-      <Box display={"flex"} h="full" w="full" rounded={"sm"}>
-        <VideoPlayer src={transformations[tfnIdx].link} />
-      </Box>
+      <AspectRatio ratio={16/9}>
+        <Box display={"flex"} h="full" w="full" rounded={"sm"}>
+          <video src={transformations[tfnIdx].link} controls />
+        </Box>
+      </AspectRatio>
       <HStack pt="10px">
         {transformations.map((tfn, idx) => (
           <Button
