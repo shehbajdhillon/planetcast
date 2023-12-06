@@ -1,5 +1,5 @@
 import Navbar from '@/components/marketing_page/marketing_page_navbar'
-import { Box, VStack, Center } from '@chakra-ui/react';
+import { Box, VStack, Center, useColorModeValue } from '@chakra-ui/react';
 import Head from 'next/head'
 
 import FooterComponent from '@/components/marketing_page/footer_component';
@@ -25,7 +25,15 @@ export default function Home() {
         <meta property="og:url" content="https://www.planetcast.ai" />
       </Head>
 
-      <Box position={"fixed"} top={0} left={0} w="full" px="10px" zIndex={100}>
+      <Box
+        backgroundColor={useColorModeValue('white', 'black')}
+        position={"fixed"}
+        top={0}
+        left={0}
+        w="full"
+        px="10px"
+        zIndex={100}
+      >
         <Navbar />
       </Box>
 
