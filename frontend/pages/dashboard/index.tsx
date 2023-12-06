@@ -3,8 +3,21 @@ import { GetServerSideProps, NextPage } from "next";
 
 import { getAuth } from "@clerk/nextjs/server";
 import { gql } from "@apollo/client";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
 
-const Index: NextPage = () => {
+interface PageProps {
+  redirect: string;
+};
+
+const Index: NextPage<PageProps> = ({ redirect }) => {
+
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push(redirect);
+  }, []);
+
   return <div />;
 };
 
@@ -48,10 +61,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   }
 
   return {
-    redirect: {
-      permanent: false,
-      destination: `dashboard/${teams[0].slug}`
-    },
-    props: { teams }
+    props: { redirect: `/dashboard/${teams[0].slug}` }
   }
 };
