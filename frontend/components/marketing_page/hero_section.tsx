@@ -5,16 +5,19 @@ import {
   Heading,
   Stack,
   Text,
+  useBreakpointValue,
   useColorModeValue
 } from "@chakra-ui/react";
-import Image from "next/image";
 import Link from "next/link";
+import { DarkModeGradientLogo, LightModeGradientLogo } from "../logo";
 
 const HeroSection: React.FC = () => {
 
   const whiteBlack = useColorModeValue("white", "black");
   const blackWhite = useColorModeValue("black", "white");
-  const imgSrc = useColorModeValue('/planetcastgradientlight.svg', '/planetcastgradientdark.svg');
+
+  const logoSize = useBreakpointValue({ base: 200, md: 250, lg: 400 });
+  const darkModeOn = useColorModeValue(false, true);
 
   return (
     <Stack
@@ -108,12 +111,12 @@ const HeroSection: React.FC = () => {
         </Text>
       </Box>
       <Box maxW={{ base: "200px", md: "25%" }} mt={{ base:"auto", md: "0px" }}>
-        <Image
-          height={400}
-          width={400}
-          src={imgSrc}
-          alt='planet cast gradient logo'
-        />
+        {
+          darkModeOn ?
+          <DarkModeGradientLogo height={logoSize || 0} width={logoSize || 0} />
+          :
+          <LightModeGradientLogo height={logoSize || 0} width={logoSize || 0} />
+        }
       </Box>
     </Stack>
   );
