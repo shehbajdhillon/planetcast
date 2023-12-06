@@ -20,9 +20,6 @@ import posthog from 'posthog-js';
 import { PostHogProvider } from 'posthog-js/react';
 
 import NProgress from 'nprogress';
-
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import App from 'next/app';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -144,12 +141,10 @@ export default function Main({ Component, pageProps, pathname }: AppProps & { pa
         :
           <ClerkProvider>
             <ApolloProviderWrapper>
-              <Elements stripe={loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "")}>
-                <main className={inter.className}>
-                  <Component {...pageProps} />
-                  <Analytics />
-                </main>
-              </Elements>
+              <main className={inter.className}>
+                <Component {...pageProps} />
+                <Analytics />
+              </main>
             </ApolloProviderWrapper>
           </ClerkProvider>
         }

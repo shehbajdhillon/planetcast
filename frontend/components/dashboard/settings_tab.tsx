@@ -29,8 +29,8 @@ import { useSearchParams } from 'next/navigation';
 import { Team } from "@/types";
 import PricingComponent from "../marketing_page/pricing_component";
 import { gql, useMutation } from "@apollo/client";
-import { useStripe } from "@stripe/react-stripe-js";
 import { convertUtcToLocal } from "@/utils";
+import { loadStripe } from "@stripe/stripe-js";
 
 const CREATE_STRIPE_CHECKOUT = gql`
   mutation CreateStripeCheckout($teamSlug: String!, $lookUpKey: String!) {
@@ -171,11 +171,7 @@ const SubscriptionSettingsTab: React.FC<SubscriptionSettingsTabProps> = (props) 
   const router = useRouter();
   const toast = useToast();
 
-  const stripe = useStripe();
-
   const currentSubscription = team?.subscriptionPlans[0];
-
-
   const [showUpgrade, setShowUpgrade] = useState(false);
   const onUpdateClick = () => {
     setShowUpgrade(true);
@@ -187,7 +183,9 @@ const SubscriptionSettingsTab: React.FC<SubscriptionSettingsTabProps> = (props) 
   const textColor = useColorModeValue("white", "black");
 
   const [createCheckoutSession, { loading }] = useMutation(CREATE_STRIPE_CHECKOUT);
+
   const handleCheckout = async (lookUpKey: string) => {
+    const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "")
     const response = await createCheckoutSession({ variables: { teamSlug, lookUpKey } });
     const sessionId = response.data?.createCheckoutSession?.sessionId;
     const res = await stripe?.redirectToCheckout({ sessionId });
