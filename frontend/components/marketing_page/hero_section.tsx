@@ -109,7 +109,7 @@ const HeroSection: React.FC = () => {
       </Box>
       <Box maxW={{ base: "200px", md: "25%" }} mt={{ base:"auto", md: "0px" }}>
         <Image
-          height={1000}
+          height={400}
           width={400}
           src={imgSrc}
           alt='planet cast gradient logo'

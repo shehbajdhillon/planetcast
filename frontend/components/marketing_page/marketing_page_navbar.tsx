@@ -70,7 +70,7 @@ const Navbar: React.FC = () => {
           <Image
             src={useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg')}
             width={60}
-            height={100}
+            height={60}
             alt='planet cast logo'
           />
           <Heading
