@@ -42,24 +42,37 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, teamType database.Tea
 		teamName = fmt.Sprintf("%s's Team", firstName)
 	}
 
-	shortUuid := uuid.NewString()[:8]
-	teamSlug := fmt.Sprintf("%s-%s", firstName, shortUuid)
+	var err error = nil
+	var shortUuid string
+	var teamSlug string
+
+	// We check if an existing team already has a slug in the DB
+	// If slug is used, err will be nil
+	retries := 10
+	for err == nil && retries > 0 {
+		shortUuid = uuid.NewString()[:8]
+		teamSlug = fmt.Sprintf("%s-%s", firstName, shortUuid)
+		_, err = r.DB.GetTeamBySlug(ctx, teamSlug)
+		retries -= 1
+	}
+
+	// If for some reason 10 retries is not enough
+	// Just default the teamslug to normal uuid
+	if retries <= 0 {
+		teamSlug = uuid.NewString()
+	}
+
 	team, err := r.DB.CreateTeam(ctx, database.CreateTeamParams{
 		Slug:     teamSlug,
 		Name:     teamName,
 		TeamType: teamType,
 	})
 
-	// Error will likely probably happen if teamSlug is not unique.
-	// Although this will obviously not be true all the time
+	// If retrying 10 times and defaulting to normal uuid does not work
+	// Throw error
 	if err != nil {
-		shortUuid = uuid.NewString()[:8]
-		teamSlug = fmt.Sprintf("%s-%s", firstName, shortUuid)
-		team, err = r.DB.CreateTeam(ctx, database.CreateTeamParams{
-			Slug:     teamSlug,
-			Name:     teamName,
-			TeamType: teamType,
-		})
+		r.Logger.Error("Could not create team", zap.String("Person Creating", email), zap.Error(err))
+		return database.Team{}, fmt.Errorf("Could not create team: %s", err.Error())
 	}
 
 	r.DB.AddTeamMembership(ctx, database.AddTeamMembershipParams{
@@ -109,11 +122,41 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 		}
 	}
 
-	project, _ := r.DB.CreateProject(ctx, database.CreateProjectParams{
+	var err error = nil
+	var shortUuid string
+	var projectSlug string
+
+	// We check if an existing team already has a project slug in the DB
+	// If slug is used, err will be nil
+	retries := 10
+	for err == nil && retries > 0 {
+		shortUuid = uuid.NewString()[:8]
+		cleanedTitle := utils.CreateSlug(title)
+		projectSlug = fmt.Sprintf("%s-%s", cleanedTitle, shortUuid)
+		_, err = r.DB.GetProjectByTeamIdProjectSlug(ctx, database.GetProjectByTeamIdProjectSlugParams{
+			TeamID: team.ID,
+			Slug:   projectSlug,
+		})
+		retries -= 1
+	}
+
+	// If for some reason 10 retries is not enough
+	// Just default the teamslug to normal uuid
+	if retries <= 0 {
+		projectSlug = uuid.NewString()
+	}
+
+	project, err := r.DB.CreateProject(ctx, database.CreateProjectParams{
 		TeamID:      team.ID,
 		Title:       title,
+		Slug:        projectSlug,
 		SourceMedia: "",
 	})
+
+	if err != nil {
+		r.Logger.Error("Could not create project", zap.Error(err), zap.String("team_name", team.Name), zap.Int64("team_id", team.ID))
+		return database.Project{}, fmt.Errorf("Could not create project: %s", err.Error())
+	}
 
 	user := auth.FromContext(ctx)
 	newCtx := context.Background()

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -125,4 +126,19 @@ func MaxOf(vars ...int) int {
 func GetExponentialDelaySeconds(retryNumber int) int {
 	delayTime := int(5 * math.Pow(2, float64(retryNumber)))
 	return delayTime
+}
+
+func CreateSlug(s string) string {
+	// Convert to lowercase
+	s = strings.ToLower(s)
+
+	// Replace spaces and special characters with a dash
+	space := regexp.MustCompile(`[\s]+`)
+	s = space.ReplaceAllString(s, "-")
+
+	// Remove all non-alphanumeric characters except dash
+	reg := regexp.MustCompile(`[^a-z0-9-]`)
+	s = reg.ReplaceAllString(s, "")
+
+	return s
 }

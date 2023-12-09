@@ -63,7 +63,7 @@ UPDATE subscription_plan SET remaining_credits = $2 WHERE id = $1 RETURNING *;
 
 
 -- name: CreateProject :one
-INSERT INTO project (team_id, title, source_media, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING *;
+INSERT INTO project (team_id, slug, title, source_media, created) VALUES ($1, $2, $3, $4, clock_timestamp()) RETURNING *;
 
 -- name: GetProjectById :one
 SELECT * FROM project WHERE id = $1 LIMIT 1;
@@ -73,6 +73,9 @@ SELECT * FROM project WHERE id = $1 AND team_id = $2 LIMIT 1;
 
 -- name: GetProjectsByTeamId :many
 SELECT * FROM project WHERE team_id = $1 ORDER BY created;
+
+-- name: GetProjectByTeamIdProjectSlug :one
+SELECT * FROM project WHERE team_id = $1 AND slug = $2;
 
 -- name: UpdateProjectSourceMedia :one
 UPDATE project SET source_media = $2 WHERE id = $1 RETURNING *;

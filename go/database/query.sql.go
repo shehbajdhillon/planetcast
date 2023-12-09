@@ -79,17 +79,23 @@ func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) (Userinfo, err
 }
 
 const createProject = `-- name: CreateProject :one
-INSERT INTO project (team_id, title, source_media, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, slug, team_id, title, source_media, created
+INSERT INTO project (team_id, slug, title, source_media, created) VALUES ($1, $2, $3, $4, clock_timestamp()) RETURNING id, slug, team_id, title, source_media, created
 `
 
 type CreateProjectParams struct {
 	TeamID      int64
+	Slug        string
 	Title       string
 	SourceMedia string
 }
 
 func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error) {
-	row := q.db.QueryRowContext(ctx, createProject, arg.TeamID, arg.Title, arg.SourceMedia)
+	row := q.db.QueryRowContext(ctx, createProject,
+		arg.TeamID,
+		arg.Slug,
+		arg.Title,
+		arg.SourceMedia,
+	)
 	var i Project
 	err := row.Scan(
 		&i.ID,
@@ -260,6 +266,29 @@ type GetProjectByProjectIdTeamIdParams struct {
 
 func (q *Queries) GetProjectByProjectIdTeamId(ctx context.Context, arg GetProjectByProjectIdTeamIdParams) (Project, error) {
 	row := q.db.QueryRowContext(ctx, getProjectByProjectIdTeamId, arg.ID, arg.TeamID)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.TeamID,
+		&i.Title,
+		&i.SourceMedia,
+		&i.Created,
+	)
+	return i, err
+}
+
+const getProjectByTeamIdProjectSlug = `-- name: GetProjectByTeamIdProjectSlug :one
+SELECT id, slug, team_id, title, source_media, created FROM project WHERE team_id = $1 AND slug = $2
+`
+
+type GetProjectByTeamIdProjectSlugParams struct {
+	TeamID int64
+	Slug   string
+}
+
+func (q *Queries) GetProjectByTeamIdProjectSlug(ctx context.Context, arg GetProjectByTeamIdProjectSlugParams) (Project, error) {
+	row := q.db.QueryRowContext(ctx, getProjectByTeamIdProjectSlug, arg.TeamID, arg.Slug)
 	var i Project
 	err := row.Scan(
 		&i.ID,
