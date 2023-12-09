@@ -40,6 +40,16 @@ CREATE TABLE team_membership (
   created TIMESTAMP NOT NULL
 );
 
+DROP TABLE IF EXISTS team_invite CASCADE;
+CREATE TABLE team_invite (
+  id BIGSERIAL PRIMARY KEY NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  team_id BIGINT REFERENCES team (id) ON DELETE CASCADE NOT NULL,
+  invitee_email TEXT NOT NULL,
+  created TIMESTAMP NOT NULL,
+  UNIQUE (team_id, invitee_email)
+);
+
 DROP TABLE IF EXISTS project CASCADE;
 CREATE TABLE project (
   id BIGSERIAL PRIMARY KEY NOT NULL,

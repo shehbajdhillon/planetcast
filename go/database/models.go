@@ -123,6 +123,14 @@ type Team struct {
 	Created          time.Time
 }
 
+type TeamInvite struct {
+	ID           int64
+	Slug         string
+	TeamID       int64
+	InviteeEmail string
+	Created      time.Time
+}
+
 type TeamMembership struct {
 	ID             int64
 	TeamID         int64

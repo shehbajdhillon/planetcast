@@ -37,6 +37,14 @@ SELECT * FROM team_membership WHERE team_id = $1 AND user_id = $2 LIMIT 1;
 SELECT * FROM team_membership WHERE team_id = $1 ORDER BY created;
 
 
+-- name: GetTeamInviteBySlug :one
+SELECT * FROM team_invite WHERE slug = $1;
+
+-- name: AddTeamInvite :one
+INSERT INTO team_invite (slug, team_id, invitee_email, created)
+VALUES ($1, $2, $3, clock_timestamp()) RETURNING *;
+
+
 -- name: CreateSubscription :one
 INSERT INTO subscription_plan
 (team_id, stripe_subscription_id, remaining_credits, created)

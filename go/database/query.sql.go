@@ -34,6 +34,30 @@ func (q *Queries) AddSubscriptionCreditsByTeamId(ctx context.Context, arg AddSub
 	return i, err
 }
 
+const addTeamInvite = `-- name: AddTeamInvite :one
+INSERT INTO team_invite (slug, team_id, invitee_email, created)
+VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, slug, team_id, invitee_email, created
+`
+
+type AddTeamInviteParams struct {
+	Slug         string
+	TeamID       int64
+	InviteeEmail string
+}
+
+func (q *Queries) AddTeamInvite(ctx context.Context, arg AddTeamInviteParams) (TeamInvite, error) {
+	row := q.db.QueryRowContext(ctx, addTeamInvite, arg.Slug, arg.TeamID, arg.InviteeEmail)
+	var i TeamInvite
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.TeamID,
+		&i.InviteeEmail,
+		&i.Created,
+	)
+	return i, err
+}
+
 const addTeamMembership = `-- name: AddTeamMembership :one
 INSERT INTO team_membership (team_id, user_id, membership_type, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, team_id, user_id, membership_type, created
 `
@@ -460,6 +484,23 @@ func (q *Queries) GetTeamByStripeCustomerId(ctx context.Context, stripeCustomerI
 		&i.Name,
 		&i.StripeCustomerID,
 		&i.TeamType,
+		&i.Created,
+	)
+	return i, err
+}
+
+const getTeamInviteBySlug = `-- name: GetTeamInviteBySlug :one
+SELECT id, slug, team_id, invitee_email, created FROM team_invite WHERE slug = $1
+`
+
+func (q *Queries) GetTeamInviteBySlug(ctx context.Context, slug string) (TeamInvite, error) {
+	row := q.db.QueryRowContext(ctx, getTeamInviteBySlug, slug)
+	var i TeamInvite
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.TeamID,
+		&i.InviteeEmail,
 		&i.Created,
 	)
 	return i, err
