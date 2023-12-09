@@ -13,6 +13,13 @@ export function formatTime(seconds: number): string {
   return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
 }
 
+export const validateEmail = (email: string) => {
+  if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+    return true;
+  }
+  return false;
+};
+
 export function matchYoutubeUrl(url: string): boolean {
   const p = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/;
   if (url.match(p)) {

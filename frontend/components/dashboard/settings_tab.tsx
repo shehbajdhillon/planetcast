@@ -20,7 +20,8 @@ import {
   useToast,
   useColorModeValue,
   IconButton,
-  Avatar
+  Avatar,
+  Input
 } from "@chakra-ui/react";
 import {  Menu, UserPlusIcon, UserXIcon } from "lucide-react";
 import { useRouter } from "next/router";
@@ -31,10 +32,11 @@ import { useSearchParams } from 'next/navigation';
 import { Team } from "@/types";
 import PricingComponent from "../marketing_page/pricing_component";
 import { gql, useMutation } from "@apollo/client";
-import { convertUtcToLocal } from "@/utils";
+import { convertUtcToLocal, validateEmail } from "@/utils";
 import { loadStripe } from "@stripe/stripe-js";
 import useWindowDimensions from "@/hooks/useWindowDimensions";
 import { useUser } from "@clerk/nextjs";
+import SingleActionModal from "../single_action_modal";
 
 const CREATE_STRIPE_CHECKOUT = gql`
   mutation CreateStripeCheckout($teamSlug: String!, $lookUpKey: String!) {
@@ -43,6 +45,17 @@ const CREATE_STRIPE_CHECKOUT = gql`
     }
   }
 `;
+
+const SEND_INVITE = gql`
+  mutation SendInvite($teamSlug: String!, $inviteeEmail: String!) {
+    sendTeamInvite(teamSlug: $teamSlug, inviteeEmail: $inviteeEmail)
+  }
+`
+const DELETE_INVITE = gql`
+  mutation DeleteInvite($teamSlug: String!, $inviteSlug: String!) {
+    deleteTeamInvite(teamSlug: $teamSlug, inviteSlug: $inviteSlug)
+  }
+`
 
 interface TabButtonsProps {
   tabIdx: number;
@@ -93,7 +106,7 @@ interface SettingsTabProps {
   team: Team
 };
 
-const SettingsTab: React.FC<SettingsTabProps> = ({ teamSlug, params, loading, team }) => {
+const SettingsTab: React.FC<SettingsTabProps> = ({ refetch, teamSlug, params, loading, team }) => {
 
   const [tabIdx, setTabIdx] = useState(getInitialTeamSettingTabIndex(params).defaultIndex);
 
@@ -166,7 +179,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ teamSlug, params, loading, te
             </Drawer>
 
             {tabIdx === 0 && <GeneralSettingsTab drawerOpen={onOpen} />}
-            {tabIdx === 1 && <TeamMembersTab drawerOpen={onOpen} team={team} teamSlug={teamSlug} />}
+            {tabIdx === 1 && <TeamMembersTab drawerOpen={onOpen} team={team} teamSlug={teamSlug} refetch={refetch} />}
             {tabIdx === 2 && <SubscriptionSettingsTab drawerOpen={onOpen} teamSlug={teamSlug} team={team} />}
           </GridItem>
         </Grid>
@@ -442,20 +455,68 @@ const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = (props) => {
 interface TeamMembersTabProps {
   drawerOpen: () => void;
   team: Team;
-  teamSlug: String;
+  teamSlug: string;
+  refetch: () => void;
 };
 
 const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
 
-  const { drawerOpen, teamSlug, team } = props;
-
+  const { refetch, drawerOpen, teamSlug, team } = props;
   const { width } = useWindowDimensions();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const { user } = useUser();
+  const [sendInvite, { loading, error, data }] = useMutation(SEND_INVITE);
+  const [deleteInvite, { loading: deleteLoading, error: deleteError, data: deleteData }] = useMutation(DELETE_INVITE);
+
+  const [inviteeEmail, setInviteeEmail] = useState("");
+  const [emailValid, setEmailValid] = useState(false);
+
+  const toast = useToast();
+
+  const sendEmailInvite = async () => {
+    const res = await sendInvite({ variables: { teamSlug, inviteeEmail } })
+    if (res) refetch();
+  };
+
+  const deleteEmailInvite = async (inviteSlug: string) => {
+    const res = await deleteInvite({ variables: { teamSlug, inviteSlug } });
+    if (res) refetch();
+  };
+
+  useEffect(() => setEmailValid(validateEmail(inviteeEmail)), [inviteeEmail]);
+  useEffect(() => setInviteeEmail(""), [isOpen]);
 
   useEffect(() => {
-    console.log({ team });
-  }, [team]);
+    if (!error) return;
+    toast({
+      title: 'Could not send invite',
+      description: error.message,
+      status: 'error',
+      duration: 6000,
+      isClosable: true,
+      position: "top",
+      containerStyle: {
+        paddingTop: "30px"
+      },
+    });
+  }, [error]);
+
+  useEffect(() => {
+    if (!error && !loading && data) {
+      toast({
+        title: 'Sent invite successfully',
+        description: 'Please ask invitee to check their email',
+        status: 'success',
+        duration: 6000,
+        isClosable: true,
+        position: "top",
+        containerStyle: {
+          paddingTop: "30px"
+        },
+      });
+    }
+  }, [error, loading, data]);
+
 
   return (
     <VStack alignItems={{ lg: "flex-start" }} maxW={"100%"} overflowX={"auto"}>
@@ -476,11 +537,25 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
         <Heading>Manage Members</Heading>
         <Spacer />
         <IconButton
-          isDisabled={true}
           aria-label="add member"
           variant={"outline"}
           icon={<UserPlusIcon />}
+          onClick={onOpen}
         />
+        <SingleActionModal
+          isOpen={isOpen}
+          onClose={onClose}
+          heading={"Add Member"}
+          loading={loading}
+          disabled={!emailValid}
+          action={sendEmailInvite}
+        >
+          <Text>Email Address</Text>
+          <Input
+            placeholder="john.doe@planetcast.ai"
+            onChange={(e) => setInviteeEmail(e.target.value)}
+          />
+        </SingleActionModal>
       </HStack>
 
       <Stack
@@ -495,7 +570,7 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
 
         {team?.members.map((m, idx) => (
           <HStack overflowX={"auto"} key={idx}>
-            <HStack spacing={"30px"}>
+            <HStack spacing={"30px"} w={"full"}>
               <Avatar
                 src={`https://api.dicebear.com/6.x/notionists/svg?seed=${m.user.email}`}
                 borderWidth={"1px"}
@@ -508,11 +583,15 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
               </Box>
             </HStack>
             <Spacer />
+            <HStack w="full">
+              <Spacer />
               <Box>
                 <Text>{m.membershipType}</Text>
               </Box>
+            </HStack>
             <Spacer />
-            <HStack spacing={"50px"}>
+            <HStack w="full">
+              <Spacer />
               <Box>
                 <IconButton
                   aria-label="remove member"
@@ -526,10 +605,108 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
           </HStack>
         ))}
 
+        {team?.invitees.map((invite, idx) => (
+          <HStack overflowX={"auto"} key={idx}>
+            <HStack spacing={"30px"} w="full">
+              <Avatar
+                src={`https://api.dicebear.com/6.x/notionists/svg?seed=${invite.inviteeEmail}`}
+                borderWidth={"1px"}
+                borderColor={"blackAlpha.200"}
+                backgroundColor={"white"}
+              />
+              <Box>
+                <Text>{invite.inviteeEmail}</Text>
+              </Box>
+            </HStack>
+            <Spacer />
+            <HStack w="full">
+              <Spacer />
+              <Box>
+                <Text>{'INVITED'}</Text>
+              </Box>
+            </HStack>
+            <Spacer />
+            <HStack w="full">
+              <Spacer />
+              <Box>
+                <DeleteInvite teamSlug={teamSlug} inviteSlug={invite.slug} refetch={refetch} />
+              </Box>
+            </HStack>
+          </HStack>
+        ))}
+
       </Stack>
 
     </VStack>
 
+  );
+};
+
+interface DeleteInviteProps {
+  teamSlug: string;
+  inviteSlug: string;
+  refetch: () => void;
+};
+
+const DeleteInvite: React.FC<DeleteInviteProps> = ({ refetch, teamSlug, inviteSlug }) => {
+  const [deleteInvite, { loading, error, data }] = useMutation(DELETE_INVITE);
+  const deleteEmailInvite = async () => {
+    const res = await deleteInvite({ variables: { teamSlug, inviteSlug } });
+    if (res) refetch();
+  };
+  const { onOpen, isOpen, onClose } = useDisclosure();
+
+  const toast = useToast();
+
+  useEffect(() => {
+    if (!loading && !error && data) {
+      toast({
+        title: 'Invite deleted successfully',
+        status: 'success',
+        duration: 6000,
+        isClosable: true,
+        position: "top",
+        containerStyle: {
+          paddingTop: "30px"
+        },
+      });
+    } else if (error) {
+      toast({
+        title: 'Could not delete invite',
+        status: 'error',
+        duration: 6000,
+        isClosable: true,
+        position: "top",
+        containerStyle: {
+          paddingTop: "30px"
+        },
+      });
+    }
+  }, [loading, data, error]);
+
+  return (
+    <>
+      <IconButton
+        aria-label="remove invite"
+        colorScheme="red"
+        variant={"outline"}
+        icon={<UserXIcon />}
+        isDisabled={loading}
+        onClick={onOpen}
+      />
+      <SingleActionModal
+        heading={"Delete invite"}
+        action={deleteEmailInvite}
+        isOpen={isOpen}
+        onClose={onClose}
+        loading={loading}
+      >
+        <Text>
+          Are you sure you want to delete this invite?
+          You will have to invite this person again later if you want them to join your team.
+        </Text>
+      </SingleActionModal>
+    </>
   );
 };
 
