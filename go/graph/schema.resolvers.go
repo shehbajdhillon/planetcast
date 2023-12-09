@@ -481,6 +481,20 @@ func (r *teamResolver) SubscriptionPlans(ctx context.Context, obj *database.Team
 	return []database.SubscriptionPlan{subscription}, err
 }
 
+// Members is the resolver for the members field.
+func (r *teamResolver) Members(ctx context.Context, obj *database.Team) ([]model.TeamMember, error) {
+	members := []model.TeamMember{}
+	memberships, _ := r.DB.GetTeamMembershipsByTeamId(ctx, obj.ID)
+	for _, m := range memberships {
+		user, _ := r.DB.GetUserById(ctx, m.UserID)
+		members = append(members, model.TeamMember{
+			MembershipType: string(m.MembershipType),
+			User:           user,
+		})
+	}
+	return members, nil
+}
+
 // Transcript is the resolver for the transcript field.
 func (r *transformationResolver) Transcript(ctx context.Context, obj *database.Transformation) (string, error) {
 	jsonBytes := obj.Transcript.RawMessage

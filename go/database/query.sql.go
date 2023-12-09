@@ -487,6 +487,39 @@ func (q *Queries) GetTeamMembershipByTeamIdUserId(ctx context.Context, arg GetTe
 	return i, err
 }
 
+const getTeamMembershipsByTeamId = `-- name: GetTeamMembershipsByTeamId :many
+SELECT id, team_id, user_id, membership_type, created FROM team_membership WHERE team_id = $1 ORDER BY created
+`
+
+func (q *Queries) GetTeamMembershipsByTeamId(ctx context.Context, teamID int64) ([]TeamMembership, error) {
+	rows, err := q.db.QueryContext(ctx, getTeamMembershipsByTeamId, teamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []TeamMembership
+	for rows.Next() {
+		var i TeamMembership
+		if err := rows.Scan(
+			&i.ID,
+			&i.TeamID,
+			&i.UserID,
+			&i.MembershipType,
+			&i.Created,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTeamMemebershipsByUserId = `-- name: GetTeamMemebershipsByUserId :many
 SELECT id, team_id, user_id, membership_type, created FROM team_membership WHERE user_id = $1 ORDER BY team_id
 `

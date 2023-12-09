@@ -166,7 +166,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ teamSlug, params, loading, te
             </Drawer>
 
             {tabIdx === 0 && <GeneralSettingsTab drawerOpen={onOpen} />}
-            {tabIdx === 1 && <TeamMembersTab drawerOpen={onOpen} />}
+            {tabIdx === 1 && <TeamMembersTab drawerOpen={onOpen} team={team} teamSlug={teamSlug} />}
             {tabIdx === 2 && <SubscriptionSettingsTab drawerOpen={onOpen} teamSlug={teamSlug} team={team} />}
           </GridItem>
         </Grid>
@@ -441,13 +441,21 @@ const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = (props) => {
 
 interface TeamMembersTabProps {
   drawerOpen: () => void;
+  team: Team;
+  teamSlug: String;
 };
 
-const TeamMembersTab: React.FC<TeamMembersTabProps> = ({ drawerOpen }) => {
+const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
+
+  const { drawerOpen, teamSlug, team } = props;
 
   const { width } = useWindowDimensions();
 
   const { user } = useUser();
+
+  useEffect(() => {
+    console.log({ team });
+  }, [team]);
 
   return (
     <VStack alignItems={{ lg: "flex-start" }} maxW={"100%"} overflowX={"auto"}>
@@ -468,6 +476,7 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = ({ drawerOpen }) => {
         <Heading>Manage Members</Heading>
         <Spacer />
         <IconButton
+          isDisabled={true}
           aria-label="add member"
           variant={"outline"}
           icon={<UserPlusIcon />}
@@ -483,40 +492,39 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = ({ drawerOpen }) => {
         spacing={"35px"}
         maxW={(width as number) - 32}
       >
-        <HStack overflowX={"auto"}>
 
-          <HStack spacing={"30px"}>
-            <Avatar
-              src={`https://api.dicebear.com/6.x/notionists/svg?seed=${user?.primaryEmailAddress?.emailAddress}`}
-              borderWidth={"1px"}
-              borderColor={"blackAlpha.200"}
-              backgroundColor={"white"}
-            />
-            <Box>
-              <Text>{user?.fullName}</Text>
-              <Text>{user?.primaryEmailAddress?.emailAddress}</Text>
-            </Box>
-          </HStack>
-
-          <Spacer />
-            <Box>
-              <Text>Owner</Text>
-            </Box>
-          <Spacer />
-
-          <HStack spacing={"50px"}>
-            <Box>
-              <IconButton
-                aria-label="remove member"
-                colorScheme="red"
-                variant={"outline"}
-                icon={<UserXIcon />}
-                isDisabled={true}
+        {team?.members.map((m, idx) => (
+          <HStack overflowX={"auto"} key={idx}>
+            <HStack spacing={"30px"}>
+              <Avatar
+                src={`https://api.dicebear.com/6.x/notionists/svg?seed=${m.user.email}`}
+                borderWidth={"1px"}
+                borderColor={"blackAlpha.200"}
+                backgroundColor={"white"}
               />
-            </Box>
+              <Box>
+                <Text>{m.user.fullName}</Text>
+                <Text>{m.user.email}</Text>
+              </Box>
+            </HStack>
+            <Spacer />
+              <Box>
+                <Text>{m.membershipType}</Text>
+              </Box>
+            <Spacer />
+            <HStack spacing={"50px"}>
+              <Box>
+                <IconButton
+                  aria-label="remove member"
+                  colorScheme="red"
+                  variant={"outline"}
+                  icon={<UserXIcon />}
+                  isDisabled={true}
+                />
+              </Box>
+            </HStack>
           </HStack>
-
-        </HStack>
+        ))}
 
       </Stack>
 

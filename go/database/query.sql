@@ -33,6 +33,9 @@ SELECT * FROM team_membership WHERE user_id = $1 ORDER BY team_id;
 -- name: GetTeamMembershipByTeamIdUserId :one
 SELECT * FROM team_membership WHERE team_id = $1 AND user_id = $2 LIMIT 1;
 
+-- name: GetTeamMembershipsByTeamId :many
+SELECT * FROM team_membership WHERE team_id = $1 ORDER BY created;
+
 
 -- name: CreateSubscription :one
 INSERT INTO subscription_plan

@@ -5,6 +5,7 @@ package model
 import (
 	"fmt"
 	"io"
+	"planetcastdev/database"
 	"strconv"
 )
 
@@ -24,6 +25,11 @@ type SubscriptionData struct {
 	PlanName           string `json:"planName"`
 	CostInUsd          int64  `json:"costInUsd"`
 	LastFourCardDigits string `json:"lastFourCardDigits"`
+}
+
+type TeamMember struct {
+	MembershipType string            `json:"membershipType"`
+	User           database.Userinfo `json:"user"`
 }
 
 type UploadOption string
