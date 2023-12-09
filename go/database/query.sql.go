@@ -79,7 +79,7 @@ func (q *Queries) AddUser(ctx context.Context, arg AddUserParams) (Userinfo, err
 }
 
 const createProject = `-- name: CreateProject :one
-INSERT INTO project (team_id, title, source_media, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, team_id, title, source_media, created
+INSERT INTO project (team_id, title, source_media, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, slug, team_id, title, source_media, created
 `
 
 type CreateProjectParams struct {
@@ -93,6 +93,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 	var i Project
 	err := row.Scan(
 		&i.ID,
+		&i.Slug,
 		&i.TeamID,
 		&i.Title,
 		&i.SourceMedia,
@@ -192,7 +193,7 @@ func (q *Queries) CreateTransformation(ctx context.Context, arg CreateTransforma
 }
 
 const deleteProjectById = `-- name: DeleteProjectById :one
-DELETE FROM project WHERE id = $1 RETURNING id, team_id, title, source_media, created
+DELETE FROM project WHERE id = $1 RETURNING id, slug, team_id, title, source_media, created
 `
 
 func (q *Queries) DeleteProjectById(ctx context.Context, id int64) (Project, error) {
@@ -200,6 +201,7 @@ func (q *Queries) DeleteProjectById(ctx context.Context, id int64) (Project, err
 	var i Project
 	err := row.Scan(
 		&i.ID,
+		&i.Slug,
 		&i.TeamID,
 		&i.Title,
 		&i.SourceMedia,
@@ -230,7 +232,7 @@ func (q *Queries) DeleteTransformationById(ctx context.Context, id int64) (Trans
 }
 
 const getProjectById = `-- name: GetProjectById :one
-SELECT id, team_id, title, source_media, created FROM project WHERE id = $1 LIMIT 1
+SELECT id, slug, team_id, title, source_media, created FROM project WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetProjectById(ctx context.Context, id int64) (Project, error) {
@@ -238,6 +240,7 @@ func (q *Queries) GetProjectById(ctx context.Context, id int64) (Project, error)
 	var i Project
 	err := row.Scan(
 		&i.ID,
+		&i.Slug,
 		&i.TeamID,
 		&i.Title,
 		&i.SourceMedia,
@@ -247,7 +250,7 @@ func (q *Queries) GetProjectById(ctx context.Context, id int64) (Project, error)
 }
 
 const getProjectByProjectIdTeamId = `-- name: GetProjectByProjectIdTeamId :one
-SELECT id, team_id, title, source_media, created FROM project WHERE id = $1 AND team_id = $2 LIMIT 1
+SELECT id, slug, team_id, title, source_media, created FROM project WHERE id = $1 AND team_id = $2 LIMIT 1
 `
 
 type GetProjectByProjectIdTeamIdParams struct {
@@ -260,6 +263,7 @@ func (q *Queries) GetProjectByProjectIdTeamId(ctx context.Context, arg GetProjec
 	var i Project
 	err := row.Scan(
 		&i.ID,
+		&i.Slug,
 		&i.TeamID,
 		&i.Title,
 		&i.SourceMedia,
@@ -269,7 +273,7 @@ func (q *Queries) GetProjectByProjectIdTeamId(ctx context.Context, arg GetProjec
 }
 
 const getProjectsByTeamId = `-- name: GetProjectsByTeamId :many
-SELECT id, team_id, title, source_media, created FROM project WHERE team_id = $1 ORDER BY created
+SELECT id, slug, team_id, title, source_media, created FROM project WHERE team_id = $1 ORDER BY created
 `
 
 func (q *Queries) GetProjectsByTeamId(ctx context.Context, teamID int64) ([]Project, error) {
@@ -283,6 +287,7 @@ func (q *Queries) GetProjectsByTeamId(ctx context.Context, teamID int64) ([]Proj
 		var i Project
 		if err := rows.Scan(
 			&i.ID,
+			&i.Slug,
 			&i.TeamID,
 			&i.Title,
 			&i.SourceMedia,
@@ -707,7 +712,7 @@ func (q *Queries) SetSubscriptionStripeIdByTeamId(ctx context.Context, arg SetSu
 }
 
 const updateProjectSourceMedia = `-- name: UpdateProjectSourceMedia :one
-UPDATE project SET source_media = $2 WHERE id = $1 RETURNING id, team_id, title, source_media, created
+UPDATE project SET source_media = $2 WHERE id = $1 RETURNING id, slug, team_id, title, source_media, created
 `
 
 type UpdateProjectSourceMediaParams struct {
@@ -720,6 +725,7 @@ func (q *Queries) UpdateProjectSourceMedia(ctx context.Context, arg UpdateProjec
 	var i Project
 	err := row.Scan(
 		&i.ID,
+		&i.Slug,
 		&i.TeamID,
 		&i.Title,
 		&i.SourceMedia,

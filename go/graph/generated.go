@@ -77,6 +77,7 @@ type ComplexityRoot struct {
 	Project struct {
 		DubbingCreditsRequired func(childComplexity int) int
 		ID                     func(childComplexity int) int
+		Slug                   func(childComplexity int) int
 		SourceMedia            func(childComplexity int) int
 		TeamID                 func(childComplexity int) int
 		Title                  func(childComplexity int) int
@@ -295,6 +296,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Project.ID(childComplexity), true
+
+	case "Project.slug":
+		if e.complexity.Project.Slug == nil {
+			break
+		}
+
+		return e.complexity.Project.Slug(childComplexity), true
 
 	case "Project.sourceMedia":
 		if e.complexity.Project.SourceMedia == nil {
@@ -1316,6 +1324,8 @@ func (ec *executionContext) fieldContext_Mutation_createProject(ctx context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Project_id(ctx, field)
+			case "slug":
+				return ec.fieldContext_Project_slug(ctx, field)
 			case "teamId":
 				return ec.fieldContext_Project_teamId(ctx, field)
 			case "title":
@@ -1405,6 +1415,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteProject(ctx context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Project_id(ctx, field)
+			case "slug":
+				return ec.fieldContext_Project_slug(ctx, field)
 			case "teamId":
 				return ec.fieldContext_Project_teamId(ctx, field)
 			case "title":
@@ -1860,6 +1872,50 @@ func (ec *executionContext) fieldContext_Project_id(ctx context.Context, field g
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int64 does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Project_slug(ctx context.Context, field graphql.CollectedField, obj *database.Project) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Project_slug(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Slug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Project_slug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Project",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3210,6 +3266,8 @@ func (ec *executionContext) fieldContext_Team_projects(ctx context.Context, fiel
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Project_id(ctx, field)
+			case "slug":
+				return ec.fieldContext_Project_slug(ctx, field)
 			case "teamId":
 				return ec.fieldContext_Project_teamId(ctx, field)
 			case "title":
@@ -5752,6 +5810,11 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = graphql.MarshalString("Project")
 		case "id":
 			out.Values[i] = ec._Project_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "slug":
+			out.Values[i] = ec._Project_slug(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

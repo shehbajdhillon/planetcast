@@ -43,10 +43,12 @@ CREATE TABLE team_membership (
 DROP TABLE IF EXISTS project CASCADE;
 CREATE TABLE project (
   id BIGSERIAL PRIMARY KEY NOT NULL,
+  slug TEXT NOT NULL,
   team_id BIGINT REFERENCES team (id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL,
   source_media TEXT NOT NULL,
-  created TIMESTAMP NOT NULL
+  created TIMESTAMP NOT NULL,
+  UNIQUE (slug, team_id)
 );
 
 DROP TABLE IF EXISTS transformation CASCADE;

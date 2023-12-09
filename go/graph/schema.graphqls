@@ -23,6 +23,7 @@ type Team {
 
 type Project {
   id: Int64!
+  slug: String!
   teamId: Int64!
   title: String!
   sourceMedia: String!
