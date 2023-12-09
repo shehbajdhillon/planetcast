@@ -358,6 +358,43 @@ func (r *mutationResolver) CreatePortalSession(ctx context.Context, teamSlug str
 	return model.PortalSessionResponse{SessionURL: ps.URL}, nil
 }
 
+// SendTeamInvite is the resolver for the sendTeamInvite field.
+func (r *mutationResolver) SendTeamInvite(ctx context.Context, teamSlug string, inviteeEmail string) (bool, error) {
+	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
+	user, err := r.DB.GetUserByEmail(ctx, inviteeEmail)
+	if err == nil {
+		_, err = r.DB.GetTeamMembershipByTeamIdUserId(ctx, database.GetTeamMembershipByTeamIdUserIdParams{
+			TeamID: team.ID,
+			UserID: user.ID,
+		})
+
+		if err == nil {
+			return false, fmt.Errorf("User already a member of the team")
+		}
+	}
+
+	_, err = r.DB.AddTeamInvite(ctx, database.AddTeamInviteParams{
+		Slug:         uuid.NewString(),
+		InviteeEmail: inviteeEmail,
+		TeamID:       team.ID,
+	})
+
+	if err != nil {
+		return false, fmt.Errorf("User already invited to the team")
+	}
+
+	return true, nil
+}
+
+// DeleteTeamInvite is the resolver for the deleteTeamInvite field.
+func (r *mutationResolver) DeleteTeamInvite(ctx context.Context, teamSlug string, inviteSlug string) (bool, error) {
+	_, err := r.DB.DeleteTeamInviteBySlug(ctx, inviteSlug)
+	if err != nil {
+		return false, fmt.Errorf("Could not remove invite")
+	}
+	return true, nil
+}
+
 // DubbingCreditsRequired is the resolver for the dubbingCreditsRequired field.
 func (r *projectResolver) DubbingCreditsRequired(ctx context.Context, obj *database.Project) (*int64, error) {
 	sourceTransformation, err := r.DB.GetSourceTransformationByProjectId(ctx, obj.ID)
@@ -493,6 +530,22 @@ func (r *teamResolver) Members(ctx context.Context, obj *database.Team) ([]model
 		})
 	}
 	return members, nil
+}
+
+// Invitees is the resolver for the invitees field.
+func (r *teamResolver) Invitees(ctx context.Context, obj *database.Team) ([]database.TeamInvite, error) {
+	invites, err := r.DB.GetTeamInvitesByTeamId(ctx, obj.ID)
+	if err != nil {
+		return []database.TeamInvite{}, nil
+	}
+	inviteeEmails := []database.TeamInvite{}
+	for _, invite := range invites {
+		inviteeEmails = append(inviteeEmails, database.TeamInvite{
+			Slug:         invite.Slug,
+			InviteeEmail: invite.InviteeEmail,
+		})
+	}
+	return inviteeEmails, nil
 }
 
 // Transcript is the resolver for the transcript field.

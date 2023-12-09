@@ -40,9 +40,15 @@ SELECT * FROM team_membership WHERE team_id = $1 ORDER BY created;
 -- name: GetTeamInviteBySlug :one
 SELECT * FROM team_invite WHERE slug = $1;
 
+-- name: GetTeamInvitesByTeamId :many
+SELECT * FROM team_invite WHERE team_id = $1 ORDER BY created;
+
 -- name: AddTeamInvite :one
 INSERT INTO team_invite (slug, team_id, invitee_email, created)
 VALUES ($1, $2, $3, clock_timestamp()) RETURNING *;
+
+-- name: DeleteTeamInviteBySlug :one
+DELETE FROM team_invite WHERE slug = $1 RETURNING *;
 
 
 -- name: CreateSubscription :one
