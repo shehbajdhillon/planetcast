@@ -6,7 +6,19 @@ export interface Team {
   created: string;
   projects: Project[];
   subscriptionPlans: SubscriptionPlan[];
+  members: TeamMember[];
 };
+
+export interface TeamMember {
+  membershipType: string;
+  user: Userinfo;
+};
+
+interface Userinfo {
+  id: number;
+  email: string;
+  fullName: string;
+}
 
 export interface Project {
   id: number;

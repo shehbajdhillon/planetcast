@@ -68,6 +68,13 @@ const GET_TEAM_BY_ID = gql`
           lastFourCardDigits
         }
       }
+      members {
+        membershipType
+        user {
+          fullName
+          email
+        }
+      }
     }
   }
 `;
