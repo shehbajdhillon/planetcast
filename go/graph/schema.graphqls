@@ -19,6 +19,12 @@ type Team {
   created: DateTime!
   projects(projectId: Int64 @ownsProject): [Project!]!
   subscriptionPlans(subscriptionId: Int64): [SubscriptionPlan!]!
+  members: [TeamMember!]!
+}
+
+type TeamMember {
+  membershipType: String!
+  user: Userinfo!
 }
 
 type Project {
