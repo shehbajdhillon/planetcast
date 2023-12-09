@@ -22,7 +22,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Project, Team } from '@/types';
 import Button from '../button';
-import { useEffect } from 'react';
 
 
 export const MenuBar: React.FC = () => {

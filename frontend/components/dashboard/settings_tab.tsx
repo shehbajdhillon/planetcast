@@ -18,9 +18,11 @@ import {
   VStack,
   useDisclosure,
   useToast,
-  useColorModeValue
+  useColorModeValue,
+  IconButton,
+  Avatar
 } from "@chakra-ui/react";
-import { Menu } from "lucide-react";
+import {  Menu, UserPlusIcon, UserXIcon } from "lucide-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import StripeCheckoutForm from "../stripe_checkout";
@@ -31,6 +33,8 @@ import PricingComponent from "../marketing_page/pricing_component";
 import { gql, useMutation } from "@apollo/client";
 import { convertUtcToLocal } from "@/utils";
 import { loadStripe } from "@stripe/stripe-js";
+import useWindowDimensions from "@/hooks/useWindowDimensions";
+import { useUser } from "@clerk/nextjs";
 
 const CREATE_STRIPE_CHECKOUT = gql`
   mutation CreateStripeCheckout($teamSlug: String!, $lookUpKey: String!) {
@@ -62,6 +66,16 @@ const TabButtons: React.FC<TabButtonsProps> = ({ tabIdx, switchTab }) => {
         w="full"
         onClick={() => switchTab(1)}
         borderWidth={tabIdx === 1 ? '1px' : ''}
+        textAlign={"left"}
+        justifyContent={"left"}
+      >
+        Members
+      </Button>
+      <Button
+        variant={"ghost"}
+        w="full"
+        onClick={() => switchTab(2)}
+        borderWidth={tabIdx === 2 ? '1px' : ''}
         textAlign={"left"}
         justifyContent={"left"}
       >
@@ -100,6 +114,9 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ teamSlug, params, loading, te
         router.push(`/dashboard/${teamSlug}/settings`, undefined, { shallow: true });
         break;
       case 1:
+        router.push(`/dashboard/${teamSlug}/settings/members`, undefined, { shallow: true });
+        break;
+      case 2:
         router.push(`/dashboard/${teamSlug}/settings/subscription`, undefined, { shallow: true });
         break;
     }
@@ -149,7 +166,8 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ teamSlug, params, loading, te
             </Drawer>
 
             {tabIdx === 0 && <GeneralSettingsTab drawerOpen={onOpen} />}
-            {tabIdx === 1 && <SubscriptionSettingsTab drawerOpen={onOpen} teamSlug={teamSlug} team={team} />}
+            {tabIdx === 1 && <TeamMembersTab drawerOpen={onOpen} />}
+            {tabIdx === 2 && <SubscriptionSettingsTab drawerOpen={onOpen} teamSlug={teamSlug} team={team} />}
           </GridItem>
         </Grid>
       </Box>
@@ -421,6 +439,92 @@ const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = (props) => {
   );
 };
 
+interface TeamMembersTabProps {
+  drawerOpen: () => void;
+};
+
+const TeamMembersTab: React.FC<TeamMembersTabProps> = ({ drawerOpen }) => {
+
+  const { width } = useWindowDimensions();
+
+  const { user } = useUser();
+
+  return (
+    <VStack alignItems={{ lg: "flex-start" }} maxW={"100%"} overflowX={"auto"}>
+      <Button
+        w="full"
+        variant={"ghost"}
+        borderWidth={'1px'}
+        display={{ lg: "none" }}
+        textAlign={"left"}
+        onClick={drawerOpen}
+      >
+        <HStack>
+          <Menu size={"20px"} />
+          <Text>Team Members</Text>
+        </HStack>
+      </Button>
+      <HStack w="full">
+        <Heading>Manage Members</Heading>
+        <Spacer />
+        <IconButton
+          aria-label="add member"
+          variant={"outline"}
+          icon={<UserPlusIcon />}
+        />
+      </HStack>
+
+      <Stack
+        direction={"column"}
+        w="full"
+        borderWidth={"1px"}
+        padding={"25px"}
+        rounded={"lg"}
+        spacing={"35px"}
+        maxW={(width as number) - 32}
+      >
+        <HStack overflowX={"auto"}>
+
+          <HStack spacing={"30px"}>
+            <Avatar
+              src={`https://api.dicebear.com/6.x/notionists/svg?seed=${user?.primaryEmailAddress?.emailAddress}`}
+              borderWidth={"1px"}
+              borderColor={"blackAlpha.200"}
+              backgroundColor={"white"}
+            />
+            <Box>
+              <Text>{user?.fullName}</Text>
+              <Text>{user?.primaryEmailAddress?.emailAddress}</Text>
+            </Box>
+          </HStack>
+
+          <Spacer />
+            <Box>
+              <Text>Owner</Text>
+            </Box>
+          <Spacer />
+
+          <HStack spacing={"50px"}>
+            <Box>
+              <IconButton
+                aria-label="remove member"
+                colorScheme="red"
+                variant={"outline"}
+                icon={<UserXIcon />}
+                isDisabled={true}
+              />
+            </Box>
+          </HStack>
+
+        </HStack>
+
+      </Stack>
+
+    </VStack>
+
+  );
+};
+
 export const getInitialTeamSettingTabIndex = (tabs: string[]) => {
 
   let defaultIndex = 0;
@@ -439,8 +543,11 @@ export const getInitialTeamSettingTabIndex = (tabs: string[]) => {
     case undefined:
       defaultIndex = 0;
       break;
-    case 'subscription':
+    case 'members':
       defaultIndex = 1;
+      break;
+    case 'subscription':
+      defaultIndex = 2;
       break;
     default:
       notFound = true
