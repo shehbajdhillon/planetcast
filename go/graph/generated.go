@@ -75,7 +75,7 @@ type ComplexityRoot struct {
 		CreateTeam            func(childComplexity int, teamType database.TeamType, addTrial bool) int
 		CreateTranslation     func(childComplexity int, projectID int64, targetLanguage string, lipSync bool) int
 		DeleteProject         func(childComplexity int, projectID int64) int
-		DeleteTeamInvite      func(childComplexity int, teamSlug string, inviteSlug string) int
+		DeleteTeamInvite      func(childComplexity int, inviteSlug string) int
 		DeleteTransformation  func(childComplexity int, transformationID int64) int
 		SendTeamInvite        func(childComplexity int, teamSlug string, inviteeEmail string) int
 	}
@@ -130,8 +130,8 @@ type ComplexityRoot struct {
 	}
 
 	TeamInvite struct {
+		InviteSlug   func(childComplexity int) int
 		InviteeEmail func(childComplexity int) int
-		Slug         func(childComplexity int) int
 		TeamID       func(childComplexity int) int
 		TeamName     func(childComplexity int) int
 	}
@@ -171,7 +171,7 @@ type MutationResolver interface {
 	CreateCheckoutSession(ctx context.Context, teamSlug string, lookUpKey string) (model.CheckoutSessionResponse, error)
 	CreatePortalSession(ctx context.Context, teamSlug string) (model.PortalSessionResponse, error)
 	SendTeamInvite(ctx context.Context, teamSlug string, inviteeEmail string) (bool, error)
-	DeleteTeamInvite(ctx context.Context, teamSlug string, inviteSlug string) (bool, error)
+	DeleteTeamInvite(ctx context.Context, inviteSlug string) (bool, error)
 }
 type ProjectResolver interface {
 	DubbingCreditsRequired(ctx context.Context, obj *database.Project) (*int64, error)
@@ -195,6 +195,8 @@ type TeamResolver interface {
 	Invitees(ctx context.Context, obj *database.Team) ([]database.TeamInvite, error)
 }
 type TeamInviteResolver interface {
+	InviteSlug(ctx context.Context, obj *database.TeamInvite) (string, error)
+
 	TeamName(ctx context.Context, obj *database.TeamInvite) (string, error)
 }
 type TeamMembershipResolver interface {
@@ -337,7 +339,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteTeamInvite(childComplexity, args["teamSlug"].(string), args["inviteSlug"].(string)), true
+		return e.complexity.Mutation.DeleteTeamInvite(childComplexity, args["inviteSlug"].(string)), true
 
 	case "Mutation.deleteTransformation":
 		if e.complexity.Mutation.DeleteTransformation == nil {
@@ -600,19 +602,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Team.TeamType(childComplexity), true
 
+	case "TeamInvite.inviteSlug":
+		if e.complexity.TeamInvite.InviteSlug == nil {
+			break
+		}
+
+		return e.complexity.TeamInvite.InviteSlug(childComplexity), true
+
 	case "TeamInvite.inviteeEmail":
 		if e.complexity.TeamInvite.InviteeEmail == nil {
 			break
 		}
 
 		return e.complexity.TeamInvite.InviteeEmail(childComplexity), true
-
-	case "TeamInvite.slug":
-		if e.complexity.TeamInvite.Slug == nil {
-			break
-		}
-
-		return e.complexity.TeamInvite.Slug(childComplexity), true
 
 	case "TeamInvite.teamId":
 		if e.complexity.TeamInvite.TeamID == nil {
@@ -1112,36 +1114,14 @@ func (ec *executionContext) field_Mutation_deleteTeamInvite_args(ctx context.Con
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["teamSlug"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("teamSlug"))
-		directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalNString2string(ctx, tmp) }
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.MemberTeam == nil {
-				return nil, errors.New("directive memberTeam is not implemented")
-			}
-			return ec.directives.MemberTeam(ctx, rawArgs, directive0)
-		}
-
-		tmp, err = directive1(ctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if data, ok := tmp.(string); ok {
-			arg0 = data
-		} else {
-			return nil, graphql.ErrorOnPath(ctx, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp))
-		}
-	}
-	args["teamSlug"] = arg0
-	var arg1 string
 	if tmp, ok := rawArgs["inviteSlug"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inviteSlug"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["inviteSlug"] = arg1
+	args["inviteSlug"] = arg0
 	return args, nil
 }
 
@@ -1515,8 +1495,8 @@ func (ec *executionContext) fieldContext_AccountInfo_invites(ctx context.Context
 			switch field.Name {
 			case "inviteeEmail":
 				return ec.fieldContext_TeamInvite_inviteeEmail(ctx, field)
-			case "slug":
-				return ec.fieldContext_TeamInvite_slug(ctx, field)
+			case "inviteSlug":
+				return ec.fieldContext_TeamInvite_inviteSlug(ctx, field)
 			case "teamId":
 				return ec.fieldContext_TeamInvite_teamId(ctx, field)
 			case "teamName":
@@ -2258,7 +2238,7 @@ func (ec *executionContext) _Mutation_deleteTeamInvite(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteTeamInvite(rctx, fc.Args["teamSlug"].(string), fc.Args["inviteSlug"].(string))
+		return ec.resolvers.Mutation().DeleteTeamInvite(rctx, fc.Args["inviteSlug"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4004,8 +3984,8 @@ func (ec *executionContext) fieldContext_Team_invitees(ctx context.Context, fiel
 			switch field.Name {
 			case "inviteeEmail":
 				return ec.fieldContext_TeamInvite_inviteeEmail(ctx, field)
-			case "slug":
-				return ec.fieldContext_TeamInvite_slug(ctx, field)
+			case "inviteSlug":
+				return ec.fieldContext_TeamInvite_inviteSlug(ctx, field)
 			case "teamId":
 				return ec.fieldContext_TeamInvite_teamId(ctx, field)
 			case "teamName":
@@ -4061,8 +4041,8 @@ func (ec *executionContext) fieldContext_TeamInvite_inviteeEmail(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _TeamInvite_slug(ctx context.Context, field graphql.CollectedField, obj *database.TeamInvite) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TeamInvite_slug(ctx, field)
+func (ec *executionContext) _TeamInvite_inviteSlug(ctx context.Context, field graphql.CollectedField, obj *database.TeamInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TeamInvite_inviteSlug(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4075,7 +4055,7 @@ func (ec *executionContext) _TeamInvite_slug(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Slug, nil
+		return ec.resolvers.TeamInvite().InviteSlug(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4092,12 +4072,12 @@ func (ec *executionContext) _TeamInvite_slug(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_TeamInvite_slug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_TeamInvite_inviteSlug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TeamInvite",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -7591,11 +7571,42 @@ func (ec *executionContext) _TeamInvite(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "slug":
-			out.Values[i] = ec._TeamInvite_slug(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+		case "inviteSlug":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TeamInvite_inviteSlug(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "teamId":
 			out.Values[i] = ec._TeamInvite_teamId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

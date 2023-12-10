@@ -387,7 +387,7 @@ func (r *mutationResolver) SendTeamInvite(ctx context.Context, teamSlug string, 
 }
 
 // DeleteTeamInvite is the resolver for the deleteTeamInvite field.
-func (r *mutationResolver) DeleteTeamInvite(ctx context.Context, teamSlug string, inviteSlug string) (bool, error) {
+func (r *mutationResolver) DeleteTeamInvite(ctx context.Context, inviteSlug string) (bool, error) {
 	_, err := r.DB.DeleteTeamInviteBySlug(ctx, inviteSlug)
 	if err != nil {
 		return false, fmt.Errorf("Could not remove invite")
@@ -549,6 +549,11 @@ func (r *teamResolver) Invitees(ctx context.Context, obj *database.Team) ([]data
 		})
 	}
 	return inviteeEmails, nil
+}
+
+// InviteSlug is the resolver for the inviteSlug field.
+func (r *teamInviteResolver) InviteSlug(ctx context.Context, obj *database.TeamInvite) (string, error) {
+	return obj.Slug, nil
 }
 
 // TeamName is the resolver for the teamName field.

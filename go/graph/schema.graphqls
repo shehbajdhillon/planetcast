@@ -39,7 +39,7 @@ type TeamMembership {
 
 type TeamInvite {
   inviteeEmail: String!
-  slug: String!
+  inviteSlug: String!
   teamId: Int64!
   teamName: String!
 }
@@ -103,7 +103,7 @@ type Mutation {
   createCheckoutSession(teamSlug: String! @memberTeam, lookUpKey: String!): CheckoutSessionResponse! @loggedIn
   createPortalSession(teamSlug: String! @memberTeam): PortalSessionResponse! @loggedIn
   sendTeamInvite(teamSlug: String! @memberTeam, inviteeEmail: String!): Boolean!
-  deleteTeamInvite(teamSlug: String! @memberTeam, inviteSlug: String!): Boolean!
+  deleteTeamInvite(inviteSlug: String!): Boolean!
 }
 
 type CheckoutSessionResponse {

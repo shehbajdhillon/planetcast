@@ -51,8 +51,8 @@ const SEND_INVITE = gql`
   }
 `
 const DELETE_INVITE = gql`
-  mutation DeleteInvite($teamSlug: String!, $inviteSlug: String!) {
-    deleteTeamInvite(teamSlug: $teamSlug, inviteSlug: $inviteSlug)
+  mutation DeleteInvite($inviteSlug: String!) {
+    deleteTeamInvite(inviteSlug: $inviteSlug)
   }
 `
 
@@ -465,7 +465,6 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [sendInvite, { loading, error, data }] = useMutation(SEND_INVITE);
-  const [deleteInvite, { loading: deleteLoading, error: deleteError, data: deleteData }] = useMutation(DELETE_INVITE);
 
   const [inviteeEmail, setInviteeEmail] = useState("");
   const [emailValid, setEmailValid] = useState(false);
@@ -474,11 +473,6 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
 
   const sendEmailInvite = async () => {
     const res = await sendInvite({ variables: { teamSlug, inviteeEmail } })
-    if (res) refetch();
-  };
-
-  const deleteEmailInvite = async (inviteSlug: string) => {
-    const res = await deleteInvite({ variables: { teamSlug, inviteSlug } });
     if (res) refetch();
   };
 
@@ -604,7 +598,7 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
           </HStack>
         ))}
 
-        {team?.invitees.map((invite, idx) => (
+        {team?.invitees.map((invite: any, idx) => (
           <HStack overflowX={"auto"} key={idx}>
             <HStack spacing={"30px"} w="full">
               <Avatar
@@ -628,7 +622,7 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
             <HStack w="full">
               <Spacer />
               <Box>
-                <DeleteInvite teamSlug={teamSlug} inviteSlug={invite.slug} refetch={refetch} />
+                <DeleteInvite teamSlug={teamSlug} inviteSlug={invite.inviteSlug} refetch={refetch} />
               </Box>
             </HStack>
           </HStack>
@@ -647,10 +641,10 @@ interface DeleteInviteProps {
   refetch: () => void;
 };
 
-const DeleteInvite: React.FC<DeleteInviteProps> = ({ refetch, teamSlug, inviteSlug }) => {
+const DeleteInvite: React.FC<DeleteInviteProps> = ({ refetch, inviteSlug }) => {
   const [deleteInvite, { loading, error, data }] = useMutation(DELETE_INVITE);
   const deleteEmailInvite = async () => {
-    const res = await deleteInvite({ variables: { teamSlug, inviteSlug } });
+    const res = await deleteInvite({ variables: { inviteSlug } });
     if (res) refetch();
   };
   const { onOpen, isOpen, onClose } = useDisclosure();
