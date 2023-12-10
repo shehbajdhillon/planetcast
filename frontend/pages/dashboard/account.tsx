@@ -82,13 +82,13 @@ const AccountSettings: React.FC = () => {
           >
             <TabList pl={'25px'} w="full" maxW={"1920px"} backgroundColor={bgColor}>
 
-              <Tab hidden={false}>
+              <Tab hidden={loading}>
                 <Text textColor={textColor}>
                   Account Settings
                 </Text>
               </Tab>
 
-              <HStack hidden={true} py="10px" spacing="15px">
+              <HStack hidden={!loading} py="10px" spacing="15px">
                 <Skeleton h="42px" w="100px" rounded={"md"} />
               </HStack>
 
