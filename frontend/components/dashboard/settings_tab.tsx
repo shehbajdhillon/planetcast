@@ -35,7 +35,6 @@ import { gql, useMutation } from "@apollo/client";
 import { convertUtcToLocal, validateEmail } from "@/utils";
 import { loadStripe } from "@stripe/stripe-js";
 import useWindowDimensions from "@/hooks/useWindowDimensions";
-import { useUser } from "@clerk/nextjs";
 import SingleActionModal from "../single_action_modal";
 
 const CREATE_STRIPE_CHECKOUT = gql`
@@ -52,8 +51,8 @@ const SEND_INVITE = gql`
   }
 `
 const DELETE_INVITE = gql`
-  mutation DeleteInvite($teamSlug: String!, $inviteSlug: String!) {
-    deleteTeamInvite(teamSlug: $teamSlug, inviteSlug: $inviteSlug)
+  mutation DeleteInvite($inviteSlug: String!) {
+    deleteTeamInvite(inviteSlug: $inviteSlug)
   }
 `
 
@@ -466,7 +465,6 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [sendInvite, { loading, error, data }] = useMutation(SEND_INVITE);
-  const [deleteInvite, { loading: deleteLoading, error: deleteError, data: deleteData }] = useMutation(DELETE_INVITE);
 
   const [inviteeEmail, setInviteeEmail] = useState("");
   const [emailValid, setEmailValid] = useState(false);
@@ -475,11 +473,6 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
 
   const sendEmailInvite = async () => {
     const res = await sendInvite({ variables: { teamSlug, inviteeEmail } })
-    if (res) refetch();
-  };
-
-  const deleteEmailInvite = async (inviteSlug: string) => {
-    const res = await deleteInvite({ variables: { teamSlug, inviteSlug } });
     if (res) refetch();
   };
 
@@ -578,16 +571,16 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
                 backgroundColor={"white"}
               />
               <Box>
-                <Text>{m.user.fullName}</Text>
+                <Heading size={"sm"}>{m.user.fullName}</Heading>
                 <Text>{m.user.email}</Text>
               </Box>
             </HStack>
             <Spacer />
             <HStack w="full">
               <Spacer />
-              <Box>
+              <Button variant={"outline"}>
                 <Text>{m.membershipType}</Text>
-              </Box>
+              </Button>
             </HStack>
             <Spacer />
             <HStack w="full">
@@ -605,7 +598,7 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
           </HStack>
         ))}
 
-        {team?.invitees.map((invite, idx) => (
+        {team?.invitees.map((invite: any, idx) => (
           <HStack overflowX={"auto"} key={idx}>
             <HStack spacing={"30px"} w="full">
               <Avatar
@@ -621,15 +614,15 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
             <Spacer />
             <HStack w="full">
               <Spacer />
-              <Box>
+              <Button variant={'outline'}>
                 <Text>{'INVITED'}</Text>
-              </Box>
+              </Button>
             </HStack>
             <Spacer />
             <HStack w="full">
               <Spacer />
               <Box>
-                <DeleteInvite teamSlug={teamSlug} inviteSlug={invite.slug} refetch={refetch} />
+                <DeleteInvite teamSlug={teamSlug} inviteSlug={invite.inviteSlug} refetch={refetch} />
               </Box>
             </HStack>
           </HStack>
@@ -648,10 +641,10 @@ interface DeleteInviteProps {
   refetch: () => void;
 };
 
-const DeleteInvite: React.FC<DeleteInviteProps> = ({ refetch, teamSlug, inviteSlug }) => {
+const DeleteInvite: React.FC<DeleteInviteProps> = ({ refetch, inviteSlug }) => {
   const [deleteInvite, { loading, error, data }] = useMutation(DELETE_INVITE);
   const deleteEmailInvite = async () => {
-    const res = await deleteInvite({ variables: { teamSlug, inviteSlug } });
+    const res = await deleteInvite({ variables: { inviteSlug } });
     if (res) refetch();
   };
   const { onOpen, isOpen, onClose } = useDisclosure();

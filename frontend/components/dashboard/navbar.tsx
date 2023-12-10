@@ -32,6 +32,8 @@ export const MenuBar: React.FC = () => {
 
   const { user } = useUser();
 
+  const router = useRouter();
+
   return (
     <Menu>
       <MenuButton
@@ -86,6 +88,15 @@ export const MenuBar: React.FC = () => {
         </MenuItem>
         <MenuItem
           backgroundColor={useColorModeValue("white", "black")}
+          onClick={() => router.push('/dashboard/account')}
+          _hover={{
+            backgroundColor: useColorModeValue("blackAlpha.200", "whiteAlpha.200")
+          }}
+        >
+          Account Settings
+        </MenuItem>
+        <MenuItem
+          backgroundColor={useColorModeValue("white", "black")}
           onClick={() => signOut({})}
           _hover={{
             backgroundColor: useColorModeValue("blackAlpha.200", "whiteAlpha.200")
@@ -99,9 +110,9 @@ export const MenuBar: React.FC = () => {
 };
 
 interface NavbarProps {
-  teams: Team[];
+  teams?: Team[];
   projects?: Project[];
-  teamSlug: string;
+  teamSlug?: string;
   projectId?: number;
 };
 
@@ -112,7 +123,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
 
   const router = useRouter();
 
-  const currentTeam: Team = teams?.filter((team: Team) => team.slug === teamSlug)[0];
+  const currentTeam: Team | undefined = teams?.filter((team: Team) => team.slug === teamSlug)[0];
 
   return (
     <Box w="full" display={"flex"} alignItems={"center"} justifyContent={"center"}>
@@ -125,7 +136,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
       >
         <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={4}>
 
-          <Link href={`/dashboard/${teamSlug}`}>
+          <Link href={`/dashboard`}>
             <Image
               src={useColorModeValue('/planetcastlight.svg', '/planetcastdark.svg')}
               width={60}
@@ -134,7 +145,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
             />
           </Link>
 
-          <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} />
+          { teamSlug && <Divider orientation='vertical' borderWidth={"1px"} maxH={"40px"} transform={"rotate(20deg)"} /> }
 
           { teamSlug && teams ?
             <HStack display={"flex"} alignItems={"center"} justifyContent={"center"} spacing={2} h="full">
@@ -175,7 +186,7 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
               </Menu>
             </HStack>
             :
-            <Skeleton rounded={"lg"} w="232px" h="40px" />
+            teamSlug && <Skeleton rounded={"lg"} w="232px" h="40px" />
           }
 
           { projectId && projects &&
@@ -223,8 +234,8 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
           }
 
         </HStack>
-          { teams && teamSlug &&
-            <HStack spacing={3}>
+          <HStack spacing={3}>
+            { teams && teamSlug &&
               <Button
                 onClick={() => router.push(`/dashboard/${teamSlug}/settings/subscription`)}
                 size="sm"
@@ -239,10 +250,9 @@ const Navbar: React.FC<NavbarProps> = ({ teams, projects, teamSlug, projectId })
                   { currentTeam?.subscriptionPlans?.[0].remainingCredits } Min
                 </Text>
               </Button>
-
-              <MenuBar />
-            </HStack>
-          }
+            }
+            <MenuBar />
+          </HStack>
       </Box>
     </Box>
   );

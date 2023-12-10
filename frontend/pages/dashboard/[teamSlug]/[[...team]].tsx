@@ -77,7 +77,7 @@ const GET_TEAM_BY_ID = gql`
       }
       invitees {
         inviteeEmail
-        slug
+        inviteSlug
       }
     }
   }

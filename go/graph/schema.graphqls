@@ -10,6 +10,8 @@ directive @loggedIn on FIELD_DEFINITION
 directive @memberTeam on ARGUMENT_DEFINITION
 directive @ownsProject on ARGUMENT_DEFINITION
 directive @ownsTransformation on ARGUMENT_DEFINITION
+directive @ownsInvite on ARGUMENT_DEFINITION
+directive @isInvitee on ARGUMENT_DEFINITION
 
 type Team {
   id: Int64!
@@ -19,18 +21,29 @@ type Team {
   created: DateTime!
   projects(projectId: Int64 @ownsProject): [Project!]!
   subscriptionPlans(subscriptionId: Int64): [SubscriptionPlan!]!
-  members: [TeamMember!]!
+  members: [TeamMembership!]!
   invitees: [TeamInvite!]!
 }
 
-type TeamMember {
+type AccountInfo {
+  user: Userinfo!
+  teams: [TeamMembership!]!
+  invites: [TeamInvite!]!
+}
+
+type TeamMembership {
   membershipType: String!
   user: Userinfo!
+  teamId: Int64!
+  teamSlug: String!
+  teamName: String!
 }
 
 type TeamInvite {
   inviteeEmail: String!
-  slug: String!
+  inviteSlug: String!
+  teamId: Int64!
+  teamName: String!
 }
 
 type Project {
@@ -80,6 +93,7 @@ type SubscriptionData {
 type Query {
   getTeams: [Team!]! @loggedIn
   getTeamById(teamSlug: String! @memberTeam): Team! @loggedIn
+  getUserInfo: AccountInfo! @loggedIn
 }
 
 type Mutation {
@@ -91,7 +105,8 @@ type Mutation {
   createCheckoutSession(teamSlug: String! @memberTeam, lookUpKey: String!): CheckoutSessionResponse! @loggedIn
   createPortalSession(teamSlug: String! @memberTeam): PortalSessionResponse! @loggedIn
   sendTeamInvite(teamSlug: String! @memberTeam, inviteeEmail: String!): Boolean!
-  deleteTeamInvite(teamSlug: String! @memberTeam, inviteSlug: String!): Boolean!
+  deleteTeamInvite(inviteSlug: String! @ownsInvite): Boolean!
+  acceptTeamInvite(inviteSlug: String! @isInvitee): Boolean!
 }
 
 type CheckoutSessionResponse {
