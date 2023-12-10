@@ -33,6 +33,7 @@ type TeamMembership {
   membershipType: String!
   user: Userinfo!
   teamId: Int64!
+  teamSlug: String!
   teamName: String!
 }
 

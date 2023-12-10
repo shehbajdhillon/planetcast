@@ -461,10 +461,10 @@ func (r *queryResolver) GetUserInfo(ctx context.Context) (model.AccountInfo, err
 	email, _ := auth.EmailFromContext(ctx)
 	user, _ := r.DB.GetUserByEmail(ctx, email)
 
-  memberships, _ := r.DB.GetTeamMembershipsByUserId(ctx, user.ID)
-  invites, _ := r.DB.GetTeamInvitesByInviteeEmail(ctx, user.Email)
+	memberships, _ := r.DB.GetTeamMembershipsByUserId(ctx, user.ID)
+	invites, _ := r.DB.GetTeamInvitesByInviteeEmail(ctx, user.Email)
 
-  return model.AccountInfo{ User: user, Invites: invites, Teams: memberships }, nil
+	return model.AccountInfo{User: user, Invites: invites, Teams: memberships}, nil
 }
 
 // StripeSubscriptionID is the resolver for the stripeSubscriptionId field.
@@ -565,6 +565,12 @@ func (r *teamMembershipResolver) MembershipType(ctx context.Context, obj *databa
 // User is the resolver for the user field.
 func (r *teamMembershipResolver) User(ctx context.Context, obj *database.TeamMembership) (database.Userinfo, error) {
 	return r.DB.GetUserById(ctx, obj.UserID)
+}
+
+// TeamSlug is the resolver for the teamSlug field.
+func (r *teamMembershipResolver) TeamSlug(ctx context.Context, obj *database.TeamMembership) (string, error) {
+	team, _ := r.DB.GetTeamById(ctx, obj.TeamID)
+	return team.Slug, nil
 }
 
 // TeamName is the resolver for the teamName field.
