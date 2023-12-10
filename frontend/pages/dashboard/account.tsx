@@ -33,6 +33,7 @@ const GET_ACCOUNT_INFO = gql`
       invites {
         teamId
         teamName
+        inviteSlug
       }
     }
   }
@@ -43,8 +44,7 @@ const AccountSettings: React.FC = () => {
   const textColor = useColorModeValue("black", "white");
   const bgColor = useColorModeValue("white", "black");
 
-  const { data, loading } = useQuery(GET_ACCOUNT_INFO)
-
+  const { data, loading, refetch } = useQuery(GET_ACCOUNT_INFO)
 
   //const user: User = data?.getUserInfo.user;
   const teams: Team[] = data?.getUserInfo.teams;
@@ -97,7 +97,7 @@ const AccountSettings: React.FC = () => {
 
           <TabPanels overflow={'auto'} pt={10}>
             <TabPanel>
-              <AccountSettingsTab loading={loading} teams={teams} invites={invites} />
+              <AccountSettingsTab loading={loading} teams={teams} invites={invites} refetch={refetch} />
             </TabPanel>
           </TabPanels>
         </Tabs>

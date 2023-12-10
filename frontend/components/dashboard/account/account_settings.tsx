@@ -1,4 +1,5 @@
 import { Team, TeamInvite } from "@/types";
+import { gql, useMutation } from "@apollo/client";
 import {
   HStack,
   Button,
@@ -21,12 +22,24 @@ import {
 } from "@chakra-ui/react";
 import { ExternalLink, Menu } from "lucide-react";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface TabButtonsProps {
   tabIdx: number;
   switchTab: (tabIdx: number) => void;
 };
+
+const DELETE_INVITE = gql`
+  mutation DeleteInvite($inviteSlug: String!) {
+    deleteTeamInvite(inviteSlug: $inviteSlug)
+  }
+`
+
+const ACCEPT_INVITE = gql`
+  mutation AcceptInvite($inviteSlug: String!) {
+    acceptTeamInvite(inviteSlug: $inviteSlug)
+  }
+`
 
 const TabButtons: React.FC<TabButtonsProps> = ({ tabIdx, switchTab }) => {
   return (
@@ -48,12 +61,25 @@ interface TeamInvitesTabProps {
   drawerOpen: () => void;
   teams: any[];
   invites: any[];
+  refetch: () => void;
 }
 
 const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
-  const { teams, invites, drawerOpen } = props;
-
+  const { refetch, teams, invites, drawerOpen } = props;
   const router = useRouter();
+
+  const [deleteInvite, { loading }] = useMutation(DELETE_INVITE);
+  const [acceptInvite, { loading: aLoading }] = useMutation(ACCEPT_INVITE);
+
+  const deleteEmailInvite = async (inviteSlug: string) => {
+    const res = await deleteInvite({ variables: { inviteSlug } });
+    if (res) refetch();
+  };
+
+  const acceptEmailInvite = async (inviteSlug: string) => {
+    const res = await acceptInvite({ variables: { inviteSlug } });
+    if (res) refetch();
+  };
 
   return (
     <VStack alignItems={{ lg: "flex-start" }}>
@@ -81,6 +107,7 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
         <HStack>
           <Box w="full">
             <Text>Current Teams</Text>
+            <Stack spacing={"25px"}>
             {teams?.map((team, idx) => (
               <HStack key={idx} w="full">
                 <Heading size="sm">{team.teamName}</Heading>
@@ -97,6 +124,7 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
                 />
               </HStack>
             ))}
+            </Stack>
           </Box>
           <Spacer />
           <Box>
@@ -117,8 +145,20 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
               <HStack key={idx} w="full">
                 <Heading size="sm">{invite.teamName}</Heading>
                 <Spacer />
-                <Button variant={"outline"}>Accept</Button>
-                <Button variant={"outline"}>Delete</Button>
+                <Button
+                  onClick={() => acceptEmailInvite(invite.inviteSlug)}
+                  variant={"outline"}
+                  isDisabled={loading || aLoading}
+                >
+                  Accept
+                </Button>
+                <Button
+                  onClick={() => deleteEmailInvite(invite.inviteSlug)}
+                  variant={"outline"}
+                  isDisabled={loading || aLoading}
+                >
+                  Delete
+                </Button>
               </HStack>
             ))}
           </Box>
@@ -136,11 +176,12 @@ interface AccountSettingsTab {
   loading: boolean;
   teams: Team[];
   invites: TeamInvite[];
+  refetch: () => void;
 };
 
 const AccountSettingsTab: React.FC<AccountSettingsTab> = (props) => {
 
-  const { teams, invites, loading } = props;
+  const { refetch, teams, invites, loading } = props;
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [tabIdx, setTabIdx] = useState(0);
@@ -191,7 +232,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTab> = (props) => {
               </DrawerContent>
             </Drawer>
 
-            {tabIdx === 0 && <TeamInvitesTab drawerOpen={onOpen} teams={teams} invites={invites} />}
+            {tabIdx === 0 && <TeamInvitesTab drawerOpen={onOpen} teams={teams} invites={invites} refetch={refetch} />}
           </GridItem>
         </Grid>
       </Box>
