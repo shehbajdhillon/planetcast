@@ -1,6 +1,27 @@
 import { Team, TeamInvite } from "@/types";
-import { HStack, Button, Text, Heading, Stack, VStack, Box, Spacer, Grid, GridItem, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerHeader, DrawerBody, useDisclosure } from "@chakra-ui/react";
-import { Menu } from "lucide-react";
+import {
+  HStack,
+  Button,
+  Text,
+  Heading,
+  Stack,
+  VStack,
+  Box,
+  Spacer,
+  Grid,
+  GridItem,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
+  DrawerHeader,
+  DrawerBody,
+  useDisclosure,
+  IconButton,
+  Badge,
+  Tag
+} from "@chakra-ui/react";
+import { ExternalLink, LinkIcon, Menu } from "lucide-react";
 import { useState } from "react";
 
 interface TabButtonsProps {
@@ -57,10 +78,18 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
         rounded={"lg"}
       >
         <HStack>
-          <Box>
+          <Box w="full">
             <Text>Current Teams</Text>
             {teams?.map((team, idx) => (
-              <Text>{team.teamName}</Text>
+              <HStack key={idx} w="full">
+                <Heading size="sm">{team.teamName}</Heading>
+                <Spacer />
+                <Button variant={"outline"} pointerEvents={"none"}>
+                  <Text>{team.membershipType}</Text>
+                </Button>
+                <Spacer />
+                <IconButton variant={"outline"} aria-label="go to team" icon={<ExternalLink />} />
+              </HStack>
             ))}
           </Box>
           <Spacer />
@@ -76,10 +105,15 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
         rounded={"lg"}
       >
         <HStack>
-          <Box>
+          <Box w="full">
             <Text>Current Invites</Text>
             {invites?.map((invite, idx) => (
-              <Text>{invite.teamName}</Text>
+              <HStack key={idx} w="full">
+                <Heading size="sm">{invite.teamName}</Heading>
+                <Spacer />
+                <Button variant={"outline"}>Accept</Button>
+                <Button variant={"outline"}>Delete</Button>
+              </HStack>
             ))}
           </Box>
           <Spacer />

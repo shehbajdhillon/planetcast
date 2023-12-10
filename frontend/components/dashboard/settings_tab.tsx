@@ -577,16 +577,16 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
                 backgroundColor={"white"}
               />
               <Box>
-                <Text>{m.user.fullName}</Text>
+                <Heading size={"sm"}>{m.user.fullName}</Heading>
                 <Text>{m.user.email}</Text>
               </Box>
             </HStack>
             <Spacer />
             <HStack w="full">
               <Spacer />
-              <Box>
+              <Button variant={"outline"}>
                 <Text>{m.membershipType}</Text>
-              </Box>
+              </Button>
             </HStack>
             <Spacer />
             <HStack w="full">
@@ -620,9 +620,9 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
             <Spacer />
             <HStack w="full">
               <Spacer />
-              <Box>
+              <Button variant={'outline'}>
                 <Text>{'INVITED'}</Text>
-              </Box>
+              </Button>
             </HStack>
             <Spacer />
             <HStack w="full">
