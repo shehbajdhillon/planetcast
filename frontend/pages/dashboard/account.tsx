@@ -16,7 +16,6 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 import Head from "next/head";
-import { useEffect } from "react";
 
 const GET_ACCOUNT_INFO = gql`
   query GetAccountInfo {
@@ -28,6 +27,7 @@ const GET_ACCOUNT_INFO = gql`
       teams {
         teamId
         teamName
+        teamSlug
         membershipType
       }
       invites {

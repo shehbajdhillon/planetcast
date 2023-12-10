@@ -18,10 +18,9 @@ import {
   DrawerBody,
   useDisclosure,
   IconButton,
-  Badge,
-  Tag
 } from "@chakra-ui/react";
-import { ExternalLink, LinkIcon, Menu } from "lucide-react";
+import { ExternalLink, Menu } from "lucide-react";
+import { useRouter } from "next/router";
 import { useState } from "react";
 
 interface TabButtonsProps {
@@ -53,6 +52,8 @@ interface TeamInvitesTabProps {
 
 const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
   const { teams, invites, drawerOpen } = props;
+
+  const router = useRouter();
 
   return (
     <VStack alignItems={{ lg: "flex-start" }}>
@@ -88,7 +89,12 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
                   <Text>{team.membershipType}</Text>
                 </Button>
                 <Spacer />
-                <IconButton variant={"outline"} aria-label="go to team" icon={<ExternalLink />} />
+                <IconButton
+                  variant={"outline"}
+                  aria-label="go to team"
+                  icon={<ExternalLink />}
+                  onClick={() => router.push(`/dashboard/${team.teamSlug}`)}
+                />
               </HStack>
             ))}
           </Box>
