@@ -51,8 +51,10 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	IsInvitee          func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 	LoggedIn           func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 	MemberTeam         func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	OwnsInvite         func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 	OwnsProject        func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 	OwnsTransformation func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
@@ -69,6 +71,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		AcceptTeamInvite      func(childComplexity int, inviteSlug string) int
 		CreateCheckoutSession func(childComplexity int, teamSlug string, lookUpKey string) int
 		CreatePortalSession   func(childComplexity int, teamSlug string) int
 		CreateProject         func(childComplexity int, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *string, initialLipSync bool) int
@@ -172,6 +175,7 @@ type MutationResolver interface {
 	CreatePortalSession(ctx context.Context, teamSlug string) (model.PortalSessionResponse, error)
 	SendTeamInvite(ctx context.Context, teamSlug string, inviteeEmail string) (bool, error)
 	DeleteTeamInvite(ctx context.Context, inviteSlug string) (bool, error)
+	AcceptTeamInvite(ctx context.Context, inviteSlug string) (bool, error)
 }
 type ProjectResolver interface {
 	DubbingCreditsRequired(ctx context.Context, obj *database.Project) (*int64, error)
@@ -256,6 +260,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CheckoutSessionResponse.SessionID(childComplexity), true
+
+	case "Mutation.acceptTeamInvite":
+		if e.complexity.Mutation.AcceptTeamInvite == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_acceptTeamInvite_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AcceptTeamInvite(childComplexity, args["inviteSlug"].(string)), true
 
 	case "Mutation.createCheckoutSession":
 		if e.complexity.Mutation.CreateCheckoutSession == nil {
@@ -865,6 +881,34 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Mutation_acceptTeamInvite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["inviteSlug"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inviteSlug"))
+		directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalNString2string(ctx, tmp) }
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsInvitee == nil {
+				return nil, errors.New("directive isInvitee is not implemented")
+			}
+			return ec.directives.IsInvitee(ctx, rawArgs, directive0)
+		}
+
+		tmp, err = directive1(ctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if data, ok := tmp.(string); ok {
+			arg0 = data
+		} else {
+			return nil, graphql.ErrorOnPath(ctx, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp))
+		}
+	}
+	args["inviteSlug"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createCheckoutSession_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1116,9 +1160,22 @@ func (ec *executionContext) field_Mutation_deleteTeamInvite_args(ctx context.Con
 	var arg0 string
 	if tmp, ok := rawArgs["inviteSlug"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inviteSlug"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalNString2string(ctx, tmp) }
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.OwnsInvite == nil {
+				return nil, errors.New("directive ownsInvite is not implemented")
+			}
+			return ec.directives.OwnsInvite(ctx, rawArgs, directive0)
+		}
+
+		tmp, err = directive1(ctx)
 		if err != nil {
-			return nil, err
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if data, ok := tmp.(string); ok {
+			arg0 = data
+		} else {
+			return nil, graphql.ErrorOnPath(ctx, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp))
 		}
 	}
 	args["inviteSlug"] = arg0
@@ -2273,6 +2330,61 @@ func (ec *executionContext) fieldContext_Mutation_deleteTeamInvite(ctx context.C
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteTeamInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_acceptTeamInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_acceptTeamInvite(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AcceptTeamInvite(rctx, fc.Args["inviteSlug"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_acceptTeamInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_acceptTeamInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6832,6 +6944,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteTeamInvite":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteTeamInvite(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "acceptTeamInvite":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_acceptTeamInvite(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

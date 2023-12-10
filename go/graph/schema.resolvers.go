@@ -395,6 +395,22 @@ func (r *mutationResolver) DeleteTeamInvite(ctx context.Context, inviteSlug stri
 	return true, nil
 }
 
+// AcceptTeamInvite is the resolver for the acceptTeamInvite field.
+func (r *mutationResolver) AcceptTeamInvite(ctx context.Context, inviteSlug string) (bool, error) {
+	invite, _ := r.DB.GetTeamInviteBySlug(ctx, inviteSlug)
+	user, _ := r.DB.GetUserByEmail(ctx, invite.InviteeEmail)
+	_, err := r.DB.AddTeamMembership(ctx, database.AddTeamMembershipParams{
+		TeamID:         invite.TeamID,
+		UserID:         user.ID,
+		MembershipType: database.MembershipTypeMEMBER,
+	})
+	if err != nil {
+		return false, fmt.Errorf("Could not process invite")
+	}
+	r.DB.DeleteTeamInviteBySlug(ctx, inviteSlug)
+	return true, nil
+}
+
 // DubbingCreditsRequired is the resolver for the dubbingCreditsRequired field.
 func (r *projectResolver) DubbingCreditsRequired(ctx context.Context, obj *database.Project) (*int64, error) {
 	sourceTransformation, err := r.DB.GetSourceTransformationByProjectId(ctx, obj.ID)

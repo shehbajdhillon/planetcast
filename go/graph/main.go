@@ -62,7 +62,7 @@ func Connect(args GraphConnectProps) *handler.Server {
 			return nil, fmt.Errorf("Access Denied")
 		}
 		teamSlug := teamSlugField.(string)
-		if memberTeam(ctx, teamSlug, args.Queries) == false {
+		if memberTeam(ctx, nil, &teamSlug, args.Queries) == false {
 			return nil, fmt.Errorf("Access Denied")
 		}
 		return next(ctx)
@@ -87,6 +87,30 @@ func Connect(args GraphConnectProps) *handler.Server {
 		}
 		transformationId, err := transformationIdField.(json.Number).Int64()
 		if err != nil || ownsTransformation(ctx, transformationId, args.Queries) == false {
+			return nil, fmt.Errorf("Access Denied")
+		}
+		return next(ctx)
+	}
+
+	gqlConfig.Directives.OwnsInvite = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+		inviteSlugField := obj.(map[string]interface{})["inviteSlug"]
+		if inviteSlugField == nil {
+			return nil, fmt.Errorf("Access Denied")
+		}
+		inviteSlug := inviteSlugField.(string)
+		if ownsInvite(ctx, inviteSlug, args.Queries) == false {
+			return nil, fmt.Errorf("Access Denied")
+		}
+		return next(ctx)
+	}
+
+	gqlConfig.Directives.IsInvitee = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+		inviteSlugField := obj.(map[string]interface{})["inviteSlug"]
+		if inviteSlugField == nil {
+			return nil, fmt.Errorf("Access Denied")
+		}
+		inviteSlug := inviteSlugField.(string)
+		if isInvitee(ctx, inviteSlug, args.Queries) == false {
 			return nil, fmt.Errorf("Access Denied")
 		}
 		return next(ctx)
@@ -146,7 +170,7 @@ func isSuperAdmin(ctx context.Context) bool {
 	return false
 }
 
-func memberTeam(ctx context.Context, teamSlug string, queries *database.Queries) bool {
+func memberTeam(ctx context.Context, teamId *int64, teamSlug *string, queries *database.Queries) bool {
 	if !isLoggedIn(ctx) {
 		return false
 	}
@@ -157,7 +181,14 @@ func memberTeam(ctx context.Context, teamSlug string, queries *database.Queries)
 
 	userEmail, _ := auth.EmailFromContext(ctx)
 	user, _ := queries.GetUserByEmail(ctx, userEmail)
-	team, _ := queries.GetTeamBySlug(ctx, teamSlug)
+
+	var team database.Team
+
+	if teamId != nil {
+		team, _ = queries.GetTeamById(ctx, *teamId)
+	} else if teamSlug != nil {
+		team, _ = queries.GetTeamBySlug(ctx, *teamSlug)
+	}
 
 	_, err := queries.GetTeamMembershipByTeamIdUserId(ctx, database.GetTeamMembershipByTeamIdUserIdParams{
 		UserID: user.ID,
@@ -173,7 +204,7 @@ func ownsProject(ctx context.Context, projectId int64, queries *database.Queries
 		return false
 	}
 	team, err := queries.GetTeamById(ctx, project.TeamID)
-	return err == nil && memberTeam(ctx, team.Slug, queries)
+	return err == nil && memberTeam(ctx, nil, &team.Slug, queries)
 }
 
 func ownsTransformation(ctx context.Context, transformationId int64, queries *database.Queries) bool {
@@ -182,4 +213,34 @@ func ownsTransformation(ctx context.Context, transformationId int64, queries *da
 		return false
 	}
 	return ownsProject(ctx, transformation.ProjectID, queries)
+}
+
+func ownsInvite(ctx context.Context, inviteSlug string, queries *database.Queries) bool {
+	invite, err := queries.GetTeamInviteBySlug(ctx, inviteSlug)
+	userEmail, err := auth.EmailFromContext(ctx)
+
+	if err != nil {
+		return false
+	}
+
+	if invite.InviteeEmail == userEmail {
+		return true
+	}
+
+	return memberTeam(ctx, &invite.TeamID, nil, queries)
+}
+
+func isInvitee(ctx context.Context, inviteSlug string, queries *database.Queries) bool {
+	invite, err := queries.GetTeamInviteBySlug(ctx, inviteSlug)
+	userEmail, err := auth.EmailFromContext(ctx)
+
+	if err != nil {
+		return false
+	}
+
+	if invite.InviteeEmail == userEmail {
+		return true
+	}
+
+	return isSuperAdmin(ctx)
 }

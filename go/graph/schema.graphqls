@@ -10,6 +10,8 @@ directive @loggedIn on FIELD_DEFINITION
 directive @memberTeam on ARGUMENT_DEFINITION
 directive @ownsProject on ARGUMENT_DEFINITION
 directive @ownsTransformation on ARGUMENT_DEFINITION
+directive @ownsInvite on ARGUMENT_DEFINITION
+directive @isInvitee on ARGUMENT_DEFINITION
 
 type Team {
   id: Int64!
@@ -103,7 +105,8 @@ type Mutation {
   createCheckoutSession(teamSlug: String! @memberTeam, lookUpKey: String!): CheckoutSessionResponse! @loggedIn
   createPortalSession(teamSlug: String! @memberTeam): PortalSessionResponse! @loggedIn
   sendTeamInvite(teamSlug: String! @memberTeam, inviteeEmail: String!): Boolean!
-  deleteTeamInvite(inviteSlug: String!): Boolean!
+  deleteTeamInvite(inviteSlug: String! @ownsInvite): Boolean!
+  acceptTeamInvite(inviteSlug: String! @isInvitee): Boolean!
 }
 
 type CheckoutSessionResponse {
