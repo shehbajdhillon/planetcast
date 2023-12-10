@@ -1,5 +1,8 @@
 import AccountSettingsTab from "@/components/dashboard/account/account_settings";
 import Navbar from "@/components/dashboard/navbar";
+import { TeamInvite } from "@/types";
+import { Team } from "@/types";
+import { gql, useQuery } from "@apollo/client";
 import {
   Box,
   HStack,
@@ -13,11 +16,39 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 import Head from "next/head";
+import { useEffect } from "react";
+
+const GET_ACCOUNT_INFO = gql`
+  query GetAccountInfo {
+    getUserInfo {
+      user {
+        fullName
+        email
+      }
+      teams {
+        teamId
+        teamName
+        membershipType
+      }
+      invites {
+        teamId
+        teamName
+      }
+    }
+  }
+`;
 
 const AccountSettings: React.FC = () => {
 
   const textColor = useColorModeValue("black", "white");
   const bgColor = useColorModeValue("white", "black");
+
+  const { data, loading } = useQuery(GET_ACCOUNT_INFO)
+
+
+  //const user: User = data?.getUserInfo.user;
+  const teams: Team[] = data?.getUserInfo.teams;
+  const invites: TeamInvite[] = data?.getUserInfo.invites;
 
   return (
     <Box>
@@ -66,7 +97,7 @@ const AccountSettings: React.FC = () => {
 
           <TabPanels overflow={'auto'} pt={10}>
             <TabPanel>
-              <AccountSettingsTab />
+              <AccountSettingsTab loading={loading} teams={teams} invites={invites} />
             </TabPanel>
           </TabPanels>
         </Tabs>

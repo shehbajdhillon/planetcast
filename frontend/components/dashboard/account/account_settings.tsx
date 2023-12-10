@@ -1,3 +1,4 @@
+import { Team, TeamInvite } from "@/types";
 import { HStack, Button, Text, Heading, Stack, VStack, Box, Spacer, Grid, GridItem, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerHeader, DrawerBody, useDisclosure } from "@chakra-ui/react";
 import { Menu } from "lucide-react";
 import { useState } from "react";
@@ -25,10 +26,12 @@ const TabButtons: React.FC<TabButtonsProps> = ({ tabIdx, switchTab }) => {
 
 interface TeamInvitesTabProps {
   drawerOpen: () => void;
+  teams: any[];
+  invites: any[];
 }
 
 const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
-  const { drawerOpen } = props;
+  const { teams, invites, drawerOpen } = props;
 
   return (
     <VStack alignItems={{ lg: "flex-start" }}>
@@ -56,14 +59,12 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
         <HStack>
           <Box>
             <Text>Current Teams</Text>
-            <Text>
-              This team and all the projects created will be deleted.
-              This action is not reversible.
-            </Text>
+            {teams?.map((team, idx) => (
+              <Text>{team.teamName}</Text>
+            ))}
           </Box>
           <Spacer />
           <Box>
-
           </Box>
         </HStack>
       </Stack>
@@ -77,10 +78,9 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
         <HStack>
           <Box>
             <Text>Current Invites</Text>
-            <Text>
-              This team and all the projects created will be deleted.
-              This action is not reversible.
-            </Text>
+            {invites?.map((invite, idx) => (
+              <Text>{invite.teamName}</Text>
+            ))}
           </Box>
           <Spacer />
           <Box>
@@ -94,12 +94,13 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
 
 interface AccountSettingsTab {
   loading: boolean;
+  teams: Team[];
+  invites: TeamInvite[];
 };
 
 const AccountSettingsTab: React.FC<AccountSettingsTab> = (props) => {
 
-  const { loading } = props;
-
+  const { teams, invites, loading } = props;
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [tabIdx, setTabIdx] = useState(0);
@@ -150,7 +151,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTab> = (props) => {
               </DrawerContent>
             </Drawer>
 
-            {tabIdx === 0 && <TeamInvitesTab drawerOpen={onOpen} />}
+            {tabIdx === 0 && <TeamInvitesTab drawerOpen={onOpen} teams={teams} invites={invites} />}
           </GridItem>
         </Grid>
       </Box>
