@@ -7,11 +7,17 @@ export interface Team {
   projects: Project[];
   subscriptionPlans: SubscriptionPlan[];
   members: TeamMember[];
+  invitees: TeamInvite[];
 };
 
 export interface TeamMember {
   membershipType: string;
   user: Userinfo;
+};
+
+export interface TeamInvite {
+  inviteeEmail: string;
+  slug: string;
 };
 
 interface Userinfo {

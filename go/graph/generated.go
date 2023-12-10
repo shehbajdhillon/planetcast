@@ -67,7 +67,9 @@ type ComplexityRoot struct {
 		CreateTeam            func(childComplexity int, teamType database.TeamType, addTrial bool) int
 		CreateTranslation     func(childComplexity int, projectID int64, targetLanguage string, lipSync bool) int
 		DeleteProject         func(childComplexity int, projectID int64) int
+		DeleteTeamInvite      func(childComplexity int, teamSlug string, inviteSlug string) int
 		DeleteTransformation  func(childComplexity int, transformationID int64) int
+		SendTeamInvite        func(childComplexity int, teamSlug string, inviteeEmail string) int
 	}
 
 	PortalSessionResponse struct {
@@ -109,12 +111,18 @@ type ComplexityRoot struct {
 	Team struct {
 		Created           func(childComplexity int) int
 		ID                func(childComplexity int) int
+		Invitees          func(childComplexity int) int
 		Members           func(childComplexity int) int
 		Name              func(childComplexity int) int
 		Projects          func(childComplexity int, projectID *int64) int
 		Slug              func(childComplexity int) int
 		SubscriptionPlans func(childComplexity int, subscriptionID *int64) int
 		TeamType          func(childComplexity int) int
+	}
+
+	TeamInvite struct {
+		InviteeEmail func(childComplexity int) int
+		Slug         func(childComplexity int) int
 	}
 
 	TeamMember struct {
@@ -148,6 +156,8 @@ type MutationResolver interface {
 	DeleteTransformation(ctx context.Context, transformationID int64) (database.Transformation, error)
 	CreateCheckoutSession(ctx context.Context, teamSlug string, lookUpKey string) (model.CheckoutSessionResponse, error)
 	CreatePortalSession(ctx context.Context, teamSlug string) (model.PortalSessionResponse, error)
+	SendTeamInvite(ctx context.Context, teamSlug string, inviteeEmail string) (bool, error)
+	DeleteTeamInvite(ctx context.Context, teamSlug string, inviteSlug string) (bool, error)
 }
 type ProjectResolver interface {
 	DubbingCreditsRequired(ctx context.Context, obj *database.Project) (*int64, error)
@@ -167,6 +177,7 @@ type TeamResolver interface {
 	Projects(ctx context.Context, obj *database.Team, projectID *int64) ([]database.Project, error)
 	SubscriptionPlans(ctx context.Context, obj *database.Team, subscriptionID *int64) ([]database.SubscriptionPlan, error)
 	Members(ctx context.Context, obj *database.Team) ([]model.TeamMember, error)
+	Invitees(ctx context.Context, obj *database.Team) ([]database.TeamInvite, error)
 }
 type TransformationResolver interface {
 	Transcript(ctx context.Context, obj *database.Transformation) (string, error)
@@ -270,6 +281,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteProject(childComplexity, args["projectId"].(int64)), true
 
+	case "Mutation.deleteTeamInvite":
+		if e.complexity.Mutation.DeleteTeamInvite == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteTeamInvite_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteTeamInvite(childComplexity, args["teamSlug"].(string), args["inviteSlug"].(string)), true
+
 	case "Mutation.deleteTransformation":
 		if e.complexity.Mutation.DeleteTransformation == nil {
 			break
@@ -281,6 +304,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteTransformation(childComplexity, args["transformationId"].(int64)), true
+
+	case "Mutation.sendTeamInvite":
+		if e.complexity.Mutation.SendTeamInvite == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_sendTeamInvite_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SendTeamInvite(childComplexity, args["teamSlug"].(string), args["inviteeEmail"].(string)), true
 
 	case "PortalSessionResponse.sessionUrl":
 		if e.complexity.PortalSessionResponse.SessionURL == nil {
@@ -453,6 +488,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Team.ID(childComplexity), true
 
+	case "Team.invitees":
+		if e.complexity.Team.Invitees == nil {
+			break
+		}
+
+		return e.complexity.Team.Invitees(childComplexity), true
+
 	case "Team.members":
 		if e.complexity.Team.Members == nil {
 			break
@@ -504,6 +546,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Team.TeamType(childComplexity), true
+
+	case "TeamInvite.inviteeEmail":
+		if e.complexity.TeamInvite.InviteeEmail == nil {
+			break
+		}
+
+		return e.complexity.TeamInvite.InviteeEmail(childComplexity), true
+
+	case "TeamInvite.slug":
+		if e.complexity.TeamInvite.Slug == nil {
+			break
+		}
+
+		return e.complexity.TeamInvite.Slug(childComplexity), true
 
 	case "TeamMember.membershipType":
 		if e.complexity.TeamMember.MembershipType == nil {
@@ -964,6 +1020,43 @@ func (ec *executionContext) field_Mutation_deleteProject_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteTeamInvite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["teamSlug"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("teamSlug"))
+		directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalNString2string(ctx, tmp) }
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.MemberTeam == nil {
+				return nil, errors.New("directive memberTeam is not implemented")
+			}
+			return ec.directives.MemberTeam(ctx, rawArgs, directive0)
+		}
+
+		tmp, err = directive1(ctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if data, ok := tmp.(string); ok {
+			arg0 = data
+		} else {
+			return nil, graphql.ErrorOnPath(ctx, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp))
+		}
+	}
+	args["teamSlug"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["inviteSlug"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inviteSlug"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["inviteSlug"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteTransformation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -989,6 +1082,43 @@ func (ec *executionContext) field_Mutation_deleteTransformation_args(ctx context
 		}
 	}
 	args["transformationId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_sendTeamInvite_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["teamSlug"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("teamSlug"))
+		directive0 := func(ctx context.Context) (interface{}, error) { return ec.unmarshalNString2string(ctx, tmp) }
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.MemberTeam == nil {
+				return nil, errors.New("directive memberTeam is not implemented")
+			}
+			return ec.directives.MemberTeam(ctx, rawArgs, directive0)
+		}
+
+		tmp, err = directive1(ctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if data, ok := tmp.(string); ok {
+			arg0 = data
+		} else {
+			return nil, graphql.ErrorOnPath(ctx, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp))
+		}
+	}
+	args["teamSlug"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["inviteeEmail"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inviteeEmail"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["inviteeEmail"] = arg1
 	return args, nil
 }
 
@@ -1267,6 +1397,8 @@ func (ec *executionContext) fieldContext_Mutation_createTeam(ctx context.Context
 				return ec.fieldContext_Team_subscriptionPlans(ctx, field)
 			case "members":
 				return ec.fieldContext_Team_members(ctx, field)
+			case "invitees":
+				return ec.fieldContext_Team_invitees(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Team", field.Name)
 		},
@@ -1807,6 +1939,116 @@ func (ec *executionContext) fieldContext_Mutation_createPortalSession(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_sendTeamInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_sendTeamInvite(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SendTeamInvite(rctx, fc.Args["teamSlug"].(string), fc.Args["inviteeEmail"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_sendTeamInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_sendTeamInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteTeamInvite(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteTeamInvite(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteTeamInvite(rctx, fc.Args["teamSlug"].(string), fc.Args["inviteSlug"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteTeamInvite(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteTeamInvite_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PortalSessionResponse_sessionUrl(ctx context.Context, field graphql.CollectedField, obj *model.PortalSessionResponse) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PortalSessionResponse_sessionUrl(ctx, field)
 	if err != nil {
@@ -2216,6 +2458,8 @@ func (ec *executionContext) fieldContext_Query_getTeams(ctx context.Context, fie
 				return ec.fieldContext_Team_subscriptionPlans(ctx, field)
 			case "members":
 				return ec.fieldContext_Team_members(ctx, field)
+			case "invitees":
+				return ec.fieldContext_Team_invitees(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Team", field.Name)
 		},
@@ -2298,6 +2542,8 @@ func (ec *executionContext) fieldContext_Query_getTeamById(ctx context.Context, 
 				return ec.fieldContext_Team_subscriptionPlans(ctx, field)
 			case "members":
 				return ec.fieldContext_Team_members(ctx, field)
+			case "invitees":
+				return ec.fieldContext_Team_invitees(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Team", field.Name)
 		},
@@ -3384,6 +3630,144 @@ func (ec *executionContext) fieldContext_Team_members(ctx context.Context, field
 				return ec.fieldContext_TeamMember_user(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TeamMember", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Team_invitees(ctx context.Context, field graphql.CollectedField, obj *database.Team) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Team_invitees(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Team().Invitees(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]database.TeamInvite)
+	fc.Result = res
+	return ec.marshalNTeamInvite2ᚕplanetcastdevᚋdatabaseᚐTeamInviteᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Team_invitees(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Team",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "inviteeEmail":
+				return ec.fieldContext_TeamInvite_inviteeEmail(ctx, field)
+			case "slug":
+				return ec.fieldContext_TeamInvite_slug(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TeamInvite", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TeamInvite_inviteeEmail(ctx context.Context, field graphql.CollectedField, obj *database.TeamInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TeamInvite_inviteeEmail(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InviteeEmail, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TeamInvite_inviteeEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TeamInvite",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TeamInvite_slug(ctx context.Context, field graphql.CollectedField, obj *database.TeamInvite) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TeamInvite_slug(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Slug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TeamInvite_slug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TeamInvite",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5857,6 +6241,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "sendTeamInvite":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_sendTeamInvite(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteTeamInvite":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteTeamInvite(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6495,6 +6893,86 @@ func (ec *executionContext) _Team(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "invitees":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Team_invitees(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var teamInviteImplementors = []string{"TeamInvite"}
+
+func (ec *executionContext) _TeamInvite(ctx context.Context, sel ast.SelectionSet, obj *database.TeamInvite) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, teamInviteImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TeamInvite")
+		case "inviteeEmail":
+			out.Values[i] = ec._TeamInvite_inviteeEmail(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "slug":
+			out.Values[i] = ec._TeamInvite_slug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7250,6 +7728,54 @@ func (ec *executionContext) marshalNTeam2ᚕplanetcastdevᚋdatabaseᚐTeamᚄ(c
 				defer wg.Done()
 			}
 			ret[i] = ec.marshalNTeam2planetcastdevᚋdatabaseᚐTeam(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTeamInvite2planetcastdevᚋdatabaseᚐTeamInvite(ctx context.Context, sel ast.SelectionSet, v database.TeamInvite) graphql.Marshaler {
+	return ec._TeamInvite(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTeamInvite2ᚕplanetcastdevᚋdatabaseᚐTeamInviteᚄ(ctx context.Context, sel ast.SelectionSet, v []database.TeamInvite) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTeamInvite2planetcastdevᚋdatabaseᚐTeamInvite(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

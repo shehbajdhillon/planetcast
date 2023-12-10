@@ -75,6 +75,10 @@ const GET_TEAM_BY_ID = gql`
           email
         }
       }
+      invitees {
+        inviteeEmail
+        slug
+      }
     }
   }
 `;

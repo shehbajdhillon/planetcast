@@ -20,11 +20,17 @@ type Team {
   projects(projectId: Int64 @ownsProject): [Project!]!
   subscriptionPlans(subscriptionId: Int64): [SubscriptionPlan!]!
   members: [TeamMember!]!
+  invitees: [TeamInvite!]!
 }
 
 type TeamMember {
   membershipType: String!
   user: Userinfo!
+}
+
+type TeamInvite {
+  inviteeEmail: String!
+  slug: String!
 }
 
 type Project {
@@ -84,6 +90,8 @@ type Mutation {
   deleteTransformation(transformationId: Int64! @ownsTransformation): Transformation! @loggedIn
   createCheckoutSession(teamSlug: String! @memberTeam, lookUpKey: String!): CheckoutSessionResponse! @loggedIn
   createPortalSession(teamSlug: String! @memberTeam): PortalSessionResponse! @loggedIn
+  sendTeamInvite(teamSlug: String! @memberTeam, inviteeEmail: String!): Boolean!
+  deleteTeamInvite(teamSlug: String! @memberTeam, inviteSlug: String!): Boolean!
 }
 
 type CheckoutSessionResponse {

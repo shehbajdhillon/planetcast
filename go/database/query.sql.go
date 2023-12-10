@@ -34,6 +34,30 @@ func (q *Queries) AddSubscriptionCreditsByTeamId(ctx context.Context, arg AddSub
 	return i, err
 }
 
+const addTeamInvite = `-- name: AddTeamInvite :one
+INSERT INTO team_invite (slug, team_id, invitee_email, created)
+VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, slug, team_id, invitee_email, created
+`
+
+type AddTeamInviteParams struct {
+	Slug         string
+	TeamID       int64
+	InviteeEmail string
+}
+
+func (q *Queries) AddTeamInvite(ctx context.Context, arg AddTeamInviteParams) (TeamInvite, error) {
+	row := q.db.QueryRowContext(ctx, addTeamInvite, arg.Slug, arg.TeamID, arg.InviteeEmail)
+	var i TeamInvite
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.TeamID,
+		&i.InviteeEmail,
+		&i.Created,
+	)
+	return i, err
+}
+
 const addTeamMembership = `-- name: AddTeamMembership :one
 INSERT INTO team_membership (team_id, user_id, membership_type, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING id, team_id, user_id, membership_type, created
 `
@@ -203,6 +227,23 @@ func (q *Queries) DeleteProjectById(ctx context.Context, id int64) (Project, err
 		&i.TeamID,
 		&i.Title,
 		&i.SourceMedia,
+		&i.Created,
+	)
+	return i, err
+}
+
+const deleteTeamInviteBySlug = `-- name: DeleteTeamInviteBySlug :one
+DELETE FROM team_invite WHERE slug = $1 RETURNING id, slug, team_id, invitee_email, created
+`
+
+func (q *Queries) DeleteTeamInviteBySlug(ctx context.Context, slug string) (TeamInvite, error) {
+	row := q.db.QueryRowContext(ctx, deleteTeamInviteBySlug, slug)
+	var i TeamInvite
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.TeamID,
+		&i.InviteeEmail,
 		&i.Created,
 	)
 	return i, err
@@ -463,6 +504,56 @@ func (q *Queries) GetTeamByStripeCustomerId(ctx context.Context, stripeCustomerI
 		&i.Created,
 	)
 	return i, err
+}
+
+const getTeamInviteBySlug = `-- name: GetTeamInviteBySlug :one
+SELECT id, slug, team_id, invitee_email, created FROM team_invite WHERE slug = $1
+`
+
+func (q *Queries) GetTeamInviteBySlug(ctx context.Context, slug string) (TeamInvite, error) {
+	row := q.db.QueryRowContext(ctx, getTeamInviteBySlug, slug)
+	var i TeamInvite
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.TeamID,
+		&i.InviteeEmail,
+		&i.Created,
+	)
+	return i, err
+}
+
+const getTeamInvitesByTeamId = `-- name: GetTeamInvitesByTeamId :many
+SELECT id, slug, team_id, invitee_email, created FROM team_invite WHERE team_id = $1 ORDER BY created
+`
+
+func (q *Queries) GetTeamInvitesByTeamId(ctx context.Context, teamID int64) ([]TeamInvite, error) {
+	rows, err := q.db.QueryContext(ctx, getTeamInvitesByTeamId, teamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []TeamInvite
+	for rows.Next() {
+		var i TeamInvite
+		if err := rows.Scan(
+			&i.ID,
+			&i.Slug,
+			&i.TeamID,
+			&i.InviteeEmail,
+			&i.Created,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getTeamMembershipByTeamIdUserId = `-- name: GetTeamMembershipByTeamIdUserId :one

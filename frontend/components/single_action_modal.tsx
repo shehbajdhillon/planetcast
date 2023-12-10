@@ -21,13 +21,14 @@ interface SingleActionModalProps extends ModalProps {
   isOpen: boolean;
   onClose: () => void;
   loading?: boolean;
+  disabled?: boolean;
   children: ReactNode;
 };
 
 
 const SingleActionModal: React.FC<SingleActionModalProps> = (props) => {
 
-  const {heading, children, action, onClose, loading} = props;
+  const { disabled, heading, children, action, onClose, loading } = props;
 
   const takeAction = async () => {
     await action();
@@ -55,7 +56,7 @@ const SingleActionModal: React.FC<SingleActionModalProps> = (props) => {
               mr={3}
               flip
               onClick={takeAction}
-              isDisabled={loading}
+              isDisabled={loading || disabled}
             >
               Submit
             </Button>
