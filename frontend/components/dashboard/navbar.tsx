@@ -32,6 +32,8 @@ export const MenuBar: React.FC = () => {
 
   const { user } = useUser();
 
+  const router = useRouter();
+
   return (
     <Menu>
       <MenuButton
@@ -83,6 +85,15 @@ export const MenuBar: React.FC = () => {
           onClick={toggleColorMode}
         >
           Turn on {useColorModeValue("Dark", "Light")} Mode
+        </MenuItem>
+        <MenuItem
+          backgroundColor={useColorModeValue("white", "black")}
+          onClick={() => router.push('/dashboard/account')}
+          _hover={{
+            backgroundColor: useColorModeValue("blackAlpha.200", "whiteAlpha.200")
+          }}
+        >
+          Account Settings
         </MenuItem>
         <MenuItem
           backgroundColor={useColorModeValue("white", "black")}
