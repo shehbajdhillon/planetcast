@@ -35,7 +35,6 @@ import { gql, useMutation } from "@apollo/client";
 import { convertUtcToLocal, validateEmail } from "@/utils";
 import { loadStripe } from "@stripe/stripe-js";
 import useWindowDimensions from "@/hooks/useWindowDimensions";
-import { useUser } from "@clerk/nextjs";
 import SingleActionModal from "../single_action_modal";
 
 const CREATE_STRIPE_CHECKOUT = gql`

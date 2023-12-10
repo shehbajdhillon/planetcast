@@ -1,5 +1,17 @@
+import AccountSettingsTab from "@/components/dashboard/account/account_settings";
 import Navbar from "@/components/dashboard/navbar";
-import { Box, HStack, Skeleton, Tab, TabList, TabPanel, TabPanels, Tabs, Text, useColorModeValue } from "@chakra-ui/react";
+import {
+  Box,
+  HStack,
+  Skeleton,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
+  Text,
+  useColorModeValue,
+} from "@chakra-ui/react";
 import Head from "next/head";
 
 const AccountSettings: React.FC = () => {
@@ -54,7 +66,7 @@ const AccountSettings: React.FC = () => {
 
           <TabPanels overflow={'auto'} pt={10}>
             <TabPanel>
-              <div />
+              <AccountSettingsTab />
             </TabPanel>
           </TabPanels>
         </Tabs>
