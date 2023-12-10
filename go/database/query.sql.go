@@ -523,6 +523,39 @@ func (q *Queries) GetTeamInviteBySlug(ctx context.Context, slug string) (TeamInv
 	return i, err
 }
 
+const getTeamInvitesByInviteeEmail = `-- name: GetTeamInvitesByInviteeEmail :many
+SELECT id, slug, team_id, invitee_email, created FROM team_invite WHERE invitee_email = $1 ORDER BY created
+`
+
+func (q *Queries) GetTeamInvitesByInviteeEmail(ctx context.Context, inviteeEmail string) ([]TeamInvite, error) {
+	rows, err := q.db.QueryContext(ctx, getTeamInvitesByInviteeEmail, inviteeEmail)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []TeamInvite
+	for rows.Next() {
+		var i TeamInvite
+		if err := rows.Scan(
+			&i.ID,
+			&i.Slug,
+			&i.TeamID,
+			&i.InviteeEmail,
+			&i.Created,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTeamInvitesByTeamId = `-- name: GetTeamInvitesByTeamId :many
 SELECT id, slug, team_id, invitee_email, created FROM team_invite WHERE team_id = $1 ORDER BY created
 `
@@ -611,12 +644,12 @@ func (q *Queries) GetTeamMembershipsByTeamId(ctx context.Context, teamID int64) 
 	return items, nil
 }
 
-const getTeamMemebershipsByUserId = `-- name: GetTeamMemebershipsByUserId :many
+const getTeamMembershipsByUserId = `-- name: GetTeamMembershipsByUserId :many
 SELECT id, team_id, user_id, membership_type, created FROM team_membership WHERE user_id = $1 ORDER BY team_id
 `
 
-func (q *Queries) GetTeamMemebershipsByUserId(ctx context.Context, userID int64) ([]TeamMembership, error) {
-	rows, err := q.db.QueryContext(ctx, getTeamMemebershipsByUserId, userID)
+func (q *Queries) GetTeamMembershipsByUserId(ctx context.Context, userID int64) ([]TeamMembership, error) {
+	rows, err := q.db.QueryContext(ctx, getTeamMembershipsByUserId, userID)
 	if err != nil {
 		return nil, err
 	}

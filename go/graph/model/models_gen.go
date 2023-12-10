@@ -9,6 +9,12 @@ import (
 	"strconv"
 )
 
+type AccountInfo struct {
+	User    database.Userinfo         `json:"user"`
+	Teams   []database.TeamMembership `json:"teams"`
+	Invites []database.TeamInvite     `json:"invites"`
+}
+
 type CheckoutSessionResponse struct {
 	SessionID string `json:"sessionId"`
 }
@@ -25,11 +31,6 @@ type SubscriptionData struct {
 	PlanName           string `json:"planName"`
 	CostInUsd          int64  `json:"costInUsd"`
 	LastFourCardDigits string `json:"lastFourCardDigits"`
-}
-
-type TeamMember struct {
-	MembershipType string            `json:"membershipType"`
-	User           database.Userinfo `json:"user"`
 }
 
 type UploadOption string

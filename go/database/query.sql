@@ -27,7 +27,7 @@ SELECT * FROM team WHERE stripe_customer_id = $1;
 -- name: AddTeamMembership :one
 INSERT INTO team_membership (team_id, user_id, membership_type, created) VALUES ($1, $2, $3, clock_timestamp()) RETURNING *;
 
--- name: GetTeamMemebershipsByUserId :many
+-- name: GetTeamMembershipsByUserId :many
 SELECT * FROM team_membership WHERE user_id = $1 ORDER BY team_id;
 
 -- name: GetTeamMembershipByTeamIdUserId :one
@@ -49,6 +49,9 @@ VALUES ($1, $2, $3, clock_timestamp()) RETURNING *;
 
 -- name: DeleteTeamInviteBySlug :one
 DELETE FROM team_invite WHERE slug = $1 RETURNING *;
+
+-- name: GetTeamInvitesByInviteeEmail :many
+SELECT * FROM team_invite WHERE invitee_email = $1 ORDER BY created;
 
 
 -- name: CreateSubscription :one

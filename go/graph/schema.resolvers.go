@@ -440,7 +440,7 @@ func (r *queryResolver) GetTeams(ctx context.Context) ([]database.Team, error) {
 	teams := []database.Team{}
 	email, _ := auth.EmailFromContext(ctx)
 	user, _ := r.DB.GetUserByEmail(ctx, email)
-	memberships, _ := r.DB.GetTeamMemebershipsByUserId(ctx, user.ID)
+	memberships, _ := r.DB.GetTeamMembershipsByUserId(ctx, user.ID)
 	for _, mem := range memberships {
 		team, err := r.DB.GetTeamById(ctx, mem.TeamID)
 		if err == nil {
@@ -454,6 +454,17 @@ func (r *queryResolver) GetTeams(ctx context.Context) ([]database.Team, error) {
 func (r *queryResolver) GetTeamByID(ctx context.Context, teamSlug string) (database.Team, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 	return team, nil
+}
+
+// GetUserInfo is the resolver for the getUserInfo field.
+func (r *queryResolver) GetUserInfo(ctx context.Context) (model.AccountInfo, error) {
+	email, _ := auth.EmailFromContext(ctx)
+	user, _ := r.DB.GetUserByEmail(ctx, email)
+
+  memberships, _ := r.DB.GetTeamMembershipsByUserId(ctx, user.ID)
+  invites, _ := r.DB.GetTeamInvitesByInviteeEmail(ctx, user.Email)
+
+  return model.AccountInfo{ User: user, Invites: invites, Teams: memberships }, nil
 }
 
 // StripeSubscriptionID is the resolver for the stripeSubscriptionId field.
@@ -519,17 +530,9 @@ func (r *teamResolver) SubscriptionPlans(ctx context.Context, obj *database.Team
 }
 
 // Members is the resolver for the members field.
-func (r *teamResolver) Members(ctx context.Context, obj *database.Team) ([]model.TeamMember, error) {
-	members := []model.TeamMember{}
+func (r *teamResolver) Members(ctx context.Context, obj *database.Team) ([]database.TeamMembership, error) {
 	memberships, _ := r.DB.GetTeamMembershipsByTeamId(ctx, obj.ID)
-	for _, m := range memberships {
-		user, _ := r.DB.GetUserById(ctx, m.UserID)
-		members = append(members, model.TeamMember{
-			MembershipType: string(m.MembershipType),
-			User:           user,
-		})
-	}
-	return members, nil
+	return memberships, nil
 }
 
 // Invitees is the resolver for the invitees field.
@@ -546,6 +549,28 @@ func (r *teamResolver) Invitees(ctx context.Context, obj *database.Team) ([]data
 		})
 	}
 	return inviteeEmails, nil
+}
+
+// TeamName is the resolver for the teamName field.
+func (r *teamInviteResolver) TeamName(ctx context.Context, obj *database.TeamInvite) (string, error) {
+	team, _ := r.DB.GetTeamById(ctx, obj.TeamID)
+	return team.Name, nil
+}
+
+// MembershipType is the resolver for the membershipType field.
+func (r *teamMembershipResolver) MembershipType(ctx context.Context, obj *database.TeamMembership) (string, error) {
+	return string(obj.MembershipType), nil
+}
+
+// User is the resolver for the user field.
+func (r *teamMembershipResolver) User(ctx context.Context, obj *database.TeamMembership) (database.Userinfo, error) {
+	return r.DB.GetUserById(ctx, obj.UserID)
+}
+
+// TeamName is the resolver for the teamName field.
+func (r *teamMembershipResolver) TeamName(ctx context.Context, obj *database.TeamMembership) (string, error) {
+	team, _ := r.DB.GetTeamById(ctx, obj.TeamID)
+	return team.Name, nil
 }
 
 // Transcript is the resolver for the transcript field.
@@ -569,6 +594,12 @@ func (r *Resolver) SubscriptionPlan() SubscriptionPlanResolver { return &subscri
 // Team returns TeamResolver implementation.
 func (r *Resolver) Team() TeamResolver { return &teamResolver{r} }
 
+// TeamInvite returns TeamInviteResolver implementation.
+func (r *Resolver) TeamInvite() TeamInviteResolver { return &teamInviteResolver{r} }
+
+// TeamMembership returns TeamMembershipResolver implementation.
+func (r *Resolver) TeamMembership() TeamMembershipResolver { return &teamMembershipResolver{r} }
+
 // Transformation returns TransformationResolver implementation.
 func (r *Resolver) Transformation() TransformationResolver { return &transformationResolver{r} }
 
@@ -577,4 +608,6 @@ type projectResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionPlanResolver struct{ *Resolver }
 type teamResolver struct{ *Resolver }
+type teamInviteResolver struct{ *Resolver }
+type teamMembershipResolver struct{ *Resolver }
 type transformationResolver struct{ *Resolver }

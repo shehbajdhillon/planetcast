@@ -19,18 +19,28 @@ type Team {
   created: DateTime!
   projects(projectId: Int64 @ownsProject): [Project!]!
   subscriptionPlans(subscriptionId: Int64): [SubscriptionPlan!]!
-  members: [TeamMember!]!
+  members: [TeamMembership!]!
   invitees: [TeamInvite!]!
 }
 
-type TeamMember {
+type AccountInfo {
+  user: Userinfo!
+  teams: [TeamMembership!]!
+  invites: [TeamInvite!]!
+}
+
+type TeamMembership {
   membershipType: String!
   user: Userinfo!
+  teamId: Int64!
+  teamName: String!
 }
 
 type TeamInvite {
   inviteeEmail: String!
   slug: String!
+  teamId: Int64!
+  teamName: String!
 }
 
 type Project {
@@ -80,6 +90,7 @@ type SubscriptionData {
 type Query {
   getTeams: [Team!]! @loggedIn
   getTeamById(teamSlug: String! @memberTeam): Team! @loggedIn
+  getUserInfo: AccountInfo! @loggedIn
 }
 
 type Mutation {
