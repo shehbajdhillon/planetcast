@@ -106,22 +106,29 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
       >
         <HStack>
           <Box w="full">
-            <Text>Current Teams</Text>
             <Stack spacing={"25px"}>
+            <Text>Current Teams</Text>
             {teams?.map((team, idx) => (
               <HStack key={idx} w="full">
-                <Heading size="sm">{team.teamName}</Heading>
+                <HStack w="full">
+                  <Heading size="sm">{team.teamName}</Heading>
+                </HStack>
                 <Spacer />
-                <Button variant={"outline"} pointerEvents={"none"}>
-                  <Text>{team.membershipType}</Text>
-                </Button>
+                <HStack w="full">
+                  <Button variant={"outline"} pointerEvents={"none"}>
+                    <Text>{team.membershipType}</Text>
+                  </Button>
+                </HStack>
                 <Spacer />
-                <IconButton
-                  variant={"outline"}
-                  aria-label="go to team"
-                  icon={<ExternalLink />}
-                  onClick={() => router.push(`/dashboard/${team.teamSlug}`)}
-                />
+                <HStack>
+                  <Spacer />
+                  <IconButton
+                    variant={"outline"}
+                    aria-label="go to team"
+                    icon={<ExternalLink />}
+                    onClick={() => router.push(`/dashboard/${team.teamSlug}`)}
+                  />
+                </HStack>
               </HStack>
             ))}
             </Stack>
@@ -140,27 +147,35 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
       >
         <HStack>
           <Box w="full">
+            <Stack spacing={"25px"}>
             <Text>Current Invites</Text>
             {invites?.map((invite, idx) => (
               <HStack key={idx} w="full">
-                <Heading size="sm">{invite.teamName}</Heading>
+                <HStack w="full">
+                  <Heading size="sm">{invite.teamName}</Heading>
+                </HStack>
                 <Spacer />
-                <Button
-                  onClick={() => acceptEmailInvite(invite.inviteSlug)}
-                  variant={"outline"}
-                  isDisabled={loading || aLoading}
-                >
-                  Accept
-                </Button>
-                <Button
-                  onClick={() => deleteEmailInvite(invite.inviteSlug)}
-                  variant={"outline"}
-                  isDisabled={loading || aLoading}
-                >
-                  Delete
-                </Button>
+                <HStack w="full">
+                  <Spacer />
+                  <Button
+                    onClick={() => acceptEmailInvite(invite.inviteSlug)}
+                    variant={"outline"}
+                    isDisabled={loading || aLoading}
+                  >
+                    Accept
+                  </Button>
+                  <Button
+                    onClick={() => deleteEmailInvite(invite.inviteSlug)}
+                    variant={"outline"}
+                    isDisabled={loading || aLoading}
+                  >
+                    Delete
+                  </Button>
+                </HStack>
               </HStack>
             ))}
+            {invites?.length === 0 && <Heading size="sm">No Active Invitations</Heading>}
+            </Stack>
           </Box>
           <Spacer />
           <Box>

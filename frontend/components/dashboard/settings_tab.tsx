@@ -577,7 +577,6 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
             </HStack>
             <Spacer />
             <HStack w="full">
-              <Spacer />
               <Button variant={"outline"}>
                 <Text>{m.membershipType}</Text>
               </Button>
@@ -600,6 +599,7 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
 
         {team?.invitees.map((invite: any, idx) => (
           <HStack overflowX={"auto"} key={idx}>
+
             <HStack spacing={"30px"} w="full">
               <Avatar
                 src={`https://api.dicebear.com/6.x/notionists/svg?seed=${invite.inviteeEmail}`}
@@ -611,20 +611,24 @@ const TeamMembersTab: React.FC<TeamMembersTabProps> = (props) => {
                 <Text>{invite.inviteeEmail}</Text>
               </Box>
             </HStack>
+
             <Spacer />
+
             <HStack w="full">
-              <Spacer />
               <Button variant={'outline'}>
                 <Text>{'INVITED'}</Text>
               </Button>
             </HStack>
+
             <Spacer />
+
             <HStack w="full">
               <Spacer />
               <Box>
                 <DeleteInvite teamSlug={teamSlug} inviteSlug={invite.inviteSlug} refetch={refetch} />
               </Box>
             </HStack>
+
           </HStack>
         ))}
 
