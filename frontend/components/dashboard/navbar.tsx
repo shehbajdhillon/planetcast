@@ -106,7 +106,7 @@ export const MenuBar: React.FC = () => {
         </MenuItem>
         <MenuItem
           backgroundColor={useColorModeValue("white", "black")}
-          onClick={() => signOut({})}
+          onClick={() => signOut(() => router.push("/"))}
           _hover={{
             backgroundColor: useColorModeValue("blackAlpha.200", "whiteAlpha.200")
           }}
