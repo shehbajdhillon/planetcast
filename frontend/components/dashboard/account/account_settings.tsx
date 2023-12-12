@@ -1,3 +1,4 @@
+import SingleActionModal from "@/components/single_action_modal";
 import { Team, TeamInvite } from "@/types";
 import { gql, useMutation } from "@apollo/client";
 import {
@@ -19,6 +20,7 @@ import {
   DrawerBody,
   useDisclosure,
   IconButton,
+  useToast,
 } from "@chakra-ui/react";
 import { ExternalLink, Menu } from "lucide-react";
 import { useRouter } from "next/router";
@@ -68,18 +70,6 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
   const { refetch, teams, invites, drawerOpen } = props;
   const router = useRouter();
 
-  const [deleteInvite, { loading }] = useMutation(DELETE_INVITE);
-  const [acceptInvite, { loading: aLoading }] = useMutation(ACCEPT_INVITE);
-
-  const deleteEmailInvite = async (inviteSlug: string) => {
-    const res = await deleteInvite({ variables: { inviteSlug } });
-    if (res) refetch();
-  };
-
-  const acceptEmailInvite = async (inviteSlug: string) => {
-    const res = await acceptInvite({ variables: { inviteSlug } });
-    if (res) refetch();
-  };
 
   return (
     <VStack alignItems={{ lg: "flex-start" }}>
@@ -157,20 +147,16 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
                 <Spacer />
                 <HStack w="full">
                   <Spacer />
-                  <Button
-                    onClick={() => acceptEmailInvite(invite.inviteSlug)}
-                    variant={"outline"}
-                    isDisabled={loading || aLoading}
-                  >
-                    Accept
-                  </Button>
-                  <Button
-                    onClick={() => deleteEmailInvite(invite.inviteSlug)}
-                    variant={"outline"}
-                    isDisabled={loading || aLoading}
-                  >
-                    Delete
-                  </Button>
+                  <AcceptInvite
+                    refetch={refetch}
+                    inviteSlug={invite.inviteSlug}
+                    teamSlug={invite.teamSlug}
+                  />
+                  <DeleteInvite
+                    refetch={refetch}
+                    inviteSlug={invite.inviteSlug}
+                    teamSlug={invite.teamSlug}
+                  />
                 </HStack>
               </HStack>
             ))}
@@ -184,6 +170,136 @@ const TeamInvitesTab: React.FC<TeamInvitesTabProps> = (props) => {
         </HStack>
       </Stack>
     </VStack>
+  );
+};
+
+interface InviteActionProps {
+  teamSlug: string;
+  inviteSlug: string;
+  refetch: () => void;
+};
+
+const DeleteInvite: React.FC<InviteActionProps> = ({ refetch, inviteSlug }) => {
+  const { onOpen, isOpen, onClose } = useDisclosure();
+
+  const toast = useToast();
+
+  const [deleteInvite, { loading, error, data }] = useMutation(DELETE_INVITE);
+
+  const deleteEmailInvite = async () => {
+    const res = await deleteInvite({ variables: { inviteSlug } });
+    if (res) refetch();
+  };
+
+  useEffect(() => {
+    if (!loading && !error && data) {
+      toast({
+        title: 'Invite deleted successfully',
+        status: 'success',
+        duration: 6000,
+        isClosable: true,
+        position: "top",
+        containerStyle: {
+          paddingTop: "30px"
+        },
+      });
+    } else if (error) {
+      toast({
+        title: 'Could not delete invite',
+        status: 'error',
+        duration: 6000,
+        isClosable: true,
+        position: "top",
+        containerStyle: {
+          paddingTop: "30px"
+        },
+      });
+    }
+  }, [loading, data, error]);
+
+  return (
+    <>
+      <Button
+        onClick={onOpen}
+        variant={"outline"}
+        isDisabled={loading}
+      >
+        Delete
+      </Button>
+      <SingleActionModal
+        heading={"Delete invite"}
+        action={deleteEmailInvite}
+        isOpen={isOpen}
+        onClose={onClose}
+        loading={loading}
+      >
+        <Text>
+          Are you sure you want to delete this invite?
+          You will need to be invited again later if you want to be a part of this team.
+        </Text>
+      </SingleActionModal>
+    </>
+  );
+};
+
+const AcceptInvite: React.FC<InviteActionProps> = ({ refetch, inviteSlug }) => {
+  const { onOpen, isOpen, onClose } = useDisclosure();
+
+  const toast = useToast();
+
+  const [acceptInvite, { loading, data, error }] = useMutation(ACCEPT_INVITE);
+  const acceptEmailInvite = async () => {
+    const res = await acceptInvite({ variables: { inviteSlug } });
+    if (res) refetch();
+  };
+
+  useEffect(() => {
+    if (!loading && !error && data) {
+      toast({
+        title: 'Invite accepted successfully',
+        status: 'success',
+        duration: 6000,
+        isClosable: true,
+        position: "top",
+        containerStyle: {
+          paddingTop: "30px"
+        },
+      });
+    } else if (error) {
+      toast({
+        title: 'Could not accept invite',
+        status: 'error',
+        duration: 6000,
+        isClosable: true,
+        position: "top",
+        containerStyle: {
+          paddingTop: "30px"
+        },
+      });
+    }
+  }, [loading, data, error]);
+
+  return (
+    <>
+      <Button
+        onClick={onOpen}
+        variant={"outline"}
+        isDisabled={loading}
+      >
+        Accept
+      </Button>
+      <SingleActionModal
+        heading={"Delete invite"}
+        action={acceptEmailInvite}
+        isOpen={isOpen}
+        onClose={onClose}
+        loading={loading}
+      >
+        <Text>
+          Are you sure you want to accept this invite?
+        </Text>
+      </SingleActionModal>
+    </>
   );
 };
 
