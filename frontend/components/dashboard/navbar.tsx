@@ -65,7 +65,7 @@ export const MenuBar: React.FC = () => {
             backgroundColor={"white"}
           />
         </Center>
-        <Center maxW={"220px"}>
+        <Center maxW={"220px"} flexDir={"column"}>
           <Text
             display={{ base: "none", lg: "inline-block" }}
             whiteSpace={"nowrap"}
@@ -74,6 +74,15 @@ export const MenuBar: React.FC = () => {
             noOfLines={1}
           >
             {user?.fullName}
+          </Text>
+          <Text
+            display={{ base: "none", lg: "inline-block" }}
+            whiteSpace={"nowrap"}
+            textOverflow={"ellipsis"}
+            overflow={'hidden'}
+            noOfLines={1}
+          >
+            {user?.primaryEmailAddress?.emailAddress}
           </Text>
         </Center>
         <MenuDivider />
