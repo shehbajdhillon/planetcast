@@ -41,7 +41,6 @@ const GET_TEAM_BY_ID = gql`
   query GetTeamById($teamSlug: String!) {
     getTeamById(teamSlug: $teamSlug) {
       slug
-      name
       projects {
         id
         title
@@ -54,6 +53,15 @@ const GET_TEAM_BY_ID = gql`
           progress
         }
       }
+    }
+  }
+`;
+
+const GET_TEAM_SETTINGS_BY_TEAM_ID = gql`
+  query GetTeamById($teamSlug: String!) {
+    getTeamById(teamSlug: $teamSlug) {
+      slug
+      name
       subscriptionPlans {
         id
         remainingCredits
@@ -90,19 +98,34 @@ export interface DashboardPageProps {
 
 const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug, tab }) => {
 
-  const { data, refetch: getAllTeamsRefetch } = useQuery(GET_TEAMS, { fetchPolicy: 'no-cache' });
   const {
-    data: currentTeamData,
-    refetch: currentTeamRefetch,
-    loading,
-    error
-  } = useQuery(GET_TEAM_BY_ID, { fetchPolicy: 'no-cache', variables: { teamSlug } });
+    data: allTeamsData,
+    refetch: allTeamsRefetch
+  } = useQuery(GET_TEAMS);
+  const {
+    data: currentTeamProjectsData,
+    refetch: currentTeamProjectsRefetch,
+    loading: currentTeamProjectsLoading,
+    error: currentTeamProjectsError,
+  } = useQuery(GET_TEAM_BY_ID, { variables: { teamSlug } });
+  const {
+    data: currentTeamSettingsData,
+    refetch: currentTeamSettingsRefetch,
+    loading: currentTeamSettingsLoading,
+    error: currentTeamSettingsError,
+  } = useQuery(GET_TEAM_SETTINGS_BY_TEAM_ID, { variables: { teamSlug } });
 
-  const teams = data?.getTeams;
-  const projects = data?.getTeams.find((team: Team) => team.slug === teamSlug)?.projects;
+  const refetch = async () => {
+    await allTeamsRefetch();
+    await currentTeamProjectsRefetch();
+    await currentTeamSettingsRefetch();
+  };
 
-  const currentTeamProjects: Project[] = currentTeamData?.getTeamById?.projects;
-  const currentTeam: Team = currentTeamData?.getTeamById;
+  const allTeams = allTeamsData?.getTeams;
+  const allProjects = allTeamsData?.getTeams.find((team: Team) => team.slug === teamSlug)?.projects;
+
+  const currentTeamProjects: Project[] = currentTeamProjectsData?.getTeamById?.projects;
+  const currentTeamSettings: Team = currentTeamSettingsData?.getTeamById;
 
   const [tabIdx, setTabIdx] = useState(tab);
   const router = useRouter();
@@ -110,14 +133,12 @@ const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug, tab }) => {
   const textColor = useColorModeValue("black", "white");
   const bgColor = useColorModeValue("white", "black");
 
-  const refetch = async () => {
-    await currentTeamRefetch();
-    await getAllTeamsRefetch();
-  };
-
   useEffect(() => {
+    let error = currentTeamProjectsError;
     if (error && error.message === "Access Denied") router.push('/404');
-  }, [error]);
+    error = currentTeamSettingsError;
+    if (error && error.message === "Access Denied") router.push('/404');
+  }, [currentTeamProjectsError, currentTeamProjectsError]);
 
   useEffect(() => {
     const params = router.query.team;
@@ -145,11 +166,9 @@ const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug, tab }) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Box position={"fixed"} top={0} left={0} w="full" p="10px" backgroundColor={useColorModeValue("white", "black")} zIndex={1000}>
-        <Navbar teamSlug={teamSlug} projects={projects} teams={teams} />
+        <Navbar teamSlug={teamSlug} projects={allProjects} teams={allTeams} />
       </Box>
-
       <Box pt="80px">
-
         <Tabs
           variant="enclosed"
           colorScheme="gray"
@@ -178,37 +197,40 @@ const Dashboard: NextPage<DashboardPageProps> = ({ teamSlug, tab }) => {
             justifyContent={"center"}
           >
             <TabList pl={'25px'} w="full" maxW={"1920px"} backgroundColor={bgColor}>
-
-              <Tab hidden={loading}><Text textColor={textColor}>Projects</Text></Tab>
-              <Tab hidden={loading}><Text textColor={textColor}>Team Settings</Text></Tab>
-
-              <HStack hidden={!loading} py="10px" spacing="15px">
+              <Tab hidden={currentTeamProjectsLoading || currentTeamSettingsLoading}>
+                <Text textColor={textColor}>Projects</Text>
+              </Tab>
+              <Tab hidden={currentTeamProjectsLoading || currentTeamSettingsLoading}>
+                <Text textColor={textColor}>Team Settings</Text>
+              </Tab>
+              <HStack hidden={!(currentTeamProjectsLoading || currentTeamSettingsLoading)} py="10px" spacing="15px">
                 <Skeleton h="42px" w="100px" rounded={"md"} />
                 <Skeleton h="42px" w="100px" rounded={"md"} />
               </HStack>
-
             </TabList>
           </Box>
-
           <TabPanels overflow={'auto'} pt={10}>
             <TabPanel>
-              <DashboardTab teamSlug={teamSlug} projects={currentTeamProjects} refetch={refetch} />
+              <DashboardTab
+                teamSlug={teamSlug}
+                projects={currentTeamProjects}
+                refetch={refetch}
+                loading={currentTeamProjectsLoading}
+              />
             </TabPanel>
             <TabPanel>
               <SettingsTab
                 teamSlug={teamSlug}
                 params={router.query.team as string[]}
                 refetch={refetch}
-                loading={loading}
-                team={currentTeam}
+                loading={currentTeamSettingsLoading}
+                team={currentTeamSettings}
               />
             </TabPanel>
           </TabPanels>
         </Tabs>
       </Box>
-
     </Box>
-
   );
 };
 

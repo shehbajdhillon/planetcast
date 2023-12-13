@@ -73,18 +73,29 @@ interface ProjectDashboardProps {
 
 const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId }) => {
 
-  const { data: currentTeamsData, loading } = useQuery(GET_TEAMS, { fetchPolicy: 'no-cache' });
+  const {
+    data: allTeamsData,
+    refetch: allTeamsRefetch,
+  } = useQuery(GET_TEAMS);
 
-  const { data: currentProjectData, error }
-  = useQuery(GET_CURRENT_PROJECT, { variables: { teamSlug, projectId }, fetchPolicy: 'no-cache' });
+  const {
+    data: currentProjectData,
+    loading: currentProjectLoading,
+    refetch: currentProjectRefetch,
+    error
+  } = useQuery(GET_CURRENT_PROJECT, { variables: { teamSlug, projectId } });
+
+  const refetch = async () => {
+    await allTeamsRefetch();
+    await currentProjectRefetch();
+  };
 
   const currentProject: Project = currentProjectData?.getTeamById?.projects?.[0];
-
   const textColor = useColorModeValue("black", "white");
   const bgColor = useColorModeValue("white", "black");
 
-  const teams = currentTeamsData?.getTeams;
-  const projects = currentTeamsData?.getTeams.find((team: Team) => team.slug === teamSlug)?.projects;
+  const allTeams = allTeamsData?.getTeams;
+  const allProjects = allTeamsData?.getTeams.find((team: Team) => team.slug === teamSlug)?.projects;
 
   const router = useRouter();
 
@@ -104,10 +115,10 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Box position={"fixed"} top={0} left={0} w="full" p="10px" backgroundColor={useColorModeValue("white", "black")} zIndex={1000}>
-        <Navbar projects={projects} teams={teams} teamSlug={teamSlug} projectId={projectId} />
+        <Navbar projects={allProjects} teams={allTeams} teamSlug={teamSlug} projectId={projectId} />
       </Box>
 
-      { (!loading && currentTeamsData) ?
+      { (!currentProjectLoading && currentProjectData) ?
 
         <Box pt={"80px"}>
           <Tabs
@@ -133,7 +144,7 @@ const ProjectDashboard: NextPage<ProjectDashboardProps> = ({ teamSlug, projectId
                 { currentProject && <ProjectTab project={currentProject} teamSlug={teamSlug} /> }
               </TabPanel>
               <TabPanel>
-                <ProjectSettingsTab projectId={projectId} teamSlug={teamSlug} />
+                <ProjectSettingsTab projectId={projectId} teamSlug={teamSlug} refetch={refetch} />
               </TabPanel>
             </TabPanels>
           </Tabs>

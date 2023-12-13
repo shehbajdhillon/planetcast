@@ -14,6 +14,7 @@ interface DashboardTabProps {
   teamSlug: string;
   projects: Project[];
   refetch: () => void;
+  loading: boolean;
 };
 
 const LoadingBox: React.FC = () => {
@@ -55,11 +56,12 @@ const LoadingGrid: React.FC = () => {
   );
 };
 
-const DashboardTab: React.FC<DashboardTabProps> = ({ teamSlug, projects, refetch }) => {
+const DashboardTab: React.FC<DashboardTabProps> = (props) => {
+  const { projects, teamSlug, refetch, loading } = props;
   return (
     <Box w="full" h="full" display={"flex"} flexDir={"column"}>
       <Center>
-      {!projects ? <LoadingGrid /> :
+      {loading ? <LoadingGrid /> :
         <Grid
           py={{ base: "20px" }}
           px={{ base: "35px", lg: "70px" }}

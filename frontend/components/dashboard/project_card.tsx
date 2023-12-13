@@ -105,7 +105,12 @@ const ProjectCard: React.FC<ProjectCardProps> = (props) => {
 
   const isProcessing = transformations?.length === 0 || currentStatus !== "complete"
 
-  const [getProjectData, { data } ] = useLazyQuery(GET_PROJECT_DATA, { variables: { teamSlug, projectId: project.id }, fetchPolicy: 'no-cache', pollInterval: isProcessing ? 10000 : 0 })
+  const [getProjectData, { data }]
+    = useLazyQuery(GET_PROJECT_DATA, {
+        variables: { teamSlug, projectId: project.id },
+        fetchPolicy: 'no-cache',
+        pollInterval: isProcessing ? 10000 : 0
+      })
 
   useEffect(() => {
     const newProjectData = data?.getTeamById.projects[0];

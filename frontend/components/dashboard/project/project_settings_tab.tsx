@@ -15,9 +15,10 @@ const DELETE_PROJECT = gql`
 interface ProjectSettingsTabProps {
   projectId: number;
   teamSlug: string;
+  refetch: () => void;
 };
 
-const ProjectSettingsTab: React.FC<ProjectSettingsTabProps> = ({ projectId, teamSlug }) => {
+const ProjectSettingsTab: React.FC<ProjectSettingsTabProps> = ({ refetch, projectId, teamSlug }) => {
 
   const [deleteProjectMutation, { loading }] = useMutation(DELETE_PROJECT);
 
@@ -25,7 +26,10 @@ const ProjectSettingsTab: React.FC<ProjectSettingsTabProps> = ({ projectId, team
 
   const deleteProject = async () => {
     const res = await deleteProjectMutation({ variables: { projectId } });
-    if (res) router.push(`/dashboard/${teamSlug}`);
+    if (res) {
+      refetch();
+      router.push(`/dashboard/${teamSlug}`);
+    }
   };
 
   const { isOpen, onClose, onOpen } = useDisclosure();
