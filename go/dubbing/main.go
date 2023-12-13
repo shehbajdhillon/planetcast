@@ -605,7 +605,8 @@ func (d *Dubbing) lipSyncClip(ctx context.Context, segment Segment, identifier s
 	}
 
 	jsonBody, err := json.Marshal(replicateRequestBody)
-	outputUrl, err := d.replicate.MakeRequest(ctx, bytes.NewBuffer(jsonBody))
+	url := "https://api.replicate.com/v1/predictions"
+	outputUrl, err := d.replicate.MakeRequest(ctx, bytes.NewBuffer(jsonBody), url)
 	d.storage.DeleteFile(dubbedVideoSegmentName)
 
 	if err != nil {

@@ -49,9 +49,9 @@ type ReplicateTriggerRequestOutput struct {
 	Status string  `json:"status"`
 }
 
-func (r *Replicate) MakeRequest(ctx context.Context, body *bytes.Buffer) (any, error) {
+func (r *Replicate) MakeRequest(ctx context.Context, body *bytes.Buffer, url string) (any, error) {
 
-	requestId, err := r.TriggerRequest(ctx, body)
+	requestId, err := r.TriggerRequest(ctx, body, url)
 
 	if err != nil {
 		return "", err
@@ -101,7 +101,7 @@ func (r *Replicate) FetchRequest(ctx context.Context, requestId string) (*Replic
 
 }
 
-func (r *Replicate) TriggerRequest(ctx context.Context, body *bytes.Buffer) (string, error) {
+func (r *Replicate) TriggerRequest(ctx context.Context, body *bytes.Buffer, url string) (string, error) {
 
 	API_KEY := os.Getenv("REPLICATE_KEY")
 
@@ -112,7 +112,7 @@ func (r *Replicate) TriggerRequest(ctx context.Context, body *bytes.Buffer) (str
 
 	responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
 		Method: "POST",
-		Url:    "https://api.replicate.com/v1/predictions",
+		Url:    url,
 		Headers: map[string]string{
 			"Authorization": fmt.Sprintf("Token %s", API_KEY),
 		},

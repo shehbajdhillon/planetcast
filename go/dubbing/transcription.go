@@ -45,7 +45,6 @@ func (d *Dubbing) getTranscript(ctx context.Context, fileName string) (*WhisperO
 		sleepTime := utils.GetExponentialDelaySeconds(5 - retries)
 
 		replicateRequestBody := map[string]interface{}{
-			"version": "4a60104c44dd709fc08a03dfeca6c6906257633dd03fd58663ec896a4eeba30e",
 			"input": map[string]interface{}{
 				"audio":           fileUrl,
 				"model":           "large-v2",
@@ -53,7 +52,8 @@ func (d *Dubbing) getTranscript(ctx context.Context, fileName string) (*WhisperO
 			},
 		}
 		jsonBody, err := json.Marshal(replicateRequestBody)
-		output, err = d.replicate.MakeRequest(ctx, bytes.NewBuffer(jsonBody))
+		url := "https://api.replicate.com/v1/deployments/shehbajdhillon/whisper-model/predictions"
+		output, err = d.replicate.MakeRequest(ctx, bytes.NewBuffer(jsonBody), url)
 
 		if err == nil {
 			break
