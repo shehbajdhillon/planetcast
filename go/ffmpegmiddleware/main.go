@@ -51,7 +51,7 @@ func (f *Ffmpeg) DownscaleFile(ctx context.Context, fileData io.ReadSeeker) (io.
 	os.WriteFile(fileName, body, 0644)
 	fileData.Seek(0, io.SeekStart)
 
-	ffmpegCmd := fmt.Sprintf(`ffmpeg -i file:'%s' -vf 'scale=1280:720' -vcodec libx264 -acodec aac -vsync 2 file:'%s'`, fileName, encodedFileName)
+	ffmpegCmd := fmt.Sprintf(`ffmpeg -i file:'%s' -vf 'scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2' -vcodec libx264 -acodec aac -vsync 2 file:'%s'`, fileName, encodedFileName)
 	_, err = f.Run(ctx, ffmpegCmd)
 	if err != nil {
 		f.logger.Error("Could not execute ffmpeg downscaling command", zap.Error(err), zap.String("file_name", fileName))
