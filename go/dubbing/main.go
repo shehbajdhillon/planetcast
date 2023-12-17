@@ -111,6 +111,7 @@ type CreateTranslationProps struct {
 	TargetTransformation database.Transformation
 	Identifier           string
 	LipSync              bool
+	Gender               string
 }
 
 func (d *Dubbing) CreateTranslation(
@@ -169,6 +170,7 @@ func (d *Dubbing) CreateTranslation(
 		targetLanguage:         targetTransformation.TargetLanguage,
 		targetTransformationId: targetTransformation.ID,
 		lipSync:                args.LipSync,
+		gender:                 args.Gender,
 	}
 	translatedSegmentsPtr, err := d.fetchAndDub(ctx, fetchAndDubArgs)
 	if err != nil {
@@ -259,6 +261,7 @@ type fetchAndDubProps struct {
 	targetLanguage         string
 	targetTransformationId int64
 	lipSync                bool
+	gender                 string
 }
 
 func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Segment, error) {
@@ -407,7 +410,7 @@ func (d *Dubbing) processSegment(ctx context.Context, idx int, frameRate float64
 	}
 	logProgress("Clip Extration")
 
-	err = d.fetchDubbedClip(ctx, *translatedSegment, identifier, args.targetLanguage)
+	err = d.fetchDubbedClip(ctx, *translatedSegment, identifier, args.targetLanguage, args.gender)
 	if err != nil {
 		return nil, fmt.Errorf("Could fetch dubbed clip %d/%d: %s\n", idx+1, len(segments), err.Error())
 	}
@@ -513,7 +516,7 @@ func (d *Dubbing) addMissingInfo(ctx context.Context, args addMissingInfoProps) 
 	return nil
 }
 
-func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifier string, language string) error {
+func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifier string, language string, gender string) error {
 
 	id := segment.Id
 	audioFileName := getAudioFileName(identifier, id)
@@ -522,7 +525,7 @@ func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifi
 
 	originalAudioSegmentName := videoSegmentName + ".mp3"
 
-	audioContent, err := d.elevenlabs.ElevenLabsMakeRequest(ctx, elevenlabsmiddleware.ElevenLabsRequestArgs{AudioFileName: originalAudioSegmentName, Text: segment.Text})
+	audioContent, err := d.elevenlabs.ElevenLabsMakeRequest(ctx, elevenlabsmiddleware.ElevenLabsRequestArgs{AudioFileName: originalAudioSegmentName, Text: segment.Text, Gender: gender})
 
 	if err != nil {
 		return fmt.Errorf("Error reading response from ElevenLabs: %s", err.Error())
