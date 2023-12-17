@@ -29,11 +29,16 @@ type VoiceRequest struct {
 type ElevenLabsRequestArgs struct {
 	AudioFileName string
 	Text          string
+	Gender        string
 }
 
 func (e *ElevenLabs) ElevenLabsMakeRequest(ctx context.Context, args ElevenLabsRequestArgs) ([]byte, error) {
 
 	originalVoiceId := "rU18Fk3uSDhmg5Xh41o4" //Fallback voice id
+	if args.Gender == "female" {
+		originalVoiceId = "21m00Tcm4TlvDq8ikWAM"
+	}
+
 	voiceId := originalVoiceId
 
 	/**

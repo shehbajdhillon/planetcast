@@ -74,9 +74,9 @@ type ComplexityRoot struct {
 		AcceptTeamInvite      func(childComplexity int, inviteSlug string) int
 		CreateCheckoutSession func(childComplexity int, teamSlug string, lookUpKey string) int
 		CreatePortalSession   func(childComplexity int, teamSlug string) int
-		CreateProject         func(childComplexity int, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *string, initialLipSync bool) int
+		CreateProject         func(childComplexity int, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, gender string, initialTargetLanguage *string, initialLipSync bool) int
 		CreateTeam            func(childComplexity int, teamType database.TeamType, addTrial bool) int
-		CreateTranslation     func(childComplexity int, projectID int64, targetLanguage string, lipSync bool) int
+		CreateTranslation     func(childComplexity int, projectID int64, targetLanguage string, lipSync bool, gender string) int
 		DeleteProject         func(childComplexity int, projectID int64) int
 		DeleteTeamInvite      func(childComplexity int, inviteSlug string) int
 		DeleteTransformation  func(childComplexity int, transformationID int64) int
@@ -167,9 +167,9 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateTeam(ctx context.Context, teamType database.TeamType, addTrial bool) (database.Team, error)
-	CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, initialTargetLanguage *string, initialLipSync bool) (database.Project, error)
+	CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, gender string, initialTargetLanguage *string, initialLipSync bool) (database.Project, error)
 	DeleteProject(ctx context.Context, projectID int64) (database.Project, error)
-	CreateTranslation(ctx context.Context, projectID int64, targetLanguage string, lipSync bool) (database.Transformation, error)
+	CreateTranslation(ctx context.Context, projectID int64, targetLanguage string, lipSync bool, gender string) (database.Transformation, error)
 	DeleteTransformation(ctx context.Context, transformationID int64) (database.Transformation, error)
 	CreateCheckoutSession(ctx context.Context, teamSlug string, lookUpKey string) (model.CheckoutSessionResponse, error)
 	CreatePortalSession(ctx context.Context, teamSlug string) (model.PortalSessionResponse, error)
@@ -307,7 +307,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateProject(childComplexity, args["teamSlug"].(string), args["title"].(string), args["sourceMedia"].(*graphql.Upload), args["youtubeLink"].(*string), args["uploadOption"].(model.UploadOption), args["initialTargetLanguage"].(*string), args["initialLipSync"].(bool)), true
+		return e.complexity.Mutation.CreateProject(childComplexity, args["teamSlug"].(string), args["title"].(string), args["sourceMedia"].(*graphql.Upload), args["youtubeLink"].(*string), args["uploadOption"].(model.UploadOption), args["gender"].(string), args["initialTargetLanguage"].(*string), args["initialLipSync"].(bool)), true
 
 	case "Mutation.createTeam":
 		if e.complexity.Mutation.CreateTeam == nil {
@@ -331,7 +331,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateTranslation(childComplexity, args["projectId"].(int64), args["targetLanguage"].(string), args["lipSync"].(bool)), true
+		return e.complexity.Mutation.CreateTranslation(childComplexity, args["projectId"].(int64), args["targetLanguage"].(string), args["lipSync"].(bool), args["gender"].(string)), true
 
 	case "Mutation.deleteProject":
 		if e.complexity.Mutation.DeleteProject == nil {
@@ -1035,24 +1035,33 @@ func (ec *executionContext) field_Mutation_createProject_args(ctx context.Contex
 		}
 	}
 	args["uploadOption"] = arg4
-	var arg5 *string
+	var arg5 string
+	if tmp, ok := rawArgs["gender"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gender"))
+		arg5, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["gender"] = arg5
+	var arg6 *string
 	if tmp, ok := rawArgs["initialTargetLanguage"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("initialTargetLanguage"))
-		arg5, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg6, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["initialTargetLanguage"] = arg5
-	var arg6 bool
+	args["initialTargetLanguage"] = arg6
+	var arg7 bool
 	if tmp, ok := rawArgs["initialLipSync"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("initialLipSync"))
-		arg6, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		arg7, err = ec.unmarshalNBoolean2bool(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["initialLipSync"] = arg6
+	args["initialLipSync"] = arg7
 	return args, nil
 }
 
@@ -1123,6 +1132,15 @@ func (ec *executionContext) field_Mutation_createTranslation_args(ctx context.Co
 		}
 	}
 	args["lipSync"] = arg2
+	var arg3 string
+	if tmp, ok := rawArgs["gender"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gender"))
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["gender"] = arg3
 	return args, nil
 }
 
@@ -1719,7 +1737,7 @@ func (ec *executionContext) _Mutation_createProject(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateProject(rctx, fc.Args["teamSlug"].(string), fc.Args["title"].(string), fc.Args["sourceMedia"].(*graphql.Upload), fc.Args["youtubeLink"].(*string), fc.Args["uploadOption"].(model.UploadOption), fc.Args["initialTargetLanguage"].(*string), fc.Args["initialLipSync"].(bool))
+			return ec.resolvers.Mutation().CreateProject(rctx, fc.Args["teamSlug"].(string), fc.Args["title"].(string), fc.Args["sourceMedia"].(*graphql.Upload), fc.Args["youtubeLink"].(*string), fc.Args["uploadOption"].(model.UploadOption), fc.Args["gender"].(string), fc.Args["initialTargetLanguage"].(*string), fc.Args["initialLipSync"].(bool))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.LoggedIn == nil {
@@ -1897,7 +1915,7 @@ func (ec *executionContext) _Mutation_createTranslation(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CreateTranslation(rctx, fc.Args["projectId"].(int64), fc.Args["targetLanguage"].(string), fc.Args["lipSync"].(bool))
+			return ec.resolvers.Mutation().CreateTranslation(rctx, fc.Args["projectId"].(int64), fc.Args["targetLanguage"].(string), fc.Args["lipSync"].(bool), fc.Args["gender"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.LoggedIn == nil {

@@ -98,9 +98,9 @@ type Query {
 
 type Mutation {
   createTeam(teamType: TeamType!, addTrial: Boolean!): Team! @loggedIn
-  createProject(teamSlug: String! @memberTeam, title: String!, sourceMedia: Upload, youtubeLink: String, uploadOption: UploadOption!, initialTargetLanguage: String, initialLipSync: Boolean!): Project! @loggedIn
+  createProject(teamSlug: String! @memberTeam, title: String!, sourceMedia: Upload, youtubeLink: String, uploadOption: UploadOption!, gender: String!, initialTargetLanguage: String, initialLipSync: Boolean!): Project! @loggedIn
   deleteProject(projectId: Int64! @ownsProject): Project! @loggedIn
-  createTranslation(projectId: Int64! @ownsProject, targetLanguage: String!, lipSync: Boolean!): Transformation! @loggedIn
+  createTranslation(projectId: Int64! @ownsProject, targetLanguage: String!, lipSync: Boolean!, gender: String!): Transformation! @loggedIn
   deleteTransformation(transformationId: Int64! @ownsTransformation): Transformation! @loggedIn
   createCheckoutSession(teamSlug: String! @memberTeam, lookUpKey: String!): CheckoutSessionResponse! @loggedIn
   createPortalSession(teamSlug: String! @memberTeam): PortalSessionResponse! @loggedIn
