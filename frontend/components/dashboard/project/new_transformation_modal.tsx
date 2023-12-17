@@ -30,8 +30,8 @@ interface NewTransformationModelProps {
 };
 
 const CREATE_TRANSLATION = gql`
-  mutation CreateTranslation($projectId: Int64!, $targetLanguage: String!, $lipSync: Boolean!) {
-    createTranslation(projectId: $projectId, targetLanguage: $targetLanguage, lipSync: $lipSync) {
+  mutation CreateTranslation($projectId: Int64!, $targetLanguage: String!, $lipSync: Boolean!, $gender: String!) {
+    createTranslation(projectId: $projectId, targetLanguage: $targetLanguage, lipSync: $lipSync, gender: $gender) {
       id
       projectId
     }
@@ -51,9 +51,10 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
 
   const [createTranslationMutation, { loading }] = useMutation(CREATE_TRANSLATION);
   const [lipSync, setLipSync] = useState(false);
+  const [gender, setGender] = useState("male");
 
   const createTranslation = async () => {
-    const variables = { projectId: project.id, targetLanguage, lipSync}
+    const variables = { projectId: project.id, targetLanguage, lipSync, gender }
     const res = await createTranslationMutation({ variables });
     if (res) {
       refetch();
@@ -65,6 +66,7 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
   useEffect(() => {
     setTargetLanguage(undubbedLanguages[0]);
     setLipSync(false);
+    setGender("male");
   }, [isOpen]);
 
   return (
@@ -93,6 +95,16 @@ const NewTransformationModel: React.FC<NewTransformationModelProps> = (props) =>
                   <Checkbox isChecked={lipSync} onChange={() => setLipSync(curr => !curr)}>
                     Enable Lip Syncing (Experimental)
                   </Checkbox>
+                  <RadioGroup value={gender} onChange={setGender}>
+                    <HStack>
+                      <Radio value='male'>Male</Radio>
+                      <Radio value='female'>Female</Radio>
+                    </HStack>
+                    <Text fontSize={'sm'} fontWeight={'light'} fontStyle={'italic'}>
+                      We are currently only offering single speaker dubbing in male or female voices,
+                      but are working on adding more voice options and multi-speaker dubbing capabilities.
+                    </Text>
+                  </RadioGroup>
                   <Text>Dubbing credits required: {project.dubbingCreditsRequired} minutes</Text>
                 </Stack>
               </Box>
