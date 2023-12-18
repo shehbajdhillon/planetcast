@@ -136,6 +136,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 		} else {
 			file, _ = r.Ffmpeg.DownscaleFile(context, sourceMedia.File)
 			fileName = strings.Split(sourceMedia.Filename, ".mp4")[0]
+			fileName = strings.ReplaceAll(fileName, " ", "_")
 		}
 
 		identifier = fileName + randomString
