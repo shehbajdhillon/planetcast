@@ -172,6 +172,9 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (
 	go func(ctx context.Context) {
 		for _, tfn := range transformations {
 			r.Storage.DeleteFile(tfn.TargetMedia)
+			if tfn.IsSource == true {
+				r.Storage.DeleteFile(fmt.Sprintf("%s-demucs.mp3", tfn.TargetMedia))
+			}
 		}
 	}(newCtx)
 
