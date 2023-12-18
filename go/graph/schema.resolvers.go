@@ -136,6 +136,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 		} else {
 			file, _ = r.Ffmpeg.DownscaleFile(context, sourceMedia.File)
 			fileName = strings.Split(sourceMedia.Filename, ".mp4")[0]
+			fileName = strings.ReplaceAll(fileName, " ", "_")
 		}
 
 		identifier = fileName + randomString
@@ -172,6 +173,9 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (
 	go func(ctx context.Context) {
 		for _, tfn := range transformations {
 			r.Storage.DeleteFile(tfn.TargetMedia)
+			if tfn.IsSource == true {
+				r.Storage.DeleteFile(fmt.Sprintf("%s-demucs.mp3", tfn.TargetMedia))
+			}
 		}
 	}(newCtx)
 

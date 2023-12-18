@@ -88,6 +88,73 @@ func (d *Dubbing) CreateTransformation(
 		return database.Transformation{}, err
 	}
 
+	demucsPtr, err := d.runDemucs(ctx, args.FileName)
+	if err != nil {
+		d.logger.Error("Failed to run demucs", zap.Error(err))
+		return database.Transformation{}, err
+	}
+	demucsObj := *demucsPtr
+
+	demucsFile := []*string{
+		demucsObj.Bass,
+		demucsObj.Drums,
+		demucsObj.Guitar,
+		demucsObj.Other,
+		demucsObj.Piano,
+	}
+
+	demucsFileNames := []string{}
+
+	//Download the files, except vocals. Write files to disk.
+	for _, filePtr := range demucsFile {
+		if filePtr == nil {
+			continue
+		}
+		fileUrl := *filePtr
+
+		responseBody, err := httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
+			Method: "GET",
+			Url:    fileUrl,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+				"Accept":       "audio/mp3",
+			},
+		})
+
+		demucsFileName := fmt.Sprintf("%s-demucs-%d.mp3", args.FileName, len(demucsFileNames))
+
+		if err != nil {
+			return database.Transformation{}, err
+		}
+		err = os.WriteFile(demucsFileName, responseBody, 0644)
+		if err != nil {
+			return database.Transformation{}, err
+		}
+		demucsFileNames = append(demucsFileNames, demucsFileName)
+	}
+
+	//Mix files together. Upload to S3.
+	fileName := fmt.Sprintf("%s-demucs.mp3", args.FileName)
+	ffmpegFiles := []string{}
+	for _, fileName := range demucsFileNames {
+		ffmpegFiles = append(ffmpegFiles, fmt.Sprintf("-i file:'%s'", fileName))
+	}
+	inputString := strings.Join(ffmpegFiles, " ")
+	ffmpegCmd := fmt.Sprintf("ffmpeg %s -filter_complex 'amix=inputs=%d:duration=longest' file:'%s'", inputString, len(demucsFileNames), fileName)
+	d.ffmpeg.Run(ctx, ffmpegCmd)
+
+	file, err := os.Open(fileName)
+	if err != nil {
+		d.logger.Error("Error opening file", zap.Error(err))
+	}
+	defer file.Close()
+
+	d.storage.Upload(fileName, file)
+
+	//Delete Files from Disk
+	utils.DeleteFiles(demucsFileNames)
+	utils.DeleteFiles([]string{fileName})
+
 	transformation, err := d.database.CreateTransformation(ctx, database.CreateTransformationParams{
 		ProjectID:      args.ProjectID,
 		TargetLanguage: strings.ToUpper(transcriptObj.Language),
@@ -139,6 +206,23 @@ func (d *Dubbing) CreateTranslation(
 	err = os.WriteFile(identifier+".mp4", responseBody, 0644)
 	if err != nil {
 		return nil, fmt.Errorf("Error writing audio file: %s", err.Error())
+	}
+
+	fileUrl = d.storage.GetFileLink(fmt.Sprintf("%s-demucs.mp3", sourceTransformation.TargetMedia))
+	responseBody, err = httpmiddleware.HttpRequest(httpmiddleware.HttpRequestStruct{
+		Method: "GET",
+		Url:    fileUrl,
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"Accept":       "audio/mp3",
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Error downloading demucs audio file from S3: %s", err.Error())
+	}
+	err = os.WriteFile(identifier+"-demucs.mp3", responseBody, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("Error writing demucs audio file: %s", err.Error())
 	}
 
 	var whisperOutput WhisperOutput
@@ -248,7 +332,7 @@ func (d *Dubbing) CreateTranslation(
 	}
 
 	//Delete any files written
-	utils.DeleteFiles([]string{identifier + ".mp4", identifier + "_dubbed.mp4"})
+	utils.DeleteFiles([]string{identifier + ".mp4", identifier + "_dubbed.mp4", identifier + "-demucs.mp3"})
 
 	// return the update transformation
 	return &targetTransformation, nil
@@ -398,12 +482,16 @@ func (d *Dubbing) processSegment(ctx context.Context, idx int, frameRate float64
 
 	videoSegmentName := getVideoSegmentName(identifier, translatedSegment.Id)
 	originalAudioSegmentName := videoSegmentName + ".mp3"
+	demucsAudioSegmentName := videoSegmentName + "-demucs.mp3"
 
 	generateVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s.mp4' -ss %f -to %f file:'%s'", identifier, translatedSegment.Start, translatedSegment.End, videoSegmentName)
 	_, err = d.ffmpeg.Run(ctx, generateVideoClip)
 
 	generateAudioClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -vn -acodec libmp3lame -q:a 4 file:'%s'", videoSegmentName, originalAudioSegmentName)
 	_, err = d.ffmpeg.Run(ctx, generateAudioClip)
+
+	generateDemucsAudioClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -ss %f -to %f -vn -acodec libmp3lame -q:a 4 file:'%s'", identifier+"-demucs.mp3", translatedSegment.Start, translatedSegment.End, demucsAudioSegmentName)
+	_, err = d.ffmpeg.Run(ctx, generateDemucsAudioClip)
 
 	if err != nil {
 		return nil, fmt.Errorf("Clip %d/%d extraction failed: %s\n%s\n", idx+1, len(segments), err.Error(), generateVideoClip)
@@ -478,6 +566,7 @@ func (d *Dubbing) addMissingInfo(ctx context.Context, args addMissingInfoProps) 
 
 	start := args.beforeSegment.End
 	end := args.currentSegment.Start
+	identifier := args.identifier
 
 	if end-start <= 0.001 {
 		return nil
@@ -486,6 +575,9 @@ func (d *Dubbing) addMissingInfo(ctx context.Context, args addMissingInfoProps) 
 	videoSegmentName := getVideoSegmentName(args.identifier, args.currentSegment.Id)
 	beforeSegmentName := "before_" + videoSegmentName
 	syncedVideoSegmentName := "synced_" + videoSegmentName
+	demucsAudioSegmentName := "before_" + videoSegmentName + "-demucs.mp3"
+
+	mixedClipFileName := "mixed_" + beforeSegmentName
 
 	//extract the middle part with disabled audio
 	generateVideoClipCmd := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s.mp4' -ss %f -to %f -af 'volume=0' file:'%s'", args.identifier, start, end, beforeSegmentName)
@@ -495,10 +587,17 @@ func (d *Dubbing) addMissingInfo(ctx context.Context, args addMissingInfoProps) 
 		return fmt.Errorf("Could not extract interim segment: %s", err.Error())
 	}
 
-	batch := []string{beforeSegmentName, syncedVideoSegmentName}
+	generateDemucsAudioClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -ss %f -to %f -vn -acodec libmp3lame -q:a 4 file:'%s'", identifier+"-demucs.mp3", start, end, demucsAudioSegmentName)
+	_, err = d.ffmpeg.Run(ctx, generateDemucsAudioClip)
+
+	dubVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -i file:'%s' -c:v copy -map 0:v:0 -map 1:a:0 file:'%s'",
+		beforeSegmentName, demucsAudioSegmentName, mixedClipFileName)
+	_, err = d.ffmpeg.Run(ctx, dubVideoClip)
+
+	batch := []string{mixedClipFileName, syncedVideoSegmentName}
 
 	if args.flip != nil && *args.flip == true {
-		batch = []string{syncedVideoSegmentName, beforeSegmentName}
+		batch = []string{syncedVideoSegmentName, mixedClipFileName}
 	}
 
 	outputFileName, err := d.concatBatchFiles(ctx, batch, args.identifier, 2)
@@ -508,6 +607,7 @@ func (d *Dubbing) addMissingInfo(ctx context.Context, args addMissingInfoProps) 
 	}
 
 	err = os.Rename(outputFileName, syncedVideoSegmentName)
+	utils.DeleteFiles([]string{beforeSegmentName, demucsAudioSegmentName})
 
 	if err != nil {
 		return fmt.Errorf("Could not rename concated missing info output: %s", err.Error())
@@ -544,11 +644,13 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 
 	audioFileName := getAudioFileName(identifier, id)
 	stretchAudioFileName := "stretched_" + audioFileName
+	mixedAudioFileName := "mixed_" + audioFileName
 
 	videoSegmentName := getVideoSegmentName(identifier, id)
 	dubbedVideoSegmentName := "dubbed_" + videoSegmentName
 
 	originalAudioSegmentName := videoSegmentName + ".mp3"
+	demucsAudioSegmentName := videoSegmentName + "-demucs.mp3"
 
 	start := segment.Start
 	end := segment.End
@@ -571,15 +673,23 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 	stretchAudioClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -filter:a 'atempo=%f' file:'%s'", audioFileName, audioStretchRatio, stretchAudioFileName)
 	_, err = d.ffmpeg.Run(ctx, stretchAudioClip)
 
+	mixAudioClip := fmt.Sprintf(
+		"ffmpeg -i file:'%s' -i file:'%s' -filter_complex 'amix=inputs=2:duration=longest' file:'%s'",
+		demucsAudioSegmentName,
+		stretchAudioFileName,
+		mixedAudioFileName,
+	)
+	_, err = d.ffmpeg.Run(ctx, mixAudioClip)
+
 	dubVideoClip := fmt.Sprintf("ffmpeg -threads 1 -i file:'%s' -i file:'%s' -c:v copy -map 0:v:0 -map 1:a:0 file:'%s'",
-		videoSegmentName, stretchAudioFileName, dubbedVideoSegmentName)
+		videoSegmentName, mixedAudioFileName, dubbedVideoSegmentName)
 	_, err = d.ffmpeg.Run(ctx, dubVideoClip)
 
 	if err != nil {
 		return fmt.Errorf("Clip dubbing failed: %s\n%s\n", err.Error(), dubVideoClip)
 	}
 
-	utils.DeleteFiles([]string{videoSegmentName, audioFileName, stretchAudioFileName, originalAudioSegmentName})
+	utils.DeleteFiles([]string{videoSegmentName, audioFileName, stretchAudioFileName, originalAudioSegmentName, demucsAudioSegmentName, mixedAudioFileName})
 
 	return nil
 }

@@ -129,6 +129,73 @@ func cleanSegments(whisperOutput *WhisperOutput) []Segment {
 	return newSegmentArray
 }
 
+type demucsOutput struct {
+	Bass   *string `json:"bass"`
+	Drums  *string `json:"drums"`
+	Guitar *string `json:"guitar"`
+	Other  *string `json:"other"`
+	Piano  *string `json:"piano"`
+	Vocals *string `json:"vocals"`
+}
+
+func (d *Dubbing) runDemucs(ctx context.Context, fileName string) (*demucsOutput, error) {
+	fileUrl := d.storage.GetFileLink(fileName)
+
+	retries := 5
+
+	var output any
+
+	for retries > 0 {
+
+		sleepTime := utils.GetExponentialDelaySeconds(5 - retries)
+
+		replicateRequestBody := map[string]interface{}{
+			"input": map[string]interface{}{
+				"audio": fileUrl,
+			},
+		}
+		jsonBody, err := json.Marshal(replicateRequestBody)
+		url := "https://api.replicate.com/v1/deployments/shehbajdhillon/demucs/predictions"
+		output, err = d.replicate.MakeRequest(ctx, bytes.NewBuffer(jsonBody), url)
+
+		if err == nil {
+			break
+		} else {
+			retries -= 1
+			d.logger.Error("Demucs request failed, retrying after sleeping", zap.Error(err), zap.Int("sleep_time", sleepTime), zap.Int("retries_left", retries))
+			time.Sleep(time.Duration(sleepTime) * time.Second)
+		}
+	}
+
+	if retries <= 0 {
+		d.logger.Error("Failed to run demucs on input file")
+		return nil, fmt.Errorf("Failed to run demucs on input file")
+	}
+
+	outputJson, ok := output.(map[string]interface{})
+
+	if !ok {
+		d.logger.Error("Could not parse demucs json output")
+		return nil, fmt.Errorf("Could not parse demucs json output")
+	}
+
+	responseBody, err := json.Marshal(outputJson)
+	if err != nil {
+		d.logger.Error("Could not parse demucs json body to bytes")
+		return nil, fmt.Errorf("Could not parse demucs json body to bytes")
+	}
+
+	var demucsOutput demucsOutput
+	err = json.Unmarshal(responseBody, &demucsOutput)
+	if err != nil {
+		d.logger.Error("Could not parse demucs bytes to struct")
+		return nil, fmt.Errorf("Could not parse demucs bytes to struct")
+	}
+	d.logger.Info("Demucs request processes successfully for:", zap.String("fileName", fileName))
+
+	return &demucsOutput, nil
+}
+
 func (d *Dubbing) GetTranscriptLength(whisperOutput *WhisperOutput) int {
 	segments := whisperOutput.Segments
 	length := 0.0
