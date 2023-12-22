@@ -766,13 +766,14 @@ func (d *Dubbing) translateSegment(
 
 	systemPrompt := fmt.Sprintf(
 		` You are an expert translator that can translate any text to the %s language.
+    You will only provide output in the %s alphabet.
     You will only use vocabulary that is simple, common and even a new learner to %s language would know.
     You will not use any advanced words, or formal vocabulary.
     You will focus more on clarity and simplicity over complexity of the vocabulary.
     You may simplify the meaning of the sentence first if it means the translation will also use simple, common vocabulary.
     You will translate the input text and will only output the translation.
     Everytime you do a translation, you will first take a deep breath and work on it step-by-step.
-  `, targetLang, targetLang)
+  `, targetLang, targetLang, targetLang)
 
 	userPrompt := fmt.Sprintf(
 		` Take a deep breath, and translate the following sentence to %s: '%s'. The original sentence was said in %f seconds, make sure that the translation can also be said in this time.`,
