@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// @PrcTrace
 func (d *Dubbing) concatSegments(ctx context.Context, segments []Segment, identifier string) (string, error) {
 
 	batchSize := 5
@@ -43,6 +44,7 @@ func (d *Dubbing) concatSegments(ctx context.Context, segments []Segment, identi
 	return finalOutput, nil
 }
 
+// @PrcTrace
 func (d *Dubbing) concatBatchSegments(ctx context.Context, batch []Segment, batchIdentifier string, identifier string) error {
 	inputList := []string{}
 	filterList := []string{}
@@ -82,6 +84,7 @@ func (d *Dubbing) concatBatchSegments(ctx context.Context, batch []Segment, batc
 	return nil
 }
 
+// @PrcTrace
 func (d *Dubbing) concatBatchFiles(ctx context.Context, batchFiles []string, identifier string, batchSize int) (string, error) {
 	for len(batchFiles) > 1 {
 		newBatchFiles := []string{}
@@ -118,6 +121,7 @@ func (d *Dubbing) concatBatchFiles(ctx context.Context, batchFiles []string, ide
 	return finalOutput, nil
 }
 
+// @PrcTrace
 func (d *Dubbing) concatBatch(ctx context.Context, batch []string, batchIdentifier string) error {
 	inputList := []string{}
 	filterList := []string{}
