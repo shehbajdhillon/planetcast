@@ -68,6 +68,7 @@ type CreateTransformationParams struct {
 	IsSource  bool
 }
 
+// @PrcTrace
 func (d *Dubbing) CreateTransformation(
 	ctx context.Context,
 	args CreateTransformationParams,
@@ -181,6 +182,7 @@ type CreateTranslationProps struct {
 	Gender               string
 }
 
+// @PrcTrace
 func (d *Dubbing) CreateTranslation(
 	ctx context.Context,
 	args CreateTranslationProps,
@@ -348,6 +350,7 @@ type fetchAndDubProps struct {
 	gender                 string
 }
 
+// @PrcTrace
 func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Segment, error) {
 
 	translatedSegments := []Segment{}
@@ -444,6 +447,7 @@ func (d *Dubbing) fetchAndDub(ctx context.Context, args fetchAndDubProps) (*[]Se
 	return &translatedSegments, nil
 }
 
+// @PrcTrace
 func (d *Dubbing) processSegment(ctx context.Context, idx int, frameRate float64, args fetchAndDubProps) (*Segment, error) {
 
 	segments := args.segments
@@ -558,6 +562,7 @@ type addMissingInfoProps struct {
 	flip           *bool
 }
 
+// @PrcTrace
 func (d *Dubbing) addMissingInfo(ctx context.Context, args addMissingInfoProps) error {
 
 	if args.beforeSegment == nil {
@@ -616,6 +621,7 @@ func (d *Dubbing) addMissingInfo(ctx context.Context, args addMissingInfoProps) 
 	return nil
 }
 
+// @PrcTrace
 func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifier string, language string, gender string) error {
 
 	id := segment.Id
@@ -638,6 +644,7 @@ func (d *Dubbing) fetchDubbedClip(ctx context.Context, segment Segment, identifi
 
 }
 
+// @PrcTrace
 func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier string, frameRate float64) error {
 
 	id := segment.Id
@@ -694,6 +701,7 @@ func (d *Dubbing) dubVideoClip(ctx context.Context, segment Segment, identifier 
 	return nil
 }
 
+// @PrcTrace
 func (d *Dubbing) lipSyncClip(ctx context.Context, segment Segment, identifier string) error {
 
 	videoSegmentName := getVideoSegmentName(identifier, segment.Id)
@@ -756,6 +764,7 @@ func (d *Dubbing) lipSyncClip(ctx context.Context, segment Segment, identifier s
 
 }
 
+// @PrcTrace
 func (d *Dubbing) translateSegment(
 	ctx context.Context,
 	segment Segment,

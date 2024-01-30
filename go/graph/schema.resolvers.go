@@ -28,7 +28,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// CreateTeam is the resolver for the createTeam field.
+// @PrcTrace CreateTeam is the resolver for the createTeam field.
 func (r *mutationResolver) CreateTeam(ctx context.Context, teamType database.TeamType, addTrial bool) (database.Team, error) {
 	email, _ := auth.EmailFromContext(ctx)
 	user, _ := r.DB.GetUserByEmail(ctx, email)
@@ -91,7 +91,7 @@ func (r *mutationResolver) CreateTeam(ctx context.Context, teamType database.Tea
 	return team, nil
 }
 
-// CreateProject is the resolver for the createProject field.
+// @PrcTrace CreateProject is the resolver for the createProject field.
 func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, title string, sourceMedia *graphql.Upload, youtubeLink *string, uploadOption model.UploadOption, gender string, initialTargetLanguage *string, initialLipSync bool) (database.Project, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 
@@ -164,7 +164,7 @@ func (r *mutationResolver) CreateProject(ctx context.Context, teamSlug string, t
 	return project, nil
 }
 
-// DeleteProject is the resolver for the deleteProject field.
+// @PrcTrace DeleteProject is the resolver for the deleteProject field.
 func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (database.Project, error) {
 	transformations, _ := r.DB.GetTransformationsByProjectId(ctx, projectID)
 	project, _ := r.DB.DeleteProjectById(ctx, projectID)
@@ -182,7 +182,7 @@ func (r *mutationResolver) DeleteProject(ctx context.Context, projectID int64) (
 	return project, nil
 }
 
-// CreateTranslation is the resolver for the createTranslation field.
+// @PrcTrace CreateTranslation is the resolver for the createTranslation field.
 func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int64, targetLanguage string, lipSync bool, gender string) (database.Transformation, error) {
 	// fetch source transcript for the project
 	sourceTransformation, err := r.DB.GetSourceTransformationByProjectId(ctx, projectID)
@@ -268,7 +268,7 @@ func (r *mutationResolver) CreateTranslation(ctx context.Context, projectID int6
 	return newTransformation, nil
 }
 
-// DeleteTransformation is the resolver for the deleteTransformation field.
+// @PrcTrace DeleteTransformation is the resolver for the deleteTransformation field.
 func (r *mutationResolver) DeleteTransformation(ctx context.Context, transformationID int64) (database.Transformation, error) {
 	transformation, _ := r.DB.DeleteTransformationById(ctx, transformationID)
 
@@ -280,7 +280,7 @@ func (r *mutationResolver) DeleteTransformation(ctx context.Context, transformat
 	return transformation, nil
 }
 
-// CreateCheckoutSession is the resolver for the createCheckoutSession field.
+// @PrcTrace CreateCheckoutSession is the resolver for the createCheckoutSession field.
 func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, teamSlug string, lookUpKey string) (model.CheckoutSessionResponse, error) {
 	production := os.Getenv("PRODUCTION") != ""
 
@@ -334,7 +334,7 @@ func (r *mutationResolver) CreateCheckoutSession(ctx context.Context, teamSlug s
 	return model.CheckoutSessionResponse{SessionID: session.ID}, nil
 }
 
-// CreatePortalSession is the resolver for the createPortalSession field.
+// @PrcTrace CreatePortalSession is the resolver for the createPortalSession field.
 func (r *mutationResolver) CreatePortalSession(ctx context.Context, teamSlug string) (model.PortalSessionResponse, error) {
 	production := os.Getenv("PRODUCTION") != ""
 
@@ -363,7 +363,7 @@ func (r *mutationResolver) CreatePortalSession(ctx context.Context, teamSlug str
 	return model.PortalSessionResponse{SessionURL: ps.URL}, nil
 }
 
-// SendTeamInvite is the resolver for the sendTeamInvite field.
+// @PrcTrace SendTeamInvite is the resolver for the sendTeamInvite field.
 func (r *mutationResolver) SendTeamInvite(ctx context.Context, teamSlug string, inviteeEmail string) (bool, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 	user, err := r.DB.GetUserByEmail(ctx, inviteeEmail)
@@ -391,7 +391,7 @@ func (r *mutationResolver) SendTeamInvite(ctx context.Context, teamSlug string, 
 	return true, nil
 }
 
-// DeleteTeamInvite is the resolver for the deleteTeamInvite field.
+// @PrcTrace DeleteTeamInvite is the resolver for the deleteTeamInvite field.
 func (r *mutationResolver) DeleteTeamInvite(ctx context.Context, inviteSlug string) (bool, error) {
 	_, err := r.DB.DeleteTeamInviteBySlug(ctx, inviteSlug)
 	if err != nil {
@@ -400,7 +400,7 @@ func (r *mutationResolver) DeleteTeamInvite(ctx context.Context, inviteSlug stri
 	return true, nil
 }
 
-// AcceptTeamInvite is the resolver for the acceptTeamInvite field.
+// @PrcTrace AcceptTeamInvite is the resolver for the acceptTeamInvite field.
 func (r *mutationResolver) AcceptTeamInvite(ctx context.Context, inviteSlug string) (bool, error) {
 	invite, _ := r.DB.GetTeamInviteBySlug(ctx, inviteSlug)
 	user, _ := r.DB.GetUserByEmail(ctx, invite.InviteeEmail)
@@ -416,7 +416,7 @@ func (r *mutationResolver) AcceptTeamInvite(ctx context.Context, inviteSlug stri
 	return true, nil
 }
 
-// DubbingCreditsRequired is the resolver for the dubbingCreditsRequired field.
+// @PrcTrace DubbingCreditsRequired is the resolver for the dubbingCreditsRequired field.
 func (r *projectResolver) DubbingCreditsRequired(ctx context.Context, obj *database.Project) (*int64, error) {
 	sourceTransformation, err := r.DB.GetSourceTransformationByProjectId(ctx, obj.ID)
 	if err != nil {
@@ -429,7 +429,7 @@ func (r *projectResolver) DubbingCreditsRequired(ctx context.Context, obj *datab
 	return &requiredCredits, nil
 }
 
-// Transformations is the resolver for the transformations field.
+// @PrcTrace Transformations is the resolver for the transformations field.
 func (r *projectResolver) Transformations(ctx context.Context, obj *database.Project, transformationID *int64) ([]database.Transformation, error) {
 	transformations := []database.Transformation{}
 
@@ -456,7 +456,7 @@ func (r *projectResolver) Transformations(ctx context.Context, obj *database.Pro
 	return filteredTransformation, nil
 }
 
-// GetTeams is the resolver for the getTeams field.
+// @PrcTrace GetTeams is the resolver for the getTeams field.
 func (r *queryResolver) GetTeams(ctx context.Context) ([]database.Team, error) {
 	teams := []database.Team{}
 	email, _ := auth.EmailFromContext(ctx)
@@ -471,13 +471,13 @@ func (r *queryResolver) GetTeams(ctx context.Context) ([]database.Team, error) {
 	return teams, nil
 }
 
-// GetTeamByID is the resolver for the getTeamById field.
+// @PrcTrace GetTeamByID is the resolver for the getTeamById field.
 func (r *queryResolver) GetTeamByID(ctx context.Context, teamSlug string) (database.Team, error) {
 	team, _ := r.DB.GetTeamBySlug(ctx, teamSlug)
 	return team, nil
 }
 
-// GetUserInfo is the resolver for the getUserInfo field.
+// @PrcTrace GetUserInfo is the resolver for the getUserInfo field.
 func (r *queryResolver) GetUserInfo(ctx context.Context) (model.AccountInfo, error) {
 	email, _ := auth.EmailFromContext(ctx)
 	user, _ := r.DB.GetUserByEmail(ctx, email)
@@ -488,7 +488,7 @@ func (r *queryResolver) GetUserInfo(ctx context.Context) (model.AccountInfo, err
 	return model.AccountInfo{User: user, Invites: invites, Teams: memberships}, nil
 }
 
-// StripeSubscriptionID is the resolver for the stripeSubscriptionId field.
+// @PrcTrace StripeSubscriptionID is the resolver for the stripeSubscriptionId field.
 func (r *subscriptionPlanResolver) StripeSubscriptionID(ctx context.Context, obj *database.SubscriptionPlan) (*string, error) {
 	if obj.StripeSubscriptionID.Valid == false {
 		return nil, nil
@@ -497,7 +497,7 @@ func (r *subscriptionPlanResolver) StripeSubscriptionID(ctx context.Context, obj
 	return &subscriptionId, nil
 }
 
-// SubscriptionData is the resolver for the subscriptionData field.
+// @PrcTrace SubscriptionData is the resolver for the subscriptionData field.
 func (r *subscriptionPlanResolver) SubscriptionData(ctx context.Context, obj *database.SubscriptionPlan) (*model.SubscriptionData, error) {
 	if obj.StripeSubscriptionID.Valid == false {
 		return nil, nil
@@ -510,12 +510,12 @@ func (r *subscriptionPlanResolver) SubscriptionData(ctx context.Context, obj *da
 	return subscriptionData, nil
 }
 
-// Created is the resolver for the created field.
+// @PrcTrace Created is the resolver for the created field.
 func (r *teamResolver) Created(ctx context.Context, obj *database.Team) (string, error) {
 	return obj.Created.String(), nil
 }
 
-// Projects is the resolver for the projects field.
+// @PrcTrace Projects is the resolver for the projects field.
 func (r *teamResolver) Projects(ctx context.Context, obj *database.Team, projectID *int64) ([]database.Project, error) {
 	projects := []database.Project{}
 
@@ -540,7 +540,7 @@ func (r *teamResolver) Projects(ctx context.Context, obj *database.Team, project
 	return filteredProject, nil
 }
 
-// SubscriptionPlans is the resolver for the subscriptionPlans field.
+// @PrcTrace SubscriptionPlans is the resolver for the subscriptionPlans field.
 func (r *teamResolver) SubscriptionPlans(ctx context.Context, obj *database.Team, subscriptionID *int64) ([]database.SubscriptionPlan, error) {
 	if subscriptionID == nil {
 		return r.DB.GetSubscriptionsByTeamId(ctx, obj.ID)
@@ -550,13 +550,13 @@ func (r *teamResolver) SubscriptionPlans(ctx context.Context, obj *database.Team
 	return []database.SubscriptionPlan{subscription}, err
 }
 
-// Members is the resolver for the members field.
+// @PrcTrace Members is the resolver for the members field.
 func (r *teamResolver) Members(ctx context.Context, obj *database.Team) ([]database.TeamMembership, error) {
 	memberships, _ := r.DB.GetTeamMembershipsByTeamId(ctx, obj.ID)
 	return memberships, nil
 }
 
-// Invitees is the resolver for the invitees field.
+// @PrcTrace Invitees is the resolver for the invitees field.
 func (r *teamResolver) Invitees(ctx context.Context, obj *database.Team) ([]database.TeamInvite, error) {
 	invites, err := r.DB.GetTeamInvitesByTeamId(ctx, obj.ID)
 	if err != nil {
@@ -572,40 +572,40 @@ func (r *teamResolver) Invitees(ctx context.Context, obj *database.Team) ([]data
 	return inviteeEmails, nil
 }
 
-// InviteSlug is the resolver for the inviteSlug field.
+// @PrcTrace InviteSlug is the resolver for the inviteSlug field.
 func (r *teamInviteResolver) InviteSlug(ctx context.Context, obj *database.TeamInvite) (string, error) {
 	return obj.Slug, nil
 }
 
-// TeamName is the resolver for the teamName field.
+// @PrcTrace TeamName is the resolver for the teamName field.
 func (r *teamInviteResolver) TeamName(ctx context.Context, obj *database.TeamInvite) (string, error) {
 	team, _ := r.DB.GetTeamById(ctx, obj.TeamID)
 	return team.Name, nil
 }
 
-// MembershipType is the resolver for the membershipType field.
+// @PrcTrace MembershipType is the resolver for the membershipType field.
 func (r *teamMembershipResolver) MembershipType(ctx context.Context, obj *database.TeamMembership) (string, error) {
 	return string(obj.MembershipType), nil
 }
 
-// User is the resolver for the user field.
+// @PrcTrace User is the resolver for the user field.
 func (r *teamMembershipResolver) User(ctx context.Context, obj *database.TeamMembership) (database.Userinfo, error) {
 	return r.DB.GetUserById(ctx, obj.UserID)
 }
 
-// TeamSlug is the resolver for the teamSlug field.
+// @PrcTrace TeamSlug is the resolver for the teamSlug field.
 func (r *teamMembershipResolver) TeamSlug(ctx context.Context, obj *database.TeamMembership) (string, error) {
 	team, _ := r.DB.GetTeamById(ctx, obj.TeamID)
 	return team.Slug, nil
 }
 
-// TeamName is the resolver for the teamName field.
+// @PrcTrace TeamName is the resolver for the teamName field.
 func (r *teamMembershipResolver) TeamName(ctx context.Context, obj *database.TeamMembership) (string, error) {
 	team, _ := r.DB.GetTeamById(ctx, obj.TeamID)
 	return team.Name, nil
 }
 
-// Transcript is the resolver for the transcript field.
+// @PrcTrace Transcript is the resolver for the transcript field.
 func (r *transformationResolver) Transcript(ctx context.Context, obj *database.Transformation) (string, error) {
 	jsonBytes := obj.Transcript.RawMessage
 	return string(jsonBytes), nil

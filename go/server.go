@@ -14,6 +14,7 @@ import (
 	"planetcastdev/logmiddleware"
 	"planetcastdev/openaimiddleware"
 	"planetcastdev/paymentsmiddleware"
+	"planetcastdev/perception"
 	"planetcastdev/replicatemiddleware"
 	"planetcastdev/storage"
 	"planetcastdev/youtubemiddleware"
@@ -90,7 +91,9 @@ func main() {
 		Debug:            false,
 	}).Handler)
 
-	router.Handle("/", GqlServer)
+	prc, err := perception.Init("PlanetCast")
+	router.Handle("/", prc.TraceHTTPHandler(GqlServer))
+
 	router.Post("/stripe-webhook", Payments.HandleStripeWebhook)
 
 	if production == false {

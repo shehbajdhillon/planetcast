@@ -32,6 +32,7 @@ type Word struct {
 	Word  string  `json:"word"`
 }
 
+// @PrcTrace
 func (d *Dubbing) getTranscript(ctx context.Context, fileName string) (*WhisperOutput, error) {
 
 	fileUrl := d.storage.GetFileLink(fileName)
@@ -138,6 +139,7 @@ type demucsOutput struct {
 	Vocals *string `json:"vocals"`
 }
 
+// @PrcTrace
 func (d *Dubbing) runDemucs(ctx context.Context, fileName string) (*demucsOutput, error) {
 	fileUrl := d.storage.GetFileLink(fileName)
 

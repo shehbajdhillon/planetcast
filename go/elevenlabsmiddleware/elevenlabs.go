@@ -32,6 +32,7 @@ type ElevenLabsRequestArgs struct {
 	Gender        string
 }
 
+// @PrcTrace
 func (e *ElevenLabs) ElevenLabsMakeRequest(ctx context.Context, args ElevenLabsRequestArgs) ([]byte, error) {
 
 	originalVoiceId := "rU18Fk3uSDhmg5Xh41o4" //Fallback voice id
@@ -71,6 +72,7 @@ func (e *ElevenLabs) ElevenLabsMakeRequest(ctx context.Context, args ElevenLabsR
 	return audioContent, nil
 }
 
+// @PrcTrace
 func (e *ElevenLabs) elevenLabsPerformTextToSpeech(ctx context.Context, args VoiceRequest, voiceId string) ([]byte, error) {
 
 	URL := fmt.Sprintf("https://api.elevenlabs.io/v1/text-to-speech/%s", voiceId)
@@ -123,6 +125,7 @@ type ElevenLabsVoiceCloneResponse struct {
 	VoiceId string `json:"voice_id"`
 }
 
+// @PrcTrace
 func (e *ElevenLabs) cloneVoice(ctx context.Context, fileName string) (string, error) {
 
 	voiceCloningRetries := 2

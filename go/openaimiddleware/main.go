@@ -57,6 +57,7 @@ type MakeAPIRequestProps struct {
 	RequestInput ChatRequestInput
 }
 
+// @PrcTrace
 func (o *OpenAI) MakeAPIRequest(ctx context.Context, args MakeAPIRequestProps) (*ChatCompletionResponse, error) {
 
 	API_KEY := os.Getenv("OPEN_AI_SECRET_KEY")
