@@ -49,6 +49,7 @@ type ReplicateTriggerRequestOutput struct {
 	Status string  `json:"status"`
 }
 
+// @PrcTrace
 func (r *Replicate) MakeRequest(ctx context.Context, body *bytes.Buffer, url string) (any, error) {
 
 	requestId, err := r.TriggerRequest(ctx, body, url)
@@ -73,6 +74,7 @@ func (r *Replicate) MakeRequest(ctx context.Context, body *bytes.Buffer, url str
 
 }
 
+// @PrcTrace
 func (r *Replicate) FetchRequest(ctx context.Context, requestId string) (*ReplicateGetRequestOutput, error) {
 
 	API_KEY := os.Getenv("REPLICATE_KEY")
@@ -101,6 +103,7 @@ func (r *Replicate) FetchRequest(ctx context.Context, requestId string) (*Replic
 
 }
 
+// @PrcTrace
 func (r *Replicate) TriggerRequest(ctx context.Context, body *bytes.Buffer, url string) (string, error) {
 
 	API_KEY := os.Getenv("REPLICATE_KEY")

@@ -29,6 +29,7 @@ func Connect(args FfmpegConnectProps) *Ffmpeg {
 	return &Ffmpeg{semaphore: sem, logger: args.Logger}
 }
 
+// @PrcTrace
 func (f *Ffmpeg) Run(ctx context.Context, ffmpegCmd string) (string, error) {
 	if err := f.semaphore.Acquire(ctx, 1); err != nil {
 		return "", fmt.Errorf("Failed to acquire semaphore.")
@@ -37,6 +38,7 @@ func (f *Ffmpeg) Run(ctx context.Context, ffmpegCmd string) (string, error) {
 	return utils.ExecCommand(ffmpegCmd)
 }
 
+// @PrcTrace
 func (f *Ffmpeg) DownscaleFile(ctx context.Context, fileData io.ReadSeeker) (io.ReadSeeker, error) {
 
 	fileName := uuid.NewString()
