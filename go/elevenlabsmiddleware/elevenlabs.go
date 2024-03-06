@@ -34,7 +34,7 @@ type ElevenLabsRequestArgs struct {
 
 func (e *ElevenLabs) ElevenLabsMakeRequest(ctx context.Context, args ElevenLabsRequestArgs) ([]byte, error) {
 
-	originalVoiceId := "rU18Fk3uSDhmg5Xh41o4" //Fallback voice id
+	originalVoiceId := "XMQab44ShF40jzdHBoXu" //Fallback voice id
 	if args.Gender == "female" {
 		originalVoiceId = "21m00Tcm4TlvDq8ikWAM"
 	}
