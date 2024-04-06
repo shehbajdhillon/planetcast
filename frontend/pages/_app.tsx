@@ -19,6 +19,9 @@ import { useRouter } from 'next/router';
 import posthog from 'posthog-js';
 import { PostHogProvider } from 'posthog-js/react';
 
+import depthJs from '@depth-js/core';
+import { DepthProvider } from '@depth-js/react';
+
 import NProgress from 'nprogress';
 import App from 'next/app';
 
@@ -77,6 +80,10 @@ if (typeof window !== 'undefined') {
     },
     capture_pageview: true,
   })
+
+  depthJs.init({
+    publicKey: process.env.NEXT_PUBLIC_DEPTH_PUBLIC_KEY!,
+  })
 }
 
 const ApolloProviderWrapper = ({ children }: PropsWithChildren) => {
@@ -133,12 +140,12 @@ export default function Main({ Component, pageProps, pathname }: AppProps & { pa
   return (
     <ChakraProvider theme={theme}>
       <PostHogProvider client={posthog}>
-        { skipProviders ?
+        {skipProviders ?
           <main className={inter.className}>
             <Component {...pageProps} />
             <Analytics />
           </main>
-        :
+          :
           <ClerkProvider>
             <ApolloProviderWrapper>
               <main className={inter.className}>
