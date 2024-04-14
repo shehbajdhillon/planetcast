@@ -941,10 +941,10 @@
   dependencies:
     csstype "3.1.1"
 
-"@depth-js/core@^0.0.13":
-  version "0.0.13"
-  resolved "https://registry.yarnpkg.com/@depth-js/core/-/core-0.0.13.tgz#103c305d2644d06e512908746086c9aef8fd6bd2"
-  integrity sha512-ASytH5mlB6CRVJ56b5gPTo3rXHB54bmZOzAGxzw9rsY7iz9ilTc408CotIPRovvfJ0Yfmy7h0kOF6m0JgSkKRw==
+"@depth-js/core@^0.0.14":
+  version "0.0.14"
+  resolved "https://registry.yarnpkg.com/@depth-js/core/-/core-0.0.14.tgz#82d0763ccaac8913f6744dbd6bebe1e13c39a58a"
+  integrity sha512-l+Hdpi1lUg4yvku7MS9isCSqmfPZwFeoaOCo948T4n3sBvQycOJjP1E468nzfWZynBU/7eVd+nUhWbWf9t8RmA==
   dependencies:
     rrweb "2.0.0-alpha.4"
 
