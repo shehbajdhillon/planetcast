@@ -941,17 +941,17 @@
   dependencies:
     csstype "3.1.1"
 
-"@depth-js/core@^0.0.14":
-  version "0.0.14"
-  resolved "https://registry.yarnpkg.com/@depth-js/core/-/core-0.0.14.tgz#82d0763ccaac8913f6744dbd6bebe1e13c39a58a"
-  integrity sha512-l+Hdpi1lUg4yvku7MS9isCSqmfPZwFeoaOCo948T4n3sBvQycOJjP1E468nzfWZynBU/7eVd+nUhWbWf9t8RmA==
+"@depth-js/core@^0.0.16":
+  version "0.0.16"
+  resolved "https://registry.yarnpkg.com/@depth-js/core/-/core-0.0.16.tgz#04c03ebcf7d04659e7a83441c723bef282d9af6b"
+  integrity sha512-zPAmxnRTyJdbDpNYH6ekvysLsOzyeR3hFLS+oZDjyYny5Rz6FOnOuoU0REnUHkIVua+qPEPICvfA3Jlw1+e3gw==
   dependencies:
     rrweb "2.0.0-alpha.4"
 
-"@depth-js/react@^0.0.7":
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/@depth-js/react/-/react-0.0.7.tgz#c5778b15ef65dfbf4e7f16a1afc3e31e057ae42e"
-  integrity sha512-JrME7lLKJQKM8BMALHTQzKWOvEeCOiJe3nUBDNuCCzN3JOPwdyRZT9JYd/eWZjWdZR7nd5RJc34asNvJUoC+6A==
+"@depth-js/react@^0.0.9":
+  version "0.0.9"
+  resolved "https://registry.yarnpkg.com/@depth-js/react/-/react-0.0.9.tgz#fb6f50c2c821d87dece19ac5aed1503e16b447e4"
+  integrity sha512-Blm+7W1745ahpquNFYD/828dBT8V78MAwK7GBVuq72PJIGtqf2dmTlJwEnCpdxyOLmVcJjYdQLXuGUUeIebVhw==
 
 "@emotion/babel-plugin@^11.11.0":
   version "11.11.0"
