@@ -140,21 +140,23 @@ export default function Main({ Component, pageProps, pathname }: AppProps & { pa
   return (
     <ChakraProvider theme={theme}>
       <PostHogProvider client={posthog}>
-        {skipProviders ?
-          <main className={inter.className}>
-            <Component {...pageProps} />
-            <Analytics />
-          </main>
-          :
-          <ClerkProvider>
-            <ApolloProviderWrapper>
-              <main className={inter.className}>
-                <Component {...pageProps} />
-                <Analytics />
-              </main>
-            </ApolloProviderWrapper>
-          </ClerkProvider>
-        }
+        <DepthProvider client={depthJs}>
+          {skipProviders ?
+            <main className={inter.className}>
+              <Component {...pageProps} />
+              <Analytics />
+            </main>
+            :
+            <ClerkProvider>
+              <ApolloProviderWrapper>
+                <main className={inter.className}>
+                  <Component {...pageProps} />
+                  <Analytics />
+                </main>
+              </ApolloProviderWrapper>
+            </ClerkProvider>
+          }
+        </DepthProvider>
       </PostHogProvider>
     </ChakraProvider>
   );
